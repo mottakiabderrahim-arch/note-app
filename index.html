@@ -1,52 +1,232 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <title>مفكرتي</title>
-  <style>
-    body {
-      font-family: Arial;
-      background: #f5f5f5;
-      margin: 0;
-      padding: 15px;
-    }
-    textarea {
-      width: 100%;
-      height: 70vh;
-      font-size: 16px;
-      padding: 10px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-    }
-    button {
-      width: 100%;
-      margin-top: 10px;
-      padding: 12px;
-      font-size: 16px;
-      background: #4CAF50;
-      color: white;
-      border: none;
-      border-radius: 8px;
-    }
-  </style>
+<meta charset="UTF-8">
+<title>مفكرتي</title>
+
+<style>
+body{
+    margin:0;
+    font-family:sans-serif;
+    background:#f5f5f5;
+}
+
+#home,#editor{
+    padding:10px;
+}
+
+#editor{display:none;}
+
+.note{
+    background:white;
+    padding:10px;
+    margin-bottom:10px;
+    border-radius:6px;
+    cursor:pointer;
+}
+
+.note small{color:gray}
+
+input,button{
+    padding:10px;
+    font-size:16px;
+    width:100%;
+    margin-bottom:10px;
+}
+
+#text{
+    min-height:50vh;
+    border:1px solid #ddd;
+    border-radius:6px;
+    padding:10px;
+    background:white;
+    outline:none;
+}
+
+#actions{
+    display:flex;
+    gap:10px;
+}
+#actions button{flex:1}
+
+#add{
+    position:fixed;
+    bottom:20px;
+    right:20px;
+    width:55px;
+    height:55px;
+    border-radius:50%;
+    font-size:30px;
+    background:#e53935;
+    color:white;
+    border:none;
+}
+
+/* أدوات التلوين */
+#tools{
+    display:flex;
+    justify-content:center;
+    gap:14px;
+    margin-top:10px;
+}
+
+.color{
+    width:28px;
+    height:28px;
+    border-radius:50%;
+    cursor:pointer;
+    border:2px solid #ccc;
+}
+
+.color.active{
+    border:3px solid #000;
+}
+</style>
 </head>
+
 <body>
 
-  <h3>📝 مفكرتي</h3>
+<div id="home">
+    <input id="search" placeholder="بحث...">
+    <div id="notesList"></div>
+</div>
 
-  <textarea id="note" placeholder="كتب ملاحظتك هنا..."></textarea>
-  <button onclick="saveNote()">💾 حفظ</button>
+<div id="editor">
+    <input id="title" placeholder="عنوان الملاحظة">
 
-  <script>
-    const note = document.getElementById("note");
+    <div id="text" contenteditable="true"></div>
 
-    note.value = localStorage.getItem("note") || "";
+    <div id="actions">
+        <button type="button" onclick="saveNote()">حفظ</button>
+        <button type="button" onclick="deleteNote()">حذف</button>
+        <button type="button" onclick="back()">رجوع</button>
+    </div>
 
-    function saveNote() {
-      localStorage.setItem("note", note.value);
-      alert("تم الحفظ ✔️");
+    <div id="tools">
+        <div class="color" data-color="black" style="background:black"></div>
+        <div class="color" data-color="red" style="background:red"></div>
+        <div class="color" data-color="blue" style="background:blue"></div>
+        <div class="color" data-color="green" style="background:green"></div>
+    </div>
+</div>
+
+<button id="add" onclick="newNote()">+</button>
+
+<script>
+let notes = JSON.parse(localStorage.getItem("notes") || "[]");
+let current = null;
+let currentColor = localStorage.getItem("lastColor") || "black";
+let savedRange = null;
+
+const home = document.getElementById("home");
+const editor = document.getElementById("editor");
+const list = document.getElementById("notesList");
+const text = document.getElementById("text");
+const title = document.getElementById("title");
+const search = document.getElementById("search");
+const colors = document.querySelectorAll(".color");
+
+/* حفظ موضع المؤشر */
+function saveSelection(){
+    let sel = window.getSelection();
+    if(sel && sel.rangeCount > 0){
+        savedRange = sel.getRangeAt(0);
     }
-  </script>
+}
+
+text.addEventListener("keyup", saveSelection);
+text.addEventListener("mouseup", saveSelection);
+
+/* التلوين */
+function activateColor(color){
+    currentColor = color;
+    localStorage.setItem("lastColor", color);
+
+    colors.forEach(c=>c.classList.remove("active"));
+    document.querySelector(`[data-color="${color}"]`).classList.add("active");
+
+    text.focus();
+    if(savedRange){
+        let sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(savedRange);
+    }
+    document.execCommand("styleWithCSS", false, true);
+    document.execCommand("foreColor", false, color);
+}
+
+colors.forEach(c=>{
+    c.onclick = ()=>activateColor(c.dataset.color);
+});
+
+/* التخزين */
+function saveStorage(){
+    localStorage.setItem("notes", JSON.stringify(notes));
+}
+
+function render(){
+    list.innerHTML="";
+    notes.forEach((n,i)=>{
+        if(n.title.includes(search.value) || n.content.includes(search.value)){
+            let d=document.createElement("div");
+            d.className="note";
+            d.innerHTML=`<strong>${n.title}</strong><br><small>${n.date}</small>`;
+            d.onclick=()=>editNote(i);
+            list.appendChild(d);
+        }
+    });
+}
+
+search.oninput = render;
+
+function newNote(){
+    current=null;
+    title.value="";
+    text.innerHTML="";
+    home.style.display="none";
+    editor.style.display="block";
+}
+
+function editNote(i){
+    current=i;
+    title.value=notes[i].title;
+    text.innerHTML=notes[i].content;
+    home.style.display="none";
+    editor.style.display="block";
+}
+
+function saveNote(){
+    if(!title.value && !text.innerHTML) return;
+
+    let note={
+        title:title.value || "بدون عنوان",
+        content:text.innerHTML,
+        date:new Date().toLocaleString()
+    };
+
+    current===null ? notes.push(note) : notes[current]=note;
+    saveStorage();
+    back();
+}
+
+function deleteNote(){
+    if(current===null) return;
+    if(confirm("واش متأكد بغيت تحذف؟")){
+        notes.splice(current,1);
+        saveStorage();
+        back();
+    }
+}
+
+function back(){
+    editor.style.display="none";
+    home.style.display="block";
+    render();
+}
+
+activateColor(currentColor);
+render();
+</script>
 
 </body>
 </html>
