@@ -5,348 +5,225 @@
 <title>مفكرتي</title>
 
 <style>
-body{
-    margin:0;
-    font-family:sans-serif;
-    background:#f5f5f5;
+:root{
+  --bg:#f2f2f2;
+  --card:#fff;
+  --text:#000;
+  --main:#4CAF50;
 }
+
 body.dark{
-    background:#121212;
-    color:white;
+  --bg:#121212;
+  --card:#1e1e1e;
+  --text:#fff;
 }
 
-.container{
-    max-width:600px;
-    margin:auto;
-    padding:8px;
+body{
+  margin:0;
+  font-family:Arial;
+  background:var(--bg);
+  color:var(--text);
 }
 
-/* الصفحات */
-#home,#editor,#settings{padding:5px}
-#editor,#settings{display:none}
+header{
+  background:var(--main);
+  color:white;
+  padding:15px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
 
-/* الملاحظات */
+header span{
+  font-size:20px;
+}
+
+.menu{
+  font-size:22px;
+  cursor:pointer;
+}
+
+#settings{
+  display:none;
+  background:var(--card);
+  padding:10px;
+}
+
+#container{
+  padding:10px;
+}
+
+input,textarea,select{
+  width:100%;
+  padding:10px;
+  margin-bottom:8px;
+  border-radius:5px;
+  border:1px solid #ccc;
+  font-size:16px;
+}
+
+button{
+  padding:10px;
+  width:100%;
+  background:var(--main);
+  color:white;
+  border:none;
+  border-radius:5px;
+  font-size:16px;
+}
+
 .note{
-    background:white;
-    padding:8px;
-    margin-bottom:8px;
-    border-radius:6px;
-    cursor:pointer;
-}
-.note small{color:gray}
-
-body.dark .note,
-body.dark #text,
-body.dark input,
-body.dark #menu,
-body.dark #settings{
-    background:#1e1e1e;
-    color:white;
+  background:var(--card);
+  padding:10px;
+  margin-top:10px;
+  border-radius:5px;
 }
 
-/* inputs */
-input,button{
-    padding:8px;
-    font-size:15px;
-    width:100%;
-    margin-bottom:8px;
+.note.pinned{
+  border:2px solid gold;
 }
 
-/* نص الملاحظة */
-#text{
-    min-height:35vh;
-    border:1px solid #ddd;
-    border-radius:6px;
-    padding:10px;
-    background:white;
-    outline:none;
+.note small{
+  color:gray;
 }
 
-/* الأزرار */
-#actions{
-    display:flex;
-    gap:8px;
-}
-#actions button{flex:1}
-
-/* زر + */
-#add{
-    position:fixed;
-    bottom:15px;
-    right:15px;
-    width:48px;
-    height:48px;
-    border-radius:50%;
-    font-size:26px;
-    background:#e53935;
-    color:white;
-    border:none;
+.actions button{
+  margin-top:5px;
+  width:32%;
 }
 
-/* أدوات التلوين */
-#tools{
-    display:flex;
-    justify-content:center;
-    gap:12px;
-}
-.color{
-    width:22px;
-    height:22px;
-    border-radius:50%;
-    cursor:pointer;
-    border:2px solid #ccc;
-}
-.color.active{border:3px solid #000}
-
-/* 3 نقاط */
-#menuBtn{
-    position:fixed;
-    top:10px;
-    right:10px;
-    font-size:22px;
-    cursor:pointer;
-    z-index:1000;
-}
-#menu{
-    position:fixed;
-    top:40px;
-    right:10px;
-    background:white;
-    border-radius:6px;
-    box-shadow:0 2px 6px rgba(0,0,0,.2);
-    display:none;
-    z-index:1000;
-}
-#menu div{
-    padding:10px;
-    cursor:pointer;
-}
-
-/* الإعدادات */
-#settings h3{text-align:center}
-
-/* رمز الحماية */
-#lockBox{display:none}
+.delete{background:#e53935;}
+.edit{background:#2196F3;}
+.pin{background:#FF9800;}
 </style>
 </head>
 
 <body>
 
-<div id="menuBtn" onclick="toggleMenu()">⋮</div>
-<div id="menu">
-    <div onclick="toggleDark()">🌙 الوضع الليلي</div>
-    <div onclick="toggleLock()">🔐 رمز الحماية</div>
-    <div onclick="openSettings()">⚙️ الإعدادات</div>
-    <div onclick="backup()">♻️ نسخ احتياطي</div>
-    <div onclick="restore()">♻️ استرجاع النسخة</div>
-    <div onclick="deleteAll()">🗑️ حذف الكل</div>
-    <div onclick="about()">ℹ️ حول</div>
-</div>
-
-<div class="container">
-
-<div id="lockBox">
-    <input id="pin" type="password" placeholder="أدخل الرمز">
-    <button onclick="savePin()">حفظ الرمز</button>
-</div>
-
-<div id="home">
-    <input id="search" placeholder="بحث...">
-    <div id="notesList"></div>
-</div>
-
-<div id="editor">
-    <input id="title" placeholder="عنوان الملاحظة">
-    <div id="text" contenteditable="true"></div>
-
-    <div id="actions">
-        <button onclick="saveNote()">حفظ</button>
-        <button onclick="deleteNote()">حذف</button>
-        <button onclick="back()">رجوع</button>
-    </div>
-
-    <div id="tools">
-        <div class="color" data-color="black" style="background:black"></div>
-        <div class="color" data-color="red" style="background:red"></div>
-        <div class="color" data-color="blue" style="background:blue"></div>
-        <div class="color" data-color="green" style="background:green"></div>
-    </div>
-</div>
+<header>
+  <span>📝 مفكرتي</span>
+  <span class="menu" onclick="toggleSettings()">⋮</span>
+</header>
 
 <div id="settings">
-    <h3>⚙️ الإعدادات</h3>
-    <button onclick="changeFont(1)">➕ تكبير الخط</button>
-    <button onclick="changeFont(-1)">➖ تصغير الخط</button>
-    <button onclick="back()">⬅️ رجوع</button>
+  <button onclick="toggleDark()">🌙 الوضع الليلي</button>
+  <button onclick="clearAll()">🗑️ مسح الكل</button>
+  <label>🔍 بحث</label>
+  <input type="text" onkeyup="search(this.value)">
+  <label>🔠 حجم الخط</label>
+  <input type="range" min="14" max="24" value="16" onchange="changeFont(this.value)">
 </div>
 
-</div>
+<div id="container">
+  <input id="title" placeholder="عنوان">
+  <textarea id="content" rows="4" placeholder="اكتب ملاحظتك..."></textarea>
+  <select id="color">
+    <option value="#ffffff">⚪ أبيض</option>
+    <option value="#fff9c4">🟡 أصفر</option>
+    <option value="#c8e6c9">🟢 أخضر</option>
+    <option value="#bbdefb">🔵 أزرق</option>
+  </select>
+  <button onclick="save()">💾 حفظ</button>
 
-<button id="add" onclick="newNote()">+</button>
+  <div id="notes"></div>
+</div>
 
 <script>
-let notes = JSON.parse(localStorage.getItem("notes") || "[]");
-let current = null;
-let currentColor = localStorage.getItem("lastColor") || "black";
-let fontSize = parseInt(localStorage.getItem("fontSize") || "15");
+let notes = JSON.parse(localStorage.getItem("notes")) || [];
+let editIndex = null;
 
-const home = document.getElementById("home");
-const editor = document.getElementById("editor");
-const settings = document.getElementById("settings");
-const list = document.getElementById("notesList");
-const text = document.getElementById("text");
-const title = document.getElementById("title");
-const search = document.getElementById("search");
-const colors = document.querySelectorAll(".color");
-
-text.style.fontSize = fontSize + "px";
-
-/* التلوين */
-function activateColor(color){
-    currentColor = color;
-    localStorage.setItem("lastColor", color);
-    colors.forEach(c=>c.classList.remove("active"));
-    document.querySelector(`[data-color="${color}"]`).classList.add("active");
-    document.execCommand("styleWithCSS", false, true);
-    document.execCommand("foreColor", false, color);
-}
-colors.forEach(c=>c.onclick=()=>activateColor(c.dataset.color));
-
-/* التخزين */
-function saveStorage(){
-    localStorage.setItem("notes", JSON.stringify(notes));
+function toggleSettings(){
+  let s=document.getElementById("settings");
+  s.style.display = s.style.display=="block"?"none":"block";
 }
 
-/* عرض */
-function render(){
-    list.innerHTML="";
-    notes.forEach((n,i)=>{
-        if(n.title.includes(search.value) || n.content.includes(search.value)){
-            let d=document.createElement("div");
-            d.className="note";
-            d.innerHTML=`<strong>${n.title}</strong><br><small>${n.date}</small>`;
-            d.onclick=()=>editNote(i);
-            list.appendChild(d);
-        }
-    });
-}
-search.oninput=render;
-
-function newNote(){
-    current=null;
-    title.value="";
-    text.innerHTML="";
-    home.style.display="none";
-    editor.style.display="block";
-}
-
-function editNote(i){
-    current=i;
-    title.value=notes[i].title;
-    text.innerHTML=notes[i].content;
-    home.style.display="none";
-    editor.style.display="block";
-}
-
-function saveNote(){
-    if(!title.value && !text.innerHTML) return;
-    let note={
-        title:title.value||"بدون عنوان",
-        content:text.innerHTML,
-        date:new Date().toLocaleString()
-    };
-    current===null ? notes.push(note) : notes[current]=note;
-    saveStorage();
-    back();
-}
-
-function deleteNote(){
-    if(current===null) return;
-    if(confirm("متأكد تحذف؟")){
-        notes.splice(current,1);
-        saveStorage();
-        back();
-    }
-}
-
-function deleteAll(){
-    if(confirm("متأكد تحذف جميع الملاحظات؟")){
-        notes=[];
-        saveStorage();
-        render();
-    }
-}
-
-function back(){
-    editor.style.display="none";
-    settings.style.display="none";
-    home.style.display="block";
-    render();
-}
-
-/* 3 نقاط */
-function toggleMenu(){
-    menu.style.display = menu.style.display==="block"?"none":"block";
-}
-
-/* الوضع الليلي */
 function toggleDark(){
-    document.body.classList.toggle("dark");
-    localStorage.setItem("dark",document.body.classList.contains("dark"));
+  document.body.classList.toggle("dark");
 }
 
-/* الإعدادات */
-function openSettings(){
-    home.style.display="none";
-    editor.style.display="none";
-    settings.style.display="block";
-    menu.style.display="none";
+function save(){
+  let t=title.value||"بدون عنوان";
+  let c=content.value;
+  if(c.trim()=="") return alert("كتب شي حاجة");
+
+  let note={
+    title:t,
+    content:c,
+    date:new Date().toLocaleString(),
+    color:color.value,
+    pinned:false
+  };
+
+  if(editIndex!==null){
+    notes[editIndex]=note;
+    editIndex=null;
+  }else{
+    notes.unshift(note);
+  }
+
+  localStorage.setItem("notes",JSON.stringify(notes));
+  title.value=content.value="";
+  show();
 }
+
+function show(list=notes){
+  notes.sort((a,b)=>b.pinned-a.pinned);
+  let box=notesDiv=document.getElementById("notes");
+  box.innerHTML="";
+  list.forEach((n,i)=>{
+    box.innerHTML+=`
+    <div class="note ${n.pinned?'pinned':''}" style="background:${n.color}">
+      <h3>${n.title}</h3>
+      <p>${n.content}</p>
+      <small>${n.date}</small>
+      <div class="actions">
+        <button class="pin" onclick="pin(${i})">📌</button>
+        <button class="edit" onclick="edit(${i})">✏️</button>
+        <button class="delete" onclick="del(${i})">🗑️</button>
+      </div>
+    </div>`;
+  });
+}
+
+function del(i){
+  if(confirm("تمسح؟")){
+    notes.splice(i,1);
+    localStorage.setItem("notes",JSON.stringify(notes));
+    show();
+  }
+}
+
+function edit(i){
+  title.value=notes[i].title;
+  content.value=notes[i].content;
+  color.value=notes[i].color;
+  editIndex=i;
+}
+
+function pin(i){
+  notes[i].pinned=!notes[i].pinned;
+  localStorage.setItem("notes",JSON.stringify(notes));
+  show();
+}
+
+function clearAll(){
+  if(confirm("تمسح كولشي؟")){
+    notes=[];
+    localStorage.removeItem("notes");
+    show();
+  }
+}
+
+function search(txt){
+  let f=notes.filter(n=>n.title.includes(txt)||n.content.includes(txt));
+  show(f);
+}
+
 function changeFont(v){
-    fontSize += v;
-    if(fontSize < 12) fontSize = 12;
-    if(fontSize > 30) fontSize = 30;
-    text.style.fontSize = fontSize + "px";
-    localStorage.setItem("fontSize",fontSize);
+  document.body.style.fontSize=v+"px";
 }
 
-/* الحماية */
-function toggleLock(){
-    lockBox.style.display = lockBox.style.display==="block"?"none":"block";
-}
-function savePin(){
-    localStorage.setItem("pin",pin.value);
-    alert("تم حفظ الرمز");
-}
-
-/* نسخ احتياطي داخلي */
-function backup(){
-    localStorage.setItem("backupNotes", JSON.stringify(notes));
-    alert("تم إنشاء نسخة احتياطية");
-}
-function restore(){
-    let b = localStorage.getItem("backupNotes");
-    if(b){
-        notes = JSON.parse(b);
-        saveStorage();
-        render();
-        alert("تم الاسترجاع");
-    }else{
-        alert("ما كايناش نسخة");
-    }
-}
-
-/* حول */
-function about(){
-    alert("مفكرتي\nنسخة 1.0\nتطبيق مفكرة بدون إنترنت");
-}
-
-/* تشغيل */
-if(localStorage.getItem("dark")==="true"){
-    document.body.classList.add("dark");
-}
-activateColor(currentColor);
-render();
+show();
 </script>
 
 </body>
