@@ -1,7 +1,10 @@
-<!DOCTYPE html><html lang="ar" dir="rtl">
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<title>مذكرتي</title><!-- ================== CSS ================== --><style>
+<title>مذكرتي</title>
+
+<style>
 :root{
   --bg:#f2f2f2;
   --card:#fff;
@@ -28,7 +31,13 @@ header{
   font-size:18px;
   position:relative;
 }
-.menu-btn{position:absolute;left:10px;top:8px;font-size:22px;cursor:pointer;}
+.menu-btn{
+  position:absolute;
+  left:10px;
+  top:8px;
+  font-size:22px;
+  cursor:pointer;
+}
 .menu{
   display:none;
   position:absolute;
@@ -40,116 +49,274 @@ header{
   overflow:hidden;
   z-index:10;
 }
-.menu div{padding:10px;cursor:pointer;border-bottom:1px solid #ccc;}
+.menu div{
+  padding:10px;
+  cursor:pointer;
+  border-bottom:1px solid #ccc;
+}
 .menu div:last-child{border:none}
 #container{padding:10px}
-input{width:100%;padding:10px;font-size:16px;border-radius:6px;border:1px solid #ccc;margin-top:8px;}
-#editor{margin-top:8px;padding:10px;min-height:120px;border-radius:6px;border:1px solid #ccc;background:#fff;outline:none;}
-.toolbar button{padding:6px 10px;margin:4px 2px;font-size:14px;}
-#tools{display:flex;gap:10px;margin:6px 0;}
-.color{width:26px;height:26px;border-radius:50%;cursor:pointer;border:2px solid #ccc;}
-.color.active{border:3px solid #000;}
-button.save{margin-top:8px;padding:10px;width:100%;font-size:16px;border:none;border-radius:6px;background:#4caf50;color:#fff;}
-.note{background:var(--card);margin-top:10px;padding:10px;border-radius:6px;position:relative;font-size:var(--noteSize);}
-.note-title{font-weight:bold;font-size:18px;margin-bottom:6px;}
-.delete{position:absolute;left:10px;top:10px;cursor:pointer;}
-</style></head>
-<body><!-- ================== HEADER ================== --><header>
-  <span class="menu-btn" onclick="UI.toggleMenu()">⋮</span>
+input{
+  width:100%;
+  padding:10px;
+  font-size:16px;
+  border-radius:6px;
+  border:1px solid #ccc;
+  margin-top:8px;
+}
+#editor{
+  margin-top:8px;
+  padding:10px;
+  min-height:120px;
+  border-radius:6px;
+  border:1px solid #ccc;
+  background:#fff;
+  outline:none;
+}
+.toolbar button{
+  padding:6px 10px;
+  margin:4px 2px;
+  font-size:14px;
+}
+#tools{
+  display:flex;
+  gap:10px;
+  margin:6px 0;
+}
+.color{
+  width:26px;
+  height:26px;
+  border-radius:50%;
+  cursor:pointer;
+  border:2px solid #ccc;
+}
+.color.active{
+  border:3px solid #000;
+}
+button.save{
+  margin-top:8px;
+  padding:10px;
+  width:100%;
+  font-size:16px;
+  border:none;
+  border-radius:6px;
+  background:#4caf50;
+  color:#fff;
+}
+.note{
+  background:var(--card);
+  margin-top:10px;
+  padding:10px;
+  border-radius:6px;
+  position:relative;
+  font-size:var(--noteSize);
+}
+.note-title{
+  font-weight:bold;
+  font-size:18px;
+  margin-bottom:6px;
+}
+.delete{
+  position:absolute;
+  left:10px;
+  top:10px;
+  cursor:pointer;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <span class="menu-btn" onclick="toggleMenu()">⋮</span>
   📒 مذكرتي
   <div class="menu" id="menu">
-    <div onclick="Settings.toggleDark()">🌙 وضع ليلي</div>
-    <div onclick="Settings.setPin()">🔒 رمز القفل</div>
-    <div onclick="Settings.changeFont(1)">🔠 تكبير الخط</div>
-    <div onclick="Settings.changeFont(-1)">🔡 تصغير الخط</div>
-    <div onclick="Notes.toggleOrder()">↕️ ترتيب</div>
-    <div onclick="Notes.deleteAll()">🗑️ حذف الكل</div>
+    <div onclick="toggleDark()">🌙 وضع ليلي</div>
+    <div onclick="setPin()">🔒 رمز القفل</div>
+    <div onclick="changeFont(1)">🔠 تكبير الخط</div>
+    <div onclick="changeFont(-1)">🔡 تصغير الخط</div>
+    <div onclick="toggleOrder()">↕️ ترتيب</div>
+    <div onclick="deleteAll()">🗑️ حذف الكل</div>
   </div>
-</header><!-- ================== UI ================== --><div id="container">
-  <input id="search" placeholder="🔍 بحث..." oninput="Notes.show()">
-  <input id="title" placeholder="📝 عنوان الملاحظة">  <div class="toolbar">
-    <button onclick="Editor.cmd('bold')"><b>B</b></button>
-    <button onclick="Editor.cmd('italic')"><i>I</i></button>
-    <button onclick="Editor.cmd('underline')"><u>U</u></button>
-    <button onclick="Camera.open()">📷</button>
-    <input id="cameraInput" type="file" accept="image/*" capture="environment" hidden>
-  </div>  <div id="tools">
+</header>
+
+<div id="container">
+  <input id="search" placeholder="🔍 بحث..." oninput="showNotes()">
+  <input id="title" placeholder="📝 عنوان الملاحظة">
+
+  <div class="toolbar">
+    <button onclick="cmd('bold')"><b>B</b></button>
+    <button onclick="cmd('italic')"><i>I</i></button>
+    <button onclick="cmd('underline')"><u>U</u></button>
+    <button onclick="openCamera()">📷</button>
+    <input id="cameraInput" type="file" accept="image/*" capture="environment" style="display:none">
+  </div>
+
+  <div id="tools">
     <div class="color" data-color="black" style="background:black"></div>
     <div class="color" data-color="red" style="background:red"></div>
     <div class="color" data-color="blue" style="background:blue"></div>
     <div class="color" data-color="green" style="background:green"></div>
-  </div>  <div id="editor" contenteditable="true">اكتب ملاحظتك هنا...</div>
-  <button class="save" onclick="Notes.save()">💾 حفظ</button>
+  </div>
+
+  <div id="editor" contenteditable="true">اكتب ملاحظتك هنا...</div>
+
+  <button class="save" onclick="saveNote()">💾 حفظ</button>
+
   <div id="notes"></div>
-</div><!-- ================== JAVASCRIPT ================== --><script>
-/********************** STORAGE **********************/
-const Storage={
-  get:(k,d)=>JSON.parse(localStorage.getItem(k)||JSON.stringify(d)),
-  set:(k,v)=>localStorage.setItem(k,JSON.stringify(v))
-};
+</div>
 
-/********************** UI **********************/
-const UI={
-  menu:document.getElementById('menu'),
-  toggleMenu(){this.menu.style.display=this.menu.style.display==='block'?'none':'block';}
-};
+<script>
+/* ===== DOM ===== */
+const editor = document.getElementById("editor");
+const title = document.getElementById("title");
+const notesBox = document.getElementById("notes");
+const search = document.getElementById("search");
+const menu = document.getElementById("menu");
+const colors = document.querySelectorAll(".color");
+const cameraInput = document.getElementById("cameraInput");
 
-/********************** SETTINGS **********************/
-const Settings={
-  fontSize:parseInt(localStorage.getItem('fontSize')||16),
-  init(){document.documentElement.style.setProperty('--noteSize',this.fontSize+'px');
-    if(localStorage.getItem('dark')==='true') document.body.classList.add('dark');
-    let pin=localStorage.getItem('pin');
-    if(pin && prompt('🔒 أدخل الرمز')!==pin) document.body.innerHTML='❌ رمز خاطئ';
-  },
-  toggleDark(){document.body.classList.toggle('dark');localStorage.setItem('dark',document.body.classList.contains('dark'));},
-  setPin(){let p=prompt('ضع رمز القفل');if(p){localStorage.setItem('pin',p);alert('تم التفعيل 🔒');}},
-  changeFont(v){this.fontSize=Math.max(12,this.fontSize+v);localStorage.setItem('fontSize',this.fontSize);
-    document.documentElement.style.setProperty('--noteSize',this.fontSize+'px');}
-};
+/* ===== متغيرات ===== */
+let notes = JSON.parse(localStorage.getItem("notes") || "[]");
+let editIndex = -1;
+let orderNewFirst = true;
+let fontSize = parseInt(localStorage.getItem("fontSize")||16);
+let currentColor = localStorage.getItem("lastColor") || "black";
+let savedRange = null;
 
-/********************** EDITOR **********************/
-const Editor={
-  el:document.getElementById('editor'),
-  cmd(c){document.execCommand(c,false,null);}
-};
+document.documentElement.style.setProperty("--noteSize",fontSize+"px");
 
-/********************** CAMERA **********************/
-const Camera={
-  input:document.getElementById('cameraInput'),
-  open(){this.input.click();},
-  init(){this.input.onchange=e=>{
-    let f=e.target.files[0]; if(!f) return;
-    let r=new FileReader(); r.onload=()=>{
-      let img=document.createElement('img'); img.src=r.result; img.style.maxWidth='100%'; Editor.el.appendChild(img);
-    }; r.readAsDataURL(f);
-  }};
+/* ===== القفل ===== */
+let pin = localStorage.getItem("pin");
+if(pin){
+  let p = prompt("🔒 أدخل الرمز");
+  if(p !== pin) document.body.innerHTML="❌ رمز خاطئ";
+}
 
-/********************** NOTES **********************/
-const Notes={
-  list:Storage.get('notes',[]),
-  box:document.getElementById('notes'),
-  title:document.getElementById('title'),
-  search:document.getElementById('search'),
-  order:true, edit:-1,
+/* ===== وظائف عامة ===== */
+function toggleMenu(){
+  menu.style.display = menu.style.display==="block"?"none":"block";
+}
+function toggleDark(){
+  document.body.classList.toggle("dark");
+  localStorage.setItem("dark",document.body.classList.contains("dark"));
+}
+if(localStorage.getItem("dark")==="true"){
+  document.body.classList.add("dark");
+}
+function setPin(){
+  let p = prompt("ضع رمز القفل");
+  if(p){ localStorage.setItem("pin",p); alert("تم التفعيل 🔒"); }
+}
+function changeFont(v){
+  fontSize+=v;
+  if(fontSize<12) fontSize=12;
+  localStorage.setItem("fontSize",fontSize);
+  document.documentElement.style.setProperty("--noteSize",fontSize+"px");
+}
+function toggleOrder(){
+  orderNewFirst=!orderNewFirst;
+  showNotes();
+}
+function deleteAll(){
+  if(confirm("حذف جميع الملاحظات؟")){
+    notes=[];
+    localStorage.setItem("notes","[]");
+    showNotes();
+  }
+}
+function cmd(c){
+  document.execCommand(c,false,null);
+}
 
-  save(){let t=this.title.value.trim();let h=Editor.el.innerHTML.trim(); if(!t&&!h) return;
-    let n={title:t||'بدون عنوان',html:h}; this.edit===-1?this.list.push(n):this.list[this.edit]=n;
-    this.edit=-1; Storage.set('notes',this.list); this.title.value=''; Editor.el.innerHTML=''; this.show();},
+/* ===== التلوين ===== */
+function saveSelection(){
+  let sel = window.getSelection();
+  if(sel && sel.rangeCount>0) savedRange = sel.getRangeAt(0);
+}
+editor.addEventListener("keyup", saveSelection);
+editor.addEventListener("mouseup", saveSelection);
 
-  show(){this.box.innerHTML=''; let q=this.search.value.toLowerCase(); let arr=[...this.list]; if(this.order) arr.reverse();
-    arr.forEach((n,i)=>{ if(!(n.title+n.html).toLowerCase().includes(q)) return;
-      let d=document.createElement('div'); d.className='note'; d.innerHTML=`<span class="delete" onclick="Notes.del(${i})">🗑️</span><div class="note-title">${n.title}</div><div>${n.html}</div>`;
-      d.onclick=()=>{this.title.value=n.title; Editor.el.innerHTML=n.html; this.edit=i; window.scrollTo(0,0);};
-      this.box.appendChild(d);
-    });},
+function activateColor(color){
+  currentColor = color;
+  localStorage.setItem("lastColor",color);
+  colors.forEach(c=>c.classList.remove("active"));
+  document.querySelector(`[data-color="${color}"]`).classList.add("active");
+  editor.focus();
+  if(savedRange){
+    let sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(savedRange);
+  }
+  document.execCommand("styleWithCSS",false,true);
+  document.execCommand("foreColor",false,color);
+}
+colors.forEach(c=>c.onclick=()=>activateColor(c.dataset.color));
+activateColor(currentColor);
 
-  del(i){if(confirm('حذف الملاحظة؟')){this.list.splice(i,1);Storage.set('notes',this.list);this.show();}},
-  deleteAll(){if(confirm('حذف جميع الملاحظات؟')){this.list=[];Storage.set('notes',this.list);this.show();}},
-  toggleOrder(){this.order=!this.order;this.show();}
-};
+/* ===== الكاميرا (مضمونة AppCreator 24) ===== */
+function openCamera(){
+  cameraInput.click();
+}
+cameraInput.addEventListener("change",function(){
+  let file=this.files[0];
+  if(!file) return;
+  let reader=new FileReader();
+  reader.onload=function(){
+    let img=document.createElement("img");
+    img.src=reader.result;
+    img.style.maxWidth="100%";
+    img.style.display="block";
+    img.style.margin="6px 0";
+    editor.appendChild(img);
+  }
+  reader.readAsDataURL(file);
+});
 
-/********************** INIT **********************/
-Settings.init(); Camera.init(); Notes.show();
-</script></body>
+/* ===== الملاحظات ===== */
+function saveNote(){
+  let ti=title.value.trim();
+  let html=editor.innerHTML.trim();
+  if(!ti && !html) return;
+  let note={title:ti||"بدون عنوان",html};
+  editIndex==-1 ? notes.push(note) : notes[editIndex]=note;
+  editIndex=-1;
+  localStorage.setItem("notes",JSON.stringify(notes));
+  title.value="";
+  editor.innerHTML="";
+  showNotes();
+}
+function showNotes(){
+  notesBox.innerHTML="";
+  let q=search.value.toLowerCase();
+  let arr=[...notes];
+  if(orderNewFirst) arr.reverse();
+  arr.forEach((n,i)=>{
+    if(!(n.title+n.html).toLowerCase().includes(q)) return;
+    let d=document.createElement("div");
+    d.className="note";
+    d.innerHTML=`
+      <span class="delete" onclick="del(${i})">🗑️</span>
+      <div class="note-title">${n.title}</div>
+      <div>${n.html}</div>`;
+    d.onclick=()=>{
+      title.value=n.title;
+      editor.innerHTML=n.html;
+      editIndex=i;
+      window.scrollTo(0,0);
+    };
+    notesBox.appendChild(d);
+  });
+}
+function del(i){
+  if(confirm("حذف الملاحظة؟")){
+    notes.splice(i,1);
+    localStorage.setItem("notes",JSON.stringify(notes));
+    showNotes();
+  }
+}
+showNotes();
+</script>
+
+</body>
 </html>
