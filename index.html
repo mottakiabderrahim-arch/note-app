@@ -5,263 +5,624 @@
 <title>مفكرتي</title>
 
 <style>
+body{
+    margin:0;
+    font-family:Arial, sans-serif;
+    background:#f2f2f2;
+}
+header{
+    background:#4CAF50;
+    color:white;
+    padding:10px;
+    text-align:center;
+    font-size:18px;
+}
+.container{
+    padding:10px;
+}
+input, textarea{
+    width:100%;
+    padding:8px;
+    margin-bottom:8px;
+    box-sizing:border-box;
+}
+button{
+    width:100%;
+    padding:10px;
+    border:none;
+    background:#4CAF50;
+    color:white;
+    font-size:16px;
+    border-radius:4px;
+    margin-bottom:10px;
+}
+.note{
+    background:white;
+    padding:10px;
+    margin-bottom:8px;
+    border-radius:5px;
+}
+.note h4{
+    margin:0 0 5px 0;
+}
+.actions button{
+    width:auto;
+    padding:5px 10px;
+    margin-left:5px;
+    font-size:12px;
+}
+.delete{background:#f44336;}
+.edit{background:#2196F3;}
+</style>
+</head>
+
+<body onload="showNotes()">
+
+<header>📒 مفكرتي</header>
+
+<div class="container">
+
+<input type="text" id="title" placeholder="عنوان الملاحظة">
+<textarea id="content" rows="4" placeholder="اكتب الملاحظة هنا..."></textarea>
+
+<button onclick="saveNote()">💾 حفظ</button>
+
+<input type="text" id="search" placeholder="🔍 بحث" onkeyup="showNotes()">
+
+<div id="notes"></div>
+
+</div>
+
+<script>
+let editIndex = -1;
+
+function getNotes(){
+    return JSON.parse(localStorage.getItem("notes") || "[]");
+}
+
+function saveNote(){
+    let title = document.getElementById("title").value.trim();
+    let content = document.getElementById("content").value.trim();
+
+    if(title === "" || content === ""){
+        alert("عمر العنوان والملاحظة");
+        return;
+    }
+
+    let notes = getNotes();
+
+    if(editIndex === -1){
+        notes.push({title:title, content:content});
+    }else{
+        notes[editIndex] = {title:title, content:content};
+        editIndex = -1;
+    }
+
+    localStorage.setItem("notes", JSON.stringify(notes));
+
+    document.getElementById("title").value="";
+    document.getElementById("content").value="";
+
+    showNotes();
+}
+
+function showNotes(){
+    let notes = getNotes();
+    let search = document.getElementById("search").value.toLowerCase();
+    let html = "";
+
+    notes.forEach((n,i)=>{
+        if(n.title.toLowerCase().includes(search) || n.content.toLowerCase().includes(search)){
+            html += `
+            <div class="note">
+                <h4>${n.title}</h4>
+                <p>${n.content}</p>
+                <div class="actions">
+                    <button class="edit" onclick="editNote(${i})">تعديل</button>
+                    <button class="delete" onclick="deleteNote(${i})">حذف</button>
+                </div>
+            </div>
+            `;
+        }
+    });
+
+    document.getElementById("notes").innerHTML = html;
+}
+
+function deleteNote(i){
+    let notes = getNotes();
+    notes.splice(i,1);
+    localStorage.setItem("notes", JSON.stringify(notes));
+    showNotes();
+}
+
+function editNote(i){
+    let notes = getNotes();
+    document.getElementById("title").value = notes[i].title;
+    document.getElementById("content").value = notes[i].content;
+    editIndex = i;
+}
+</script>
+
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>مفكرتي</title>
+
+<style>
 :root{
   --bg:#f2f2f2;
   --card:#fff;
   --text:#000;
-  --main:#4CAF50;
 }
-body.dark{
+.dark{
   --bg:#121212;
   --card:#1e1e1e;
   --text:#fff;
 }
 body{
   margin:0;
-  font-family:Tahoma, Arial;
+  font-family:Arial;
   background:var(--bg);
   color:var(--text);
 }
 header{
-  background:var(--main);
-  color:#fff;
-  padding:15px;
+  background:#4CAF50;
+  color:white;
+  padding:10px;
   display:flex;
   justify-content:space-between;
+  align-items:center;
 }
-.menu{cursor:pointer;font-size:22px;}
-
-#settings{
+.menu{
+  position:relative;
+}
+.menu button{
+  background:none;
+  border:none;
+  color:white;
+  font-size:20px;
+}
+.menu-content{
   display:none;
+  position:absolute;
+  left:0;
   background:var(--card);
-  padding:10px;
-}
-
-#container{padding:10px;}
-
-input,select{
-  width:100%;
-  padding:8px;
-  margin-bottom:6px;
+  color:var(--text);
   border-radius:5px;
-  border:1px solid #ccc;
+  overflow:hidden;
 }
-
-.toolbar{
+.menu-content button{
+  width:100%;
+  border:none;
+  padding:8px;
+  background:none;
+  text-align:right;
+}
+.container{padding:10px;}
+textarea{
+  width:100%;
+  height:120px;
+}
+.tools button{
+  margin:3px;
+}
+.hidden{display:none;}
+.lock{
+  position:fixed;
+  inset:0;
+  background:#000;
+  color:white;
   display:flex;
-  flex-wrap:wrap;
-  gap:5px;
-  margin-bottom:5px;
+  align-items:center;
+  justify-content:center;
+  flex-direction:column;
 }
-
-.toolbar button, .toolbar select, .toolbar input{
-  width:23%;
-  padding:8px;
-  border:none;
-  border-radius:5px;
-  background:#2196F3;
-  color:#fff;
-}
-
-#editor{
-  min-height:140px;
-  background:var(--card);
-  padding:10px;
-  border:1px solid #ccc;
-  border-radius:5px;
-}
-
-button.save{
-  background:var(--main);
-  width:100%;
-  margin-top:6px;
-  padding:10px;
-  border:none;
-  border-radius:5px;
-  color:#fff;
-}
-
-.note{
-  background:var(--card);
-  padding:10px;
-  margin-top:10px;
-  border-radius:5px;
-}
-.note.pinned{border:2px solid gold;}
-
-.actions button{
-  width:23%;
-  margin-top:5px;
-}
-.delete{background:#e53935;}
-.edit{background:#FF9800;}
-.pin{background:#9C27B0;}
-.lock{background:#607D8B;}
 </style>
 </head>
 
-<body>
+<body onload="checkLock()">
 
-<header>
-  <span>📝 مفكرتي</span>
-  <span class="menu" onclick="toggleSettings()">⋮</span>
-</header>
-
-<div id="settings">
-  <button onclick="toggleDark()">🌙 الوضع الليلي</button>
-  <input placeholder="🔍 بحث" onkeyup="searchNotes(this.value)">
-  <button onclick="clearAll()">🗑️ مسح الكل</button>
+<!-- قفل -->
+<div id="lock" class="lock hidden">
+  <h3>🔐 أدخل الرمز</h3>
+  <input type="password" id="pin">
+  <button onclick="unlock()">فتح</button>
 </div>
 
-<div id="container">
-  <input id="title" placeholder="عنوان الملاحظة">
-  <input id="pinCode" placeholder="🔐 رمز القفل (اختياري)">
+<header>
+  <div class="menu">
+    <button onclick="toggleMenu()">⋮</button>
+    <div id="menu" class="menu-content">
+      <button onclick="toggleDark()">🌙 وضع ليلي</button>
+      <button onclick="setPin()">🔐 تعيين رمز</button>
+    </div>
+  </div>
+  <div>📒 مفكرتي</div>
+</header>
 
-  <!-- 🧰 شريط الأدوات -->
-  <div class="toolbar">
-    <button onclick="cmd('bold')"><b>B</b></button>
-    <button onclick="cmd('italic')"><i>I</i></button>
-    <button onclick="cmd('underline')"><u>U</u></button>
-
-    <button onclick="cmd('hiliteColor','yellow')">🟡</button>
-    <button onclick="cmd('hiliteColor','lightgreen')">🟢</button>
-    <button onclick="cmd('hiliteColor','lightblue')">🔵</button>
-
-    <input type="color" onchange="cmd('foreColor',this.value)">
-    
-    <select onchange="cmd('fontSize',this.value)">
-      <option value="3">عادي</option>
-      <option value="4">كبير</option>
-      <option value="5">كبير جدا</option>
-    </select>
-
-    <button onclick="cmd('justifyRight')">↦</button>
-    <button onclick="cmd('justifyCenter')">↔</button>
-    <button onclick="cmd('removeFormat')">🧹</button>
+<div class="container">
+  <div class="tools">
+    <button onclick="colorText('red')">🔴</button>
+    <button onclick="colorText('blue')">🔵</button>
+    <button onclick="colorText('green')">🟢</button>
   </div>
 
-  <div id="editor" contenteditable="true">اكتب ملاحظتك هنا...</div>
-
-  <button class="save" onclick="save()">💾 حفظ</button>
-
-  <div id="notes"></div>
+  <textarea id="note" placeholder="اكتب هنا..."></textarea>
 </div>
 
 <script>
-let notes = JSON.parse(localStorage.getItem("notes")) || [];
-let editIndex = null;
-
-function cmd(c,v=null){
-  document.execCommand(c,false,v);
+function toggleMenu(){
+  let m=document.getElementById("menu");
+  m.style.display = m.style.display==="block"?"none":"block";
 }
 
-function toggleSettings(){
-  settings.style.display = settings.style.display=="block"?"none":"block";
-}
-
+/* وضع ليلي */
 function toggleDark(){
   document.body.classList.toggle("dark");
+  localStorage.setItem("dark",document.body.classList.contains("dark"));
+}
+if(localStorage.getItem("dark")=="true"){
+  document.body.classList.add("dark");
 }
 
-function save(){
-  let t = title.value || "بدون عنوان";
-  let c = editor.innerHTML;
-  if(c.trim()=="") return;
+/* تلوين الكلمات */
+function colorText(color){
+  let t=document.getElementById("note");
+  let s=t
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>مفكرة</title>
 
-  let note = {
-    title:t,
-    content:c,
-    date:new Date().toLocaleString(),
-    pin:false,
-    code:pinCode.value
-  };
+<style>
+body{
+  margin:0;
+  font-family:Arial;
+  background:#f2f2f2;
+}
+header{
+  background:#2196F3;
+  color:#fff;
+  padding:10px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+.container{padding:10px;}
+textarea,input,select{
+  width:100%;
+  margin-bottom:8px;
+  padding:8px;
+  box-sizing:border-box;
+}
+.note{
+  background:#fff;
+  padding:8px;
+  margin-bottom:8px;
+  border-radius:5px;
+}
+.note small{color:#666;}
+.actions button{margin-left:5px;}
+</style>
+</head>
 
-  if(editIndex!==null){
-    notes[editIndex]=note;
-    editIndex=null;
+<body onload="loadNotes()">
+
+<header>
+  <div>📒 مفكرتي</div>
+  <div>
+    <button onclick="fontSize(1)">A+</button>
+    <button onclick="fontSize(-1)">A-</button>
+  </div>
+</header>
+
+<div class="container">
+
+<input id="title" placeholder="العنوان">
+<textarea id="content" placeholder="اكتب هنا..." oninput="autoSave()"></textarea>
+
+<select id="sort" onchange="loadNotes()">
+  <option value="new">الأحدث</option>
+  <option value="old">الأقدم</option>
+</select>
+
+<button onclick="exportNotes()">⬇️ نسخ احتياطي</button>
+<input type="file" onchange="importNotes(this)">
+
+<div id="notes"></div>
+
+</div>
+
+<script>
+let edit=-1;
+let size=16;
+
+function getNotes(){
+  return JSON.parse(localStorage.getItem("notes")||"[]");
+}
+
+function autoSave(){
+  let t=title.value.trim();
+  let c=content.value.trim();
+  if(t==""&&c=="") return;
+
+  let notes=getNotes();
+  let now=new Date().toLocaleString();
+
+  if(edit==-1){
+    notes.push({t,c,time:now});
   }else{
-    notes.unshift(note);
+    notes[edit]={t,c,time:now};
   }
 
   localStorage.setItem("notes",JSON.stringify(notes));
-  title.value = editor.innerHTML = pinCode.value = "";
-  render();
+  loadNotes();
 }
 
-function render(list=notes){
-  notes.sort((a,b)=>b.pin-a.pin);
-  notesDiv.innerHTML="";
-  list.forEach((n,i)=>{
-    notesDiv.innerHTML+=`
-    <div class="note ${n.pin?'pinned':''}">
-      <h3>${n.title}</h3>
-      <div>${n.content}</div>
-      <small>${n.date}</small>
+function loadNotes(){
+  let notes=getNotes();
+  let s=sort.value;
+
+  if(s=="new") notes.reverse();
+
+  let html="";
+  notes.forEach((n,i)=>{
+    html+=`
+    <div class="note">
+      <b>${n.t}</b>
+      <p>${n.c}</p>
+      <small>🕒 ${n.time}</small><br>
       <div class="actions">
-        <button class="pin" onclick="pin(${i})">📌</button>
-        <button class="edit" onclick="edit(${i})">✏️</button>
-        <button class="delete" onclick="del(${i})">🗑️</button>
+        <button onclick="editNote(${i})">تعديل</button>
+        <button onclick="delNote(${i})">حذف</button>
       </div>
     </div>`;
   });
+  notes.reverse();
+  notesDiv.innerHTML=html;
 }
 
-function edit(i){
-  title.value = notes[i].title;
-  editor.innerHTML = notes[i].content;
-  pinCode.value = notes[i].code || "";
-  editIndex = i;
-}
-
-function del(i){
-  if(confirm("تمسح هاد الملاحظة؟")){
-    notes.splice(i,1);
-    localStorage.setItem("notes",JSON.stringify(notes));
-    render();
-  }
-}
-
-function pin(i){
-  notes[i].pin=!notes[i].pin;
+function delNote(i){
+  if(!confirm("واش متأكد من الحذف؟")) return;
+  let notes=getNotes();
+  notes.splice(i,1);
   localStorage.setItem("notes",JSON.stringify(notes));
-  render();
+  loadNotes();
 }
 
-function clearAll(){
-  if(confirm("تمسح كلشي؟")){
-    notes=[];
-    localStorage.clear();
-    render();
+function editNote(i){
+  let n=getNotes()[i];
+  title.value=n.t;
+  content.value=n.c;
+  edit=i;
+}
+
+function fontSize(v){
+  size+=v;
+  content.style.fontSize=size+"px";
+}
+
+/* نسخ احتياطي */
+function exportNotes(){
+  let data=localStorage.getItem("notes");
+  let a=document.createElement("a");
+  a.href="data:text/json,"+encodeURIComponent(data);
+  a.download="notes-backup.json";
+  a.click();
+}
+
+function importNotes(f){
+  let r=new FileReader();
+  r.onload=e=>{
+    localStorage.setItem("notes",e.target.result);
+    loadNotes();
   }
+  r.readAsText(f.files[0]);
 }
-
-function searchNotes(t){
-  let f = notes.filter(n=>n.title.includes(t)||n.content.includes(t));
-  render(f);
-}
-
-render();
 </script>
 
 </body>
 </html>
-<div id="note-list">
-  <!-- الملاحظات ستعرض هنا -->
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>مفكرة</title>
+
+<style>
+:root{
+  --bg:#f2f2f2;
+  --card:#fff;
+  --text:#000;
+}
+.dark{
+  --bg:#121212;
+  --card:#1e1e1e;
+  --text:#fff;
+}
+body{
+  margin:0;
+  font-family:Arial;
+  background:var(--bg);
+  color:var(--text);
+}
+header{
+  background:#2196F3;
+  color:#fff;
+  padding:10px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+.menu{
+  position:relative;
+}
+.menu button{
+  background:none;
+  border:none;
+  color:white;
+  font-size:22px;
+}
+.menu-list{
+  display:none;
+  position:absolute;
+  left:0;
+  background:var(--card);
+  color:var(--text);
+  border-radius:5px;
+  overflow:hidden;
+  min-width:160px;
+}
+.menu-list button{
+  width:100%;
+  border:none;
+  background:none;
+  padding:10px;
+  text-align:right;
+}
+.container{padding:10px;}
+.note{
+  background:var(--card);
+  padding:8px;
+  margin-bottom:6px;
+  border-radius:5px;
+}
+.lock{
+  position:fixed;
+  inset:0;
+  background:#000;
+  color:#fff;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+}
+.hidden{display:none;}
+</style>
+</head>
+
+<body onload="checkLock();loadNotes()">
+
+<!-- قفل -->
+<div id="lock" class="lock hidden">
+  <h3>🔐 أدخل الرمز</h3>
+  <input type="password" id="pin">
+  <button onclick="unlock()">فتح</button>
+</div>
+
+<header>
+  <div class="menu">
+    <button onclick="toggleMenu()">⋮</button>
+    <div id="menu" class="menu-list">
+      <button onclick="toggleDark()">🌙 وضع ليلي</button>
+      <button onclick="toggleSearch()">🔍 بحث</button>
+      <button onclick="setPin()">🔐 قفل بالرمز</button>
+      <button onclick="fontSize(1)">🔠 تكبير الخط</button>
+      <button onclick="fontSize(-1)">🔡 تصغير الخط</button>
+      <button onclick="toggleSort()">↕️ ترتيب</button>
+      <button onclick="deleteAll()">🗑️ حذف الكل</button>
+    </div>
+  </div>
+  <div>📒 مفكرتي</div>
+</header>
+
+<div class="container">
+  <input id="search" class="hidden" placeholder="ابحث...">
+  <textarea id="note" placeholder="اكتب ملاحظتك هنا..." style="width:100%;height:100px;"></textarea>
+  <div id="notes"></div>
 </div>
 
 <script>
-  function saveNote() {
-    // كود حفظ الملاحظة
-    var noteText = document.getElementById("note-text").value;
-    var noteTitle = document.getElementById("note-title").value;
-    // ...
-    showSaveMessage();
-    displayNote(noteTitle, noteText);
-  }
+let size=16;
+let newest=true;
 
-  function displayNote(title, text) {
-    var noteHTML = "<div class='note'><h2>" + title + "</h2><p>" + text + "</p></div>";
-    document.getElementById("note-list").innerHTML += noteHTML;
+/* 3 نقاط */
+function toggleMenu(){
+  let m=document.getElementById("menu");
+  m.style.display = m.style.display=="block"?"none":"block";
+}
+
+/* وضع ليلي */
+function toggleDark(){
+  document.body.classList.toggle("dark");
+  localStorage.setItem("dark",document.body.classList.contains("dark"));
+}
+if(localStorage.getItem("dark")=="true"){
+  document.body.classList.add("dark");
+}
+
+/* بحث */
+function toggleSearch(){
+  document.getElementById("search").classList.toggle("hidden");
+}
+
+/* قفل */
+function setPin(){
+  let p=prompt("دخل رمز القفل");
+  if(p) localStorage.setItem("pin",p);
+}
+function checkLock(){
+  if(localStorage.getItem("pin")){
+    document.getElementById("lock").classList.remove("hidden");
   }
+}
+function unlock(){
+  if(pin.value===localStorage.getItem("pin")){
+    lock.classList.add("hidden");
+  }else alert("رمز خاطئ");
+}
+
+/* حجم الخط */
+function fontSize(v){
+  size+=v;
+  note.style.fontSize=size+"px";
+}
+
+/* ملاحظات */
+function getNotes(){
+  return JSON.parse(localStorage.getItem("notes")||"[]");
+}
+function loadNotes(){
+  let notes=getNotes();
+  let q=search.value.toLowerCase();
+  if(newest) notes=[...notes].reverse();
+
+  let html="";
+  notes.forEach(n=>{
+    if(n.toLowerCase().includes(q)){
+      html+=`<div class="note">${n}</div>`;
+    }
+  });
+  notesDiv.innerHTML=html;
+}
+note.oninput=function(){
+  let n=getNotes();
+  n.push(note.value);
+  localStorage.setItem("notes",JSON.stringify(n));
+  note.value="";
+  loadNotes();
+}
+search.oninput=loadNotes;
+
+/* ترتيب */
+function toggleSort(){
+  newest=!newest;
+  loadNotes();
+}
+
+/* حذف الكل */
+function deleteAll(){
+  if(confirm("واش متأكد تمسح كلشي؟")){
+    localStorage.removeItem("notes");
+    loadNotes();
+  }
+}
 </script>
 
+</body>
+</html>
