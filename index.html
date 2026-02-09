@@ -2,51 +2,57 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<title>مفكرتي</title>
+<title>مفكرتي الاحترافية</title>
 
 <style>
+:root{
+    --bg:#f5f5f5;
+    --card:#fff;
+    --text:#000;
+}
+body.dark{
+    --bg:#121212;
+    --card:#1e1e1e;
+    --text:#fff;
+}
+
 body{
     margin:0;
     font-family:sans-serif;
-    background:#f5f5f5;
+    background:var(--bg);
+    color:var(--text);
 }
 
-#home,#editor{
+#home,#editor,#lock{
     padding:10px;
 }
 
-#editor{display:none;}
-
 .note{
-    background:white;
+    background:var(--card);
     padding:10px;
     margin-bottom:10px;
     border-radius:6px;
     cursor:pointer;
 }
 
-.note small{color:gray}
-
-input,button{
+button,input,select{
     padding:10px;
-    font-size:16px;
     width:100%;
-    margin-bottom:10px;
+    margin-bottom:8px;
+    font-size:16px;
 }
 
 #text{
     min-height:50vh;
-    border:1px solid #ddd;
-    border-radius:6px;
+    background:var(--card);
+    border:1px solid #ccc;
     padding:10px;
-    background:white;
-    outline:none;
+    border-radius:6px;
 }
 
-#actions{
-    display:flex;
-    gap:10px;
-}
+#editor,#lock{display:none}
+
+#actions{display:flex;gap:6px}
 #actions button{flex:1}
 
 #add{
@@ -57,165 +63,166 @@ input,button{
     height:55px;
     border-radius:50%;
     font-size:30px;
-    background:#e53935;
-    color:white;
-    border:none;
-}
-
-/* أدوات التلوين */
-#tools{
-    display:flex;
-    justify-content:center;
-    gap:14px;
-    margin-top:10px;
 }
 
 .color{
-    width:28px;
-    height:28px;
-    border-radius:50%;
-    cursor:pointer;
-    border:2px solid #ccc;
+    width:25px;height:25px;border-radius:50%;display:inline-block;
+    cursor:pointer;border:2px solid #999;
 }
-
-.color.active{
-    border:3px solid #000;
-}
+.color.active{border:3px solid #000}
 </style>
 </head>
 
 <body>
 
+<div id="lock">
+    <h3>🔒 أدخل الرمز</h3>
+    <input id="pinInput" type="password">
+    <button onclick="unlock()">دخول</button>
+</div>
+
 <div id="home">
-    <input id="search" placeholder="بحث...">
+    <input id="search" placeholder="بحث">
+    <select id="sort">
+        <option value="new">الأحدث</option>
+        <option value="old">الأقدم</option>
+        <option value="title">العنوان</option>
+    </select>
+
+    <button onclick="toggleDark()">🌙 وضع ليلي</button>
+    <button onclick="showTrash()">🗑️ سلة المحذوفات</button>
+
+    <div id="stats"></div>
     <div id="notesList"></div>
 </div>
 
 <div id="editor">
-    <input id="title" placeholder="عنوان الملاحظة">
-
+    <input id="title" placeholder="العنوان">
+    <input id="tag" placeholder="تصنيف">
     <div id="text" contenteditable="true"></div>
 
-    <div id="actions">
-        <button type="button" onclick="saveNote()">حفظ</button>
-        <button type="button" onclick="deleteNote()">حذف</button>
-        <button type="button" onclick="back()">رجوع</button>
+    <div>
+        <span class="color" style="background:black" data-c="black"></span>
+        <span class="color" style="background:red" data-c="red"></span>
+        <span class="color" style="background:blue" data-c="blue"></span>
     </div>
 
-    <div id="tools">
-        <div class="color" data-color="black" style="background:black"></div>
-        <div class="color" data-color="red" style="background:red"></div>
-        <div class="color" data-color="blue" style="background:blue"></div>
-        <div class="color" data-color="green" style="background:green"></div>
+    <div id="actions">
+        <button onclick="save()">💾</button>
+        <button onclick="fav()">⭐</button>
+        <button onclick="remove()">🗑️</button>
+        <button onclick="back()">↩</button>
     </div>
+
+    <button onclick="exportTxt()">⬇️ تصدير TXT</button>
 </div>
 
 <button id="add" onclick="newNote()">+</button>
 
 <script>
-let notes = JSON.parse(localStorage.getItem("notes") || "[]");
-let current = null;
-let currentColor = localStorage.getItem("lastColor") || "black";
-let savedRange = null;
+let notes = JSON.parse(localStorage.getItem("notes")||"[]");
+let trash = JSON.parse(localStorage.getItem("trash")||"[]");
+let pin = localStorage.getItem("pin") || "1234";
+let current=null;
 
-const home = document.getElementById("home");
-const editor = document.getElementById("editor");
-const list = document.getElementById("notesList");
-const text = document.getElementById("text");
-const title = document.getElementById("title");
-const search = document.getElementById("search");
-const colors = document.querySelectorAll(".color");
+const home=document.getElementById("home");
+const editor=document.getElementById("editor");
+const lock=document.getElementById("lock");
 
-/* حفظ موضع المؤشر */
-function saveSelection(){
-    let sel = window.getSelection();
-    if(sel && sel.rangeCount > 0){
-        savedRange = sel.getRangeAt(0);
+function unlock(){
+    if(pinInput.value===pin){
+        lock.style.display="none";
+        home.style.display="block";
     }
 }
 
-text.addEventListener("keyup", saveSelection);
-text.addEventListener("mouseup", saveSelection);
-
-/* التلوين */
-function activateColor(color){
-    currentColor = color;
-    localStorage.setItem("lastColor", color);
-
-    colors.forEach(c=>c.classList.remove("active"));
-    document.querySelector(`[data-color="${color}"]`).classList.add("active");
-
-    text.focus();
-    if(savedRange){
-        let sel = window.getSelection();
-        sel.removeAllRanges();
-        sel.addRange(savedRange);
-    }
-    document.execCommand("styleWithCSS", false, true);
-    document.execCommand("foreColor", false, color);
+function saveStore(){
+    localStorage.setItem("notes",JSON.stringify(notes));
+    localStorage.setItem("trash",JSON.stringify(trash));
 }
-
-colors.forEach(c=>{
-    c.onclick = ()=>activateColor(c.dataset.color);
-});
-
-/* التخزين */
-function saveStorage(){
-    localStorage.setItem("notes", JSON.stringify(notes));
-}
-
-function render(){
-    list.innerHTML="";
-    notes.forEach((n,i)=>{
-        if(n.title.includes(search.value) || n.content.includes(search.value)){
-            let d=document.createElement("div");
-            d.className="note";
-            d.innerHTML=`<strong>${n.title}</strong><br><small>${n.date}</small>`;
-            d.onclick=()=>editNote(i);
-            list.appendChild(d);
-        }
-    });
-}
-
-search.oninput = render;
 
 function newNote(){
     current=null;
     title.value="";
+    tag.value="";
     text.innerHTML="";
-    home.style.display="none";
     editor.style.display="block";
+    home.style.display="none";
 }
 
-function editNote(i){
-    current=i;
-    title.value=notes[i].title;
-    text.innerHTML=notes[i].content;
-    home.style.display="none";
-    editor.style.display="block";
-}
-
-function saveNote(){
-    if(!title.value && !text.innerHTML) return;
-
-    let note={
-        title:title.value || "بدون عنوان",
+function save(){
+    let n={
+        title:title.value||"بدون عنوان",
+        tag:tag.value,
         content:text.innerHTML,
+        fav:false,
         date:new Date().toLocaleString()
     };
-
-    current===null ? notes.push(note) : notes[current]=note;
-    saveStorage();
-    back();
+    current===null?notes.push(n):notes[current]=n;
+    saveStore();back();
 }
 
-function deleteNote(){
-    if(current===null) return;
-    if(confirm("واش متأكد بغيت تحذف؟")){
+function render(){
+    notesList.innerHTML="";
+    let arr=[...notes];
+    if(sort.value==="title")arr.sort((a,b)=>a.title.localeCompare(b.title));
+    if(sort.value==="old")arr.reverse();
+
+    arr.forEach((n,i)=>{
+        if(n.title.includes(search.value)||n.content.includes(search.value)){
+            let d=document.createElement("div");
+            d.className="note";
+            d.innerHTML=`${n.fav?"⭐ ":""}<b>${n.title}</b><br><small>${n.tag} | ${n.date}</small>`;
+            d.onclick=()=>edit(i);
+            notesList.appendChild(d);
+        }
+    });
+    stats.innerHTML=`📊 عدد الملاحظات: ${notes.length}`;
+}
+
+function edit(i){
+    current=i;
+    let n=notes[i];
+    title.value=n.title;
+    tag.value=n.tag;
+    text.innerHTML=n.content;
+    home.style.display="none";
+    editor.style.display="block";
+}
+
+function fav(){
+    if(current!=null){notes[current].fav=!notes[current].fav;saveStore();}
+}
+
+function remove(){
+    if(current!=null){
+        trash.push(notes[current]);
         notes.splice(current,1);
-        saveStorage();
-        back();
+        saveStore();back();
     }
+}
+
+function showTrash(){
+    notesList.innerHTML="";
+    trash.forEach((n,i)=>{
+        let d=document.createElement("div");
+        d.className="note";
+        d.innerHTML=`🗑️ ${n.title}`;
+        d.onclick=()=>{notes.push(n);trash.splice(i,1);saveStore();render();}
+        notesList.appendChild(d);
+    });
+}
+
+function exportTxt(){
+    let blob=new Blob([text.innerText],{type:"text/plain"});
+    let a=document.createElement("a");
+    a.href=URL.createObjectURL(blob);
+    a.download="note.txt";
+    a.click();
+}
+
+function toggleDark(){
+    document.body.classList.toggle("dark");
 }
 
 function back(){
@@ -224,7 +231,10 @@ function back(){
     render();
 }
 
-activateColor(currentColor);
+sort.onchange=render;
+search.oninput=render;
+
+lock.style.display="block";
 render();
 </script>
 
