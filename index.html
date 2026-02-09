@@ -245,3 +245,23 @@ render();
 
 </body>
 </html>
+<div id="note-list">
+  <!-- الملاحظات ستعرض هنا -->
+</div>
+
+<script>
+  function saveNote() {
+    // كود حفظ الملاحظة
+    var noteText = document.getElementById("note-text").value;
+    var noteTitle = document.getElementById("note-title").value;
+    // ...
+    showSaveMessage();
+    displayNote(noteTitle, noteText);
+  }
+
+  function displayNote(title, text) {
+    var noteHTML = "<div class='note'><h2>" + title + "</h2><p>" + text + "</p></div>";
+    document.getElementById("note-list").innerHTML += noteHTML;
+  }
+</script>
+
