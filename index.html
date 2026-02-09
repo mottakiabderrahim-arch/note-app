@@ -64,7 +64,7 @@ header{
 
 #container{padding:10px}
 
-input, textarea{
+input{
   width:100%;
   padding:10px;
   font-size:16px;
@@ -73,9 +73,25 @@ input, textarea{
   margin-top:8px;
 }
 
-textarea{height:120px}
+#editor{
+  margin-top:8px;
+  padding:10px;
+  min-height:120px;
+  border-radius:6px;
+  border:1px solid #ccc;
+  background:white;
+}
 
-button{
+.toolbar button{
+  width:auto;
+  padding:6px 10px;
+  margin:4px 2px;
+  font-size:14px;
+  background:#ddd;
+  color:#000;
+}
+
+button.save{
   margin-top:8px;
   padding:10px;
   width:100%;
@@ -98,7 +114,7 @@ button{
 .note-title{
   font-weight:bold;
   font-size:18px;
-  margin-bottom:5px;
+  margin-bottom:6px;
 }
 
 .delete{
@@ -106,14 +122,6 @@ button{
   left:10px;
   top:10px;
   cursor:pointer;
-}
-
-.highlight{
-  background:#ffeb3b;
-  color:#000;
-  padding:2px 4px;
-  border-radius:4px;
-  font-weight:bold;
 }
 </style>
 </head>
@@ -136,9 +144,19 @@ button{
 <div id="container">
   <input id="search" placeholder="🔍 بحث..." oninput="showNotes()">
   <input id="title" placeholder="📝 عنوان الملاحظة">
-  <textarea id="text" placeholder="اكتب ملاحظتك هنا..."></textarea>
-  <small style="opacity:.7">💡 استعمل # قبل الكلمة باش تتلوّن بعد الحفظ</small>
-  <button onclick="saveNote()">💾 حفظ</button>
+
+  <div class="toolbar">
+    <button onclick="cmd('bold')"><b>B</b></button>
+    <button onclick="cmd('italic')"><i>I</i></button>
+    <button onclick="cmd('underline')"><u>U</u></button>
+    <button onclick="color('red')">🔴</button>
+    <button onclick="color('blue')">🔵</button>
+    <button onclick="color('green')">🟢</button>
+  </div>
+
+  <div id="editor" contenteditable="true">اكتب ملاحظتك هنا...</div>
+
+  <button class="save" onclick="saveNote()">💾 حفظ</button>
   <div id="notes"></div>
 </div>
 
@@ -194,19 +212,27 @@ function deleteAll(){
   }
 }
 
-function saveNote(){
-  let t=text.value.trim();
-  let ti=title.value.trim();
-  if(!t && !ti) return;
+function cmd(c){
+  document.execCommand(c,false,null);
+}
 
-  let note={title:ti,text:t};
+function color(c){
+  document.execCommand("foreColor",false,c);
+}
+
+function saveNote(){
+  let ti = title.value.trim();
+  let html = editor.innerHTML.trim();
+  if(!ti && !html) return;
+
+  let note={title:ti,html:html};
 
   if(editIndex==-1) notes.push(note);
   else{ notes[editIndex]=note; editIndex=-1 }
 
   localStorage.setItem("notes",JSON.stringify(notes));
-  text.value="";
   title.value="";
+  editor.innerHTML="";
   showNotes();
 }
 
@@ -217,19 +243,19 @@ function showNotes(){
   if(orderNewFirst) arr.reverse();
 
   arr.forEach((n,i)=>{
-    let content=(n.title+" "+n.text).toLowerCase();
+    let content=(n.title+" "+n.html).toLowerCase();
     if(!content.includes(q)) return;
 
     let d=document.createElement("div");
     d.className="note";
     d.innerHTML=`
       <span class="delete" onclick="del(${i})">🗑️</span>
-      <div class="note-title">${colorWords(n.title)}</div>
-      <div>${colorWords(n.text)}</div>
+      <div class="note-title">${n.title}</div>
+      <div>${n.html}</div>
     `;
     d.onclick=()=>{
       title.value=n.title;
-      text.value=n.text;
+      editor.innerHTML=n.html;
       editIndex=i;
       window.scrollTo(0,0);
     };
@@ -245,13 +271,7 @@ function del(i){
   }
 }
 
-function colorWords(t){
-  return (t||"").split(" ").map(w=>
-    w.startsWith("#")?`<span class="highlight">${w}</span>`:w
-  ).join(" ");
-}
-
-const text=document.getElementById("text");
+const editor=document.getElementById("editor");
 const title=document.getElementById("title");
 const notesBox=document.getElementById("notes");
 const search=document.getElementById("search");
