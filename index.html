@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<title>مفكرتي</title>
+<title>مذكرتي</title>
 
 <style>
 :root{
@@ -10,6 +10,7 @@
   --card:#fff;
   --text:#000;
   --main:#2196f3;
+  --noteSize:16px;
 }
 
 body.dark{
@@ -27,7 +28,7 @@ body{
 
 header{
   background:var(--main);
-  color:white;
+  color:#fff;
   padding:12px;
   text-align:center;
   font-size:18px;
@@ -79,16 +80,32 @@ input{
   min-height:120px;
   border-radius:6px;
   border:1px solid #ccc;
-  background:white;
+  background:#fff;
+  outline:none;
 }
 
 .toolbar button{
-  width:auto;
   padding:6px 10px;
   margin:4px 2px;
   font-size:14px;
-  background:#ddd;
-  color:#000;
+}
+
+#tools{
+  display:flex;
+  gap:10px;
+  margin:6px 0;
+}
+
+.color{
+  width:26px;
+  height:26px;
+  border-radius:50%;
+  cursor:pointer;
+  border:2px solid #ccc;
+}
+
+.color.active{
+  border:3px solid #000;
 }
 
 button.save{
@@ -99,7 +116,7 @@ button.save{
   border:none;
   border-radius:6px;
   background:#4caf50;
-  color:white;
+  color:#fff;
 }
 
 .note{
@@ -108,7 +125,7 @@ button.save{
   padding:10px;
   border-radius:6px;
   position:relative;
-  font-size:var(--noteSize,16px);
+  font-size:var(--noteSize);
 }
 
 .note-title{
@@ -130,13 +147,13 @@ button.save{
 
 <header>
   <span class="menu-btn" onclick="toggleMenu()">⋮</span>
-  📒 مفكرتي
+  📒 مذكرتي
   <div class="menu" id="menu">
     <div onclick="toggleDark()">🌙 وضع ليلي</div>
-    <div onclick="setPin()">🔒 قفل برمز</div>
+    <div onclick="setPin()">🔒 رمز القفل</div>
     <div onclick="changeFont(1)">🔠 تكبير الخط</div>
     <div onclick="changeFont(-1)">🔡 تصغير الخط</div>
-    <div onclick="toggleOrder()">↕️ ترتيب الملاحظات</div>
+    <div onclick="toggleOrder()">↕️ ترتيب</div>
     <div onclick="deleteAll()">🗑️ حذف الكل</div>
   </div>
 </header>
@@ -149,14 +166,20 @@ button.save{
     <button onclick="cmd('bold')"><b>B</b></button>
     <button onclick="cmd('italic')"><i>I</i></button>
     <button onclick="cmd('underline')"><u>U</u></button>
-    <button onclick="color('red')">🔴</button>
-    <button onclick="color('blue')">🔵</button>
-    <button onclick="color('green')">🟢</button>
+  </div>
+
+  <!-- تلوين مُصلح -->
+  <div id="tools">
+    <div class="color" data-color="black" style="background:black"></div>
+    <div class="color" data-color="red" style="background:red"></div>
+    <div class="color" data-color="blue" style="background:blue"></div>
+    <div class="color" data-color="green" style="background:green"></div>
   </div>
 
   <div id="editor" contenteditable="true">اكتب ملاحظتك هنا...</div>
 
   <button class="save" onclick="saveNote()">💾 حفظ</button>
+
   <div id="notes"></div>
 </div>
 
@@ -165,9 +188,9 @@ let notes = JSON.parse(localStorage.getItem("notes") || "[]");
 let editIndex = -1;
 let orderNewFirst = true;
 let fontSize = parseInt(localStorage.getItem("fontSize")||16);
-
 document.documentElement.style.setProperty("--noteSize",fontSize+"px");
 
+/* قفل */
 let pin = localStorage.getItem("pin");
 if(pin){
   let p = prompt("🔒 أدخل الرمز");
@@ -216,19 +239,55 @@ function cmd(c){
   document.execCommand(c,false,null);
 }
 
-function color(c){
-  document.execCommand("foreColor",false,c);
+/* ===== تلوين مُستقر ===== */
+let currentColor = localStorage.getItem("lastColor") || "black";
+let savedRange = null;
+const colors = document.querySelectorAll(".color");
+
+function saveSelection(){
+  let sel = window.getSelection();
+  if(sel && sel.rangeCount>0){
+    savedRange = sel.getRangeAt(0);
+  }
 }
 
+editor.addEventListener("keyup", saveSelection);
+editor.addEventListener("mouseup", saveSelection);
+
+function activateColor(color){
+  currentColor = color;
+  localStorage.setItem("lastColor",color);
+
+  colors.forEach(c=>c.classList.remove("active"));
+  document.querySelector(`[data-color="${color}"]`).classList.add("active");
+
+  editor.focus();
+  if(savedRange){
+    let sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(savedRange);
+  }
+
+  document.execCommand("styleWithCSS",false,true);
+  document.execCommand("foreColor",false,color);
+}
+
+colors.forEach(c=>{
+  c.onclick=()=>activateColor(c.dataset.color);
+});
+
+activateColor(currentColor);
+
+/* ===== الملاحظات ===== */
 function saveNote(){
-  let ti = title.value.trim();
-  let html = editor.innerHTML.trim();
+  let ti=title.value.trim();
+  let html=editor.innerHTML.trim();
   if(!ti && !html) return;
 
-  let note={title:ti,html:html};
+  let note={title:ti||"بدون عنوان",html:html};
 
-  if(editIndex==-1) notes.push(note);
-  else{ notes[editIndex]=note; editIndex=-1 }
+  editIndex==-1 ? notes.push(note) : notes[editIndex]=note;
+  editIndex=-1;
 
   localStorage.setItem("notes",JSON.stringify(notes));
   title.value="";
@@ -243,9 +302,7 @@ function showNotes(){
   if(orderNewFirst) arr.reverse();
 
   arr.forEach((n,i)=>{
-    let content=(n.title+" "+n.html).toLowerCase();
-    if(!content.includes(q)) return;
-
+    if(!(n.title+n.html).toLowerCase().includes(q)) return;
     let d=document.createElement("div");
     d.className="note";
     d.innerHTML=`
