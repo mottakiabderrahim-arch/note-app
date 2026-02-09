@@ -168,7 +168,6 @@ button.save{
     <button onclick="cmd('underline')"><u>U</u></button>
   </div>
 
-  <!-- تلوين مُصلح -->
   <div id="tools">
     <div class="color" data-color="black" style="background:black"></div>
     <div class="color" data-color="red" style="background:red"></div>
@@ -184,29 +183,41 @@ button.save{
 </div>
 
 <script>
+/* ===== عناصر DOM (أولاً) ===== */
+const editor = document.getElementById("editor");
+const title = document.getElementById("title");
+const notesBox = document.getElementById("notes");
+const search = document.getElementById("search");
+const menu = document.getElementById("menu");
+const colors = document.querySelectorAll(".color");
+
+/* ===== متغيرات ===== */
 let notes = JSON.parse(localStorage.getItem("notes") || "[]");
 let editIndex = -1;
 let orderNewFirst = true;
 let fontSize = parseInt(localStorage.getItem("fontSize")||16);
+let currentColor = localStorage.getItem("lastColor") || "black";
+let savedRange = null;
+
 document.documentElement.style.setProperty("--noteSize",fontSize+"px");
 
-/* قفل */
+/* ===== القفل ===== */
 let pin = localStorage.getItem("pin");
 if(pin){
   let p = prompt("🔒 أدخل الرمز");
   if(p !== pin) document.body.innerHTML="❌ رمز خاطئ";
 }
 
+/* ===== وظائف عامة ===== */
 function toggleMenu(){
-  menu.style.display = menu.style.display=="block"?"none":"block";
+  menu.style.display = menu.style.display==="block"?"none":"block";
 }
 
 function toggleDark(){
   document.body.classList.toggle("dark");
   localStorage.setItem("dark",document.body.classList.contains("dark"));
 }
-
-if(localStorage.getItem("dark")=="true"){
+if(localStorage.getItem("dark")==="true"){
   document.body.classList.add("dark");
 }
 
@@ -239,18 +250,13 @@ function cmd(c){
   document.execCommand(c,false,null);
 }
 
-/* ===== تلوين مُستقر ===== */
-let currentColor = localStorage.getItem("lastColor") || "black";
-let savedRange = null;
-const colors = document.querySelectorAll(".color");
-
+/* ===== التلوين (مستقر 100%) ===== */
 function saveSelection(){
   let sel = window.getSelection();
   if(sel && sel.rangeCount>0){
     savedRange = sel.getRangeAt(0);
   }
 }
-
 editor.addEventListener("keyup", saveSelection);
 editor.addEventListener("mouseup", saveSelection);
 
@@ -267,7 +273,6 @@ function activateColor(color){
     sel.removeAllRanges();
     sel.addRange(savedRange);
   }
-
   document.execCommand("styleWithCSS",false,true);
   document.execCommand("foreColor",false,color);
 }
@@ -275,7 +280,6 @@ function activateColor(color){
 colors.forEach(c=>{
   c.onclick=()=>activateColor(c.dataset.color);
 });
-
 activateColor(currentColor);
 
 /* ===== الملاحظات ===== */
@@ -284,8 +288,7 @@ function saveNote(){
   let html=editor.innerHTML.trim();
   if(!ti && !html) return;
 
-  let note={title:ti||"بدون عنوان",html:html};
-
+  let note={title:ti||"بدون عنوان",html};
   editIndex==-1 ? notes.push(note) : notes[editIndex]=note;
   editIndex=-1;
 
@@ -327,12 +330,6 @@ function del(i){
     showNotes();
   }
 }
-
-const editor=document.getElementById("editor");
-const title=document.getElementById("title");
-const notesBox=document.getElementById("notes");
-const search=document.getElementById("search");
-const menu=document.getElementById("menu");
 
 showNotes();
 </script>
