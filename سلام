@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Apprendre le français – IA</title>
+
+<style>
+body{
+    font-family: Arial, sans-serif;
+    background:#f4f6f8;
+    margin:0;
+    padding:20px;
+}
+h1{
+    text-align:center;
+}
+#box{
+    background:white;
+    padding:15px;
+    border-radius:10px;
+    max-width:500px;
+    margin:auto;
+}
+button{
+    width:100%;
+    padding:15px;
+    font-size:18px;
+    margin-top:10px;
+    border:none;
+    border-radius:8px;
+    background:#4CAF50;
+    color:white;
+}
+#userText,#aiText{
+    margin-top:15px;
+    padding:10px;
+    border-radius:8px;
+}
+#userText{
+    background:#e3f2fd;
+}
+#aiText{
+    background:#f1f8e9;
+}
+</style>
+</head>
+
+<body>
+
+<h1>🇫🇷 Parlons français</h1>
+
+<div id="box">
+    <button onclick="startListening()">🎤 Parler</button>
+
+    <div id="userText">🧑‍🎓 أنت: ...</div>
+    <div id="aiText">🤖 Prof: ...</div>
+</div>
+
+<script>
+const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+recognition.lang = "fr-FR";
+recognition.interimResults = false;
+
+function startListening(){
+    recognition.start();
+}
+
+recognition.onresult = function(event){
+    const text = event.results[0][0].transcript;
+    document.getElementById("userText").innerText = "🧑‍🎓 أنت: " + text;
+
+    // جواب بسيط (تعليمي)
+    let reply = "Très bien ! Peux-tu répéter encore une fois ?";
+    if(text.toLowerCase().includes("bonjour")){
+        reply = "Bonjour ! Comment ça va ?";
+    }
+    if(text.toLowerCase().includes("ça va")){
+        reply = "Parfait 😄 Continuons la conversation.";
+    }
+
+    document.getElementById("aiText").innerText = "🤖 Prof: " + reply;
+    speak(reply);
+}
+
+function speak(text){
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.lang = "fr-FR";
+    speechSynthesis.speak(utter);
+}
+</script>
+
+</body>
+</html>
