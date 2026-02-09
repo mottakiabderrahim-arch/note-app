@@ -5,263 +5,106 @@
 <title>مفكرتي</title>
 
 <style>
-:root{
-  --bg:#f2f2f2;
-  --card:#fff;
-  --text:#000;
-  --main:#4CAF50;
-}
-body.dark{
-  --bg:#121212;
-  --card:#1e1e1e;
-  --text:#fff;
-}
 body{
   margin:0;
-  font-family:Tahoma, Arial;
-  background:var(--bg);
-  color:var(--text);
+  font-family:sans-serif;
+  background:#f2f2f2;
 }
+
 header{
-  background:var(--main);
-  color:#fff;
-  padding:15px;
-  display:flex;
-  justify-content:space-between;
+  background:#2196f3;
+  color:white;
+  padding:12px;
+  text-align:center;
+  font-size:18px;
 }
-.menu{cursor:pointer;font-size:22px;}
 
-#settings{
-  display:none;
-  background:var(--card);
+#container{
   padding:10px;
 }
 
-#container{padding:10px;}
-
-input,select{
+textarea{
   width:100%;
-  padding:8px;
-  margin-bottom:6px;
-  border-radius:5px;
+  height:120px;
+  padding:10px;
+  font-size:16px;
+  box-sizing:border-box;
+  border-radius:6px;
   border:1px solid #ccc;
 }
 
-.toolbar{
-  display:flex;
-  flex-wrap:wrap;
-  gap:5px;
-  margin-bottom:5px;
-}
-
-.toolbar button, .toolbar select, .toolbar input{
-  width:23%;
-  padding:8px;
-  border:none;
-  border-radius:5px;
-  background:#2196F3;
-  color:#fff;
-}
-
-#editor{
-  min-height:140px;
-  background:var(--card);
+button{
+  margin-top:8px;
   padding:10px;
-  border:1px solid #ccc;
-  border-radius:5px;
-}
-
-button.save{
-  background:var(--main);
   width:100%;
-  margin-top:6px;
-  padding:10px;
+  font-size:16px;
   border:none;
-  border-radius:5px;
-  color:#fff;
+  border-radius:6px;
+  background:#4caf50;
+  color:white;
 }
 
 .note{
-  background:var(--card);
-  padding:10px;
+  background:white;
   margin-top:10px;
-  border-radius:5px;
+  padding:10px;
+  border-radius:6px;
+  word-wrap:break-word;
 }
-.note.pinned{border:2px solid gold;}
-
-.actions button{
-  width:23%;
-  margin-top:5px;
+.highlight{
+  background:yellow;
 }
-.delete{background:#e53935;}
-.edit{background:#FF9800;}
-.pin{background:#9C27B0;}
-.lock{background:#607D8B;}
 </style>
 </head>
 
 <body>
 
-<header>
-  <span>📝 مفكرتي</span>
-  <span class="menu" onclick="toggleSettings()">⋮</span>
-</header>
-
-<div id="settings">
-  <button onclick="toggleDark()">🌙 الوضع الليلي</button>
-  <input placeholder="🔍 بحث" onkeyup="searchNotes(this.value)">
-  <button onclick="clearAll()">🗑️ مسح الكل</button>
-</div>
+<header>📒 مفكرتي</header>
 
 <div id="container">
-  <input id="title" placeholder="عنوان الملاحظة">
-  <input id="pinCode" placeholder="🔐 رمز القفل (اختياري)">
-
-  <!-- 🧰 شريط الأدوات -->
-  <div class="toolbar">
-    <button onclick="cmd('bold')"><b>B</b></button>
-    <button onclick="cmd('italic')"><i>I</i></button>
-    <button onclick="cmd('underline')"><u>U</u></button>
-
-    <button onclick="cmd('hiliteColor','yellow')">🟡</button>
-    <button onclick="cmd('hiliteColor','lightgreen')">🟢</button>
-    <button onclick="cmd('hiliteColor','lightblue')">🔵</button>
-
-    <input type="color" onchange="cmd('foreColor',this.value)">
-    
-    <select onchange="cmd('fontSize',this.value)">
-      <option value="3">عادي</option>
-      <option value="4">كبير</option>
-      <option value="5">كبير جدا</option>
-    </select>
-
-    <button onclick="cmd('justifyRight')">↦</button>
-    <button onclick="cmd('justifyCenter')">↔</button>
-    <button onclick="cmd('removeFormat')">🧹</button>
-  </div>
-
-  <div id="editor" contenteditable="true">اكتب ملاحظتك هنا...</div>
-
-  <button class="save" onclick="save()">💾 حفظ</button>
+  <textarea id="text" placeholder="اكتب ملاحظتك هنا..."></textarea>
+  <button onclick="saveNote()">💾 حفظ</button>
 
   <div id="notes"></div>
 </div>
 
 <script>
-let notes = JSON.parse(localStorage.getItem("notes")) || [];
-let editIndex = null;
+let notes = JSON.parse(localStorage.getItem("notes") || "[]");
 
-function cmd(c,v=null){
-  document.execCommand(c,false,v);
+function saveNote(){
+  let text = document.getElementById("text").value.trim();
+  if(text === "") return;
+
+  notes.push(text);
+  localStorage.setItem("notes", JSON.stringify(notes));
+  document.getElementById("text").value = "";
+  showNotes();
 }
 
-function toggleSettings(){
-  settings.style.display = settings.style.display=="block"?"none":"block";
-}
+function showNotes(){
+  let box = document.getElementById("notes");
+  box.innerHTML = "";
 
-function toggleDark(){
-  document.body.classList.toggle("dark");
-}
-
-function save(){
-  let t = title.value || "بدون عنوان";
-  let c = editor.innerHTML;
-  if(c.trim()=="") return;
-
-  let note = {
-    title:t,
-    content:c,
-    date:new Date().toLocaleString(),
-    pin:false,
-    code:pinCode.value
-  };
-
-  if(editIndex!==null){
-    notes[editIndex]=note;
-    editIndex=null;
-  }else{
-    notes.unshift(note);
-  }
-
-  localStorage.setItem("notes",JSON.stringify(notes));
-  title.value = editor.innerHTML = pinCode.value = "";
-  render();
-}
-
-function render(list=notes){
-  notes.sort((a,b)=>b.pin-a.pin);
-  notesDiv.innerHTML="";
-  list.forEach((n,i)=>{
-    notesDiv.innerHTML+=`
-    <div class="note ${n.pin?'pinned':''}">
-      <h3>${n.title}</h3>
-      <div>${n.content}</div>
-      <small>${n.date}</small>
-      <div class="actions">
-        <button class="pin" onclick="pin(${i})">📌</button>
-        <button class="edit" onclick="edit(${i})">✏️</button>
-        <button class="delete" onclick="del(${i})">🗑️</button>
-      </div>
-    </div>`;
+  notes.forEach((n,i)=>{
+    let div = document.createElement("div");
+    div.className = "note";
+    div.innerHTML = colorWords(n);
+    box.appendChild(div);
   });
 }
 
-function edit(i){
-  title.value = notes[i].title;
-  editor.innerHTML = notes[i].content;
-  pinCode.value = notes[i].code || "";
-  editIndex = i;
+function colorWords(text){
+  let words = text.split(" ");
+  return words.map(w=>{
+    if(w.startsWith("#")){
+      return `<span class="highlight">${w}</span>`;
+    }
+    return w;
+  }).join(" ");
 }
 
-function del(i){
-  if(confirm("تمسح هاد الملاحظة؟")){
-    notes.splice(i,1);
-    localStorage.setItem("notes",JSON.stringify(notes));
-    render();
-  }
-}
-
-function pin(i){
-  notes[i].pin=!notes[i].pin;
-  localStorage.setItem("notes",JSON.stringify(notes));
-  render();
-}
-
-function clearAll(){
-  if(confirm("تمسح كلشي؟")){
-    notes=[];
-    localStorage.clear();
-    render();
-  }
-}
-
-function searchNotes(t){
-  let f = notes.filter(n=>n.title.includes(t)||n.content.includes(t));
-  render(f);
-}
-
-render();
+showNotes();
 </script>
 
 </body>
 </html>
-<div id="note-list">
-  <!-- الملاحظات ستعرض هنا -->
-</div>
-
-<script>
-  function saveNote() {
-    // كود حفظ الملاحظة
-    var noteText = document.getElementById("note-text").value;
-    var noteTitle = document.getElementById("note-title").value;
-    // ...
-    showSaveMessage();
-    displayNote(noteTitle, noteText);
-  }
-
-  function displayNote(title, text) {
-    var noteHTML = "<div class='note'><h2>" + title + "</h2><p>" + text + "</p></div>";
-    document.getElementById("note-list").innerHTML += noteHTML;
-  }
-</script>
-
