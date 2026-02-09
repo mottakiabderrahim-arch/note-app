@@ -12,9 +12,10 @@ body{
     background:#f5f5f5;
 }
 
+/* الوضع الليلي */
 body.dark{
     background:#121212;
-    color:white;
+    color:#fff;
 }
 
 .container{
@@ -29,7 +30,7 @@ body.dark{
 
 /* الملاحظات */
 .note{
-    background:white;
+    background:#fff;
     padding:8px;
     margin-bottom:8px;
     border-radius:6px;
@@ -42,7 +43,7 @@ body.dark #text,
 body.dark input,
 body.dark #menu{
     background:#1e1e1e;
-    color:white;
+    color:#fff;
 }
 
 /* inputs */
@@ -61,7 +62,7 @@ input,button{
     border:1px solid #ddd;
     border-radius:6px;
     padding:10px;
-    background:white;
+    background:#fff;
     outline:none;
 }
 
@@ -82,8 +83,9 @@ input,button{
     border-radius:50%;
     font-size:26px;
     background:#e53935;
-    color:white;
+    color:#fff;
     border:none;
+    z-index:999;
 }
 
 /* أدوات التلوين */
@@ -102,30 +104,42 @@ input,button{
 }
 .color.active{border:3px solid #000}
 
-/* 3 نقاط */
+/* زر المينو (خاص بـ AppCreator24) */
 #menuBtn{
     position:fixed;
     top:10px;
     right:10px;
-    font-size:22px;
+    width:44px;
+    height:44px;
+    background:#ffffff;
+    color:#000000;
+    font-size:26px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:50%;
+    box-shadow:0 2px 8px rgba(0,0,0,.3);
     cursor:pointer;
-    color:#000;
-    z-index:1000;
+    z-index:999999;
 }
+
+/* المينو */
 #menu{
     position:fixed;
-    top:40px;
+    top:60px;
     right:10px;
-    background:white;
+    background:#ffffff;
     border-radius:6px;
-    box-shadow:0 2px 6px rgba(0,0,0,.2);
+    box-shadow:0 2px 8px rgba(0,0,0,.3);
     display:none;
-    z-index:1000;
+    z-index:999999;
 }
 #menu div{
-    padding:10px;
+    padding:12px;
     cursor:pointer;
+    border-bottom:1px solid #eee;
 }
+#menu div:last-child{border-bottom:none}
 
 /* رمز الحماية */
 #lockBox{display:none;}
@@ -134,7 +148,10 @@ input,button{
 
 <body>
 
-<div id="menuBtn" onclick="toggleMenu()">⋮</div>
+<!-- زر المينو -->
+<div id="menuBtn" onclick="toggleMenu()">☰</div>
+
+<!-- المينو -->
 <div id="menu">
     <div onclick="toggleLock()">🔐 رمز الحماية</div>
     <div onclick="toggleDark()">🌙 الوضع الليلي</div>
@@ -204,10 +221,8 @@ text.addEventListener("mouseup", saveSelection);
 function activateColor(color){
     currentColor = color;
     localStorage.setItem("lastColor", color);
-
     colors.forEach(c=>c.classList.remove("active"));
     document.querySelector(`[data-color="${color}"]`).classList.add("active");
-
     text.focus();
     if(savedRange){
         let sel = window.getSelection();
@@ -217,15 +232,14 @@ function activateColor(color){
     document.execCommand("styleWithCSS", false, true);
     document.execCommand("foreColor", false, color);
 }
-colors.forEach(c=>{
-    c.onclick = ()=>activateColor(c.dataset.color);
-});
+colors.forEach(c=>c.onclick=()=>activateColor(c.dataset.color));
 
 /* التخزين */
 function saveStorage(){
     localStorage.setItem("notes", JSON.stringify(notes));
 }
 
+/* العرض */
 function render(){
     list.innerHTML="";
     notes.forEach((n,i)=>{
@@ -240,6 +254,7 @@ function render(){
 }
 search.oninput = render;
 
+/* العمليات */
 function newNote(){
     current=null;
     title.value="";
@@ -293,7 +308,7 @@ function back(){
     render();
 }
 
-/* 3 نقاط */
+/* المينو */
 function toggleMenu(){
     let m=document.getElementById("menu");
     m.style.display = m.style.display==="block"?"none":"block";
@@ -302,8 +317,7 @@ function toggleMenu(){
 /* الوضع الليلي */
 function toggleDark(){
     document.body.classList.toggle("dark");
-    localStorage.setItem("dark",
-        document.body.classList.contains("dark"));
+    localStorage.setItem("dark",document.body.classList.contains("dark"));
 }
 
 /* رمز الحماية */
