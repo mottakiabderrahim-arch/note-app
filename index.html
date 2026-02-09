@@ -11,65 +11,58 @@
   --text:#000;
   --main:#4CAF50;
 }
-
 body.dark{
   --bg:#121212;
   --card:#1e1e1e;
   --text:#fff;
 }
-
 body{
   margin:0;
   font-family:Arial;
   background:var(--bg);
   color:var(--text);
 }
-
 header{
   background:var(--main);
   color:white;
   padding:15px;
   display:flex;
   justify-content:space-between;
-  align-items:center;
 }
+.menu{cursor:pointer;font-size:22px;}
+#settings{display:none;background:var(--card);padding:10px;}
+#container{padding:10px;}
 
-header span{
-  font-size:20px;
-}
-
-.menu{
-  font-size:22px;
-  cursor:pointer;
-}
-
-#settings{
-  display:none;
-  background:var(--card);
-  padding:10px;
-}
-
-#container{
-  padding:10px;
-}
-
-input,textarea,select{
+input,select{
   width:100%;
-  padding:10px;
-  margin-bottom:8px;
+  padding:8px;
+  margin-bottom:5px;
   border-radius:5px;
   border:1px solid #ccc;
-  font-size:16px;
+}
+
+#editor{
+  min-height:120px;
+  background:var(--card);
+  padding:10px;
+  border:1px solid #ccc;
+  border-radius:5px;
+}
+
+.toolbar button{
+  width:23%;
+  margin-bottom:5px;
+  background:#2196F3;
 }
 
 button{
   padding:10px;
-  width:100%;
   background:var(--main);
   color:white;
   border:none;
   border-radius:5px;
-  font-size:16px;
+  width:100%;
+  margin-top:5px;
 }
 
 .note{
@@ -79,22 +72,12 @@ button{
   border-radius:5px;
 }
 
-.note.pinned{
-  border:2px solid gold;
-}
-
-.note small{
-  color:gray;
-}
-
-.actions button{
-  margin-top:5px;
-  width:32%;
-}
-
+.note.pinned{border:2px solid gold;}
+.actions button{width:32%;}
 .delete{background:#e53935;}
-.edit{background:#2196F3;}
-.pin{background:#FF9800;}
+.edit{background:#FF9800;}
+.pin{background:#9C27B0;}
+.lock{background:#607D8B;}
 </style>
 </head>
 
@@ -107,82 +90,79 @@ button{
 
 <div id="settings">
   <button onclick="toggleDark()">🌙 الوضع الليلي</button>
+  <input placeholder="🔍 بحث" onkeyup="search(this.value)">
   <button onclick="clearAll()">🗑️ مسح الكل</button>
-  <label>🔍 بحث</label>
-  <input type="text" onkeyup="search(this.value)">
-  <label>🔠 حجم الخط</label>
-  <input type="range" min="14" max="24" value="16" onchange="changeFont(this.value)">
 </div>
 
 <div id="container">
-  <input id="title" placeholder="عنوان">
-  <textarea id="content" rows="4" placeholder="اكتب ملاحظتك..."></textarea>
-  <select id="color">
-    <option value="#ffffff">⚪ أبيض</option>
-    <option value="#fff9c4">🟡 أصفر</option>
-    <option value="#c8e6c9">🟢 أخضر</option>
-    <option value="#bbdefb">🔵 أزرق</option>
-  </select>
+  <input id="title" placeholder="عنوان الملاحظة">
+  <input id="pinCode" placeholder="🔐 رمز القفل (اختياري)">
+
+  <div class="toolbar">
+    <button onclick="cmd('bold')"><b>B</b></button>
+    <button onclick="cmd('italic')"><i>I</i></button>
+    <button onclick="cmd('underline')"><u>U</u></button>
+    <button onclick="cmd('hiliteColor','yellow')">🟡</button>
+    <input type="color" onchange="cmd('foreColor',this.value)">
+    <select onchange="cmd('fontName',this.value)">
+      <option>Arial</option>
+      <option>Courier</option>
+      <option>Georgia</option>
+      <option>Tahoma</option>
+    </select>
+  </div>
+
+  <div id="editor" contenteditable="true">اكتب ملاحظتك هنا...</div>
+
   <button onclick="save()">💾 حفظ</button>
 
   <div id="notes"></div>
 </div>
 
 <script>
-let notes = JSON.parse(localStorage.getItem("notes")) || [];
-let editIndex = null;
+let notes=JSON.parse(localStorage.getItem("notes"))||[];
+let editIndex=null;
 
-function toggleSettings(){
-  let s=document.getElementById("settings");
-  s.style.display = s.style.display=="block"?"none":"block";
-}
-
-function toggleDark(){
-  document.body.classList.toggle("dark");
-}
+function cmd(c,v=null){document.execCommand(c,false,v);}
+function toggleSettings(){settings.style.display=settings.style.display=="block"?"none":"block";}
+function toggleDark(){document.body.classList.toggle("dark");}
 
 function save(){
   let t=title.value||"بدون عنوان";
-  let c=content.value;
+  let c=editor.innerHTML;
   if(c.trim()=="") return alert("كتب شي حاجة");
-
-  let note={
-    title:t,
-    content:c,
-    date:new Date().toLocaleString(),
-    color:color.value,
-    pinned:false
-  };
-
-  if(editIndex!==null){
-    notes[editIndex]=note;
-    editIndex=null;
-  }else{
-    notes.unshift(note);
-  }
-
+  let note={title:t,content:c,date:new Date().toLocaleString(),pin:false,code:pinCode.value};
+  if(editIndex!==null){notes[editIndex]=note;editIndex=null;}
+  else{notes.unshift(note);}
   localStorage.setItem("notes",JSON.stringify(notes));
-  title.value=content.value="";
+  title.value=editor.innerHTML=pinCode.value="";
   show();
 }
 
 function show(list=notes){
-  notes.sort((a,b)=>b.pinned-a.pinned);
-  let box=notesDiv=document.getElementById("notes");
-  box.innerHTML="";
+  notes.sort((a,b)=>b.pin-a.pin);
+  notesDiv.innerHTML="";
   list.forEach((n,i)=>{
-    box.innerHTML+=`
-    <div class="note ${n.pinned?'pinned':''}" style="background:${n.color}">
+    notesDiv.innerHTML+=`
+    <div class="note ${n.pin?'pinned':''}">
       <h3>${n.title}</h3>
-      <p>${n.content}</p>
+      <div>${n.content}</div>
       <small>${n.date}</small>
       <div class="actions">
         <button class="pin" onclick="pin(${i})">📌</button>
+        <button class="lock" onclick="unlock(${i})">🔐</button>
         <button class="edit" onclick="edit(${i})">✏️</button>
         <button class="delete" onclick="del(${i})">🗑️</button>
       </div>
     </div>`;
   });
+}
+
+function edit(i){
+  title.value=notes[i].title;
+  editor.innerHTML=notes[i].content;
+  pinCode.value=notes[i].code||"";
+  editIndex=i;
 }
 
 function del(i){
@@ -193,34 +173,30 @@ function del(i){
   }
 }
 
-function edit(i){
-  title.value=notes[i].title;
-  content.value=notes[i].content;
-  color.value=notes[i].color;
-  editIndex=i;
-}
-
 function pin(i){
-  notes[i].pinned=!notes[i].pinned;
+  notes[i].pin=!notes[i].pin;
   localStorage.setItem("notes",JSON.stringify(notes));
   show();
+}
+
+function unlock(i){
+  if(!notes[i].code) return alert("ما مقفولةش");
+  let c=prompt("دخل الرمز");
+  if(c===notes[i].code) alert("مفتوحة ✅");
+  else alert("رمز خطأ ❌");
 }
 
 function clearAll(){
   if(confirm("تمسح كولشي؟")){
     notes=[];
-    localStorage.removeItem("notes");
+    localStorage.clear();
     show();
   }
 }
 
-function search(txt){
-  let f=notes.filter(n=>n.title.includes(txt)||n.content.includes(txt));
+function search(t){
+  let f=notes.filter(n=>n.title.includes(t)||n.content.includes(t));
   show(f);
-}
-
-function changeFont(v){
-  document.body.style.fontSize=v+"px";
 }
 
 show();
