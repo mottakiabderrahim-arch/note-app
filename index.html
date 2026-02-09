@@ -12,20 +12,17 @@
   --main:#2196f3;
   --noteSize:16px;
 }
-
 body.dark{
   --bg:#121212;
   --card:#1e1e1e;
   --text:#fff;
 }
-
 body{
   margin:0;
   font-family:sans-serif;
   background:var(--bg);
   color:var(--text);
 }
-
 header{
   background:var(--main);
   color:#fff;
@@ -34,7 +31,6 @@ header{
   font-size:18px;
   position:relative;
 }
-
 .menu-btn{
   position:absolute;
   left:10px;
@@ -42,7 +38,6 @@ header{
   font-size:22px;
   cursor:pointer;
 }
-
 .menu{
   display:none;
   position:absolute;
@@ -54,17 +49,13 @@ header{
   overflow:hidden;
   z-index:10;
 }
-
 .menu div{
   padding:10px;
   cursor:pointer;
   border-bottom:1px solid #ccc;
 }
-
 .menu div:last-child{border:none}
-
 #container{padding:10px}
-
 input{
   width:100%;
   padding:10px;
@@ -73,7 +64,6 @@ input{
   border:1px solid #ccc;
   margin-top:8px;
 }
-
 #editor{
   margin-top:8px;
   padding:10px;
@@ -83,19 +73,16 @@ input{
   background:#fff;
   outline:none;
 }
-
 .toolbar button{
   padding:6px 10px;
   margin:4px 2px;
   font-size:14px;
 }
-
 #tools{
   display:flex;
   gap:10px;
   margin:6px 0;
 }
-
 .color{
   width:26px;
   height:26px;
@@ -103,11 +90,9 @@ input{
   cursor:pointer;
   border:2px solid #ccc;
 }
-
 .color.active{
   border:3px solid #000;
 }
-
 button.save{
   margin-top:8px;
   padding:10px;
@@ -118,7 +103,6 @@ button.save{
   background:#4caf50;
   color:#fff;
 }
-
 .note{
   background:var(--card);
   margin-top:10px;
@@ -127,13 +111,11 @@ button.save{
   position:relative;
   font-size:var(--noteSize);
 }
-
 .note-title{
   font-weight:bold;
   font-size:18px;
   margin-bottom:6px;
 }
-
 .delete{
   position:absolute;
   left:10px;
@@ -166,6 +148,8 @@ button.save{
     <button onclick="cmd('bold')"><b>B</b></button>
     <button onclick="cmd('italic')"><i>I</i></button>
     <button onclick="cmd('underline')"><u>U</u></button>
+    <button onclick="openCamera()">📷</button>
+    <input id="cameraInput" type="file" accept="image/*" capture="environment" style="display:none">
   </div>
 
   <div id="tools">
@@ -183,13 +167,14 @@ button.save{
 </div>
 
 <script>
-/* ===== عناصر DOM (أولاً) ===== */
+/* ===== DOM ===== */
 const editor = document.getElementById("editor");
 const title = document.getElementById("title");
 const notesBox = document.getElementById("notes");
 const search = document.getElementById("search");
 const menu = document.getElementById("menu");
 const colors = document.querySelectorAll(".color");
+const cameraInput = document.getElementById("cameraInput");
 
 /* ===== متغيرات ===== */
 let notes = JSON.parse(localStorage.getItem("notes") || "[]");
@@ -212,7 +197,6 @@ if(pin){
 function toggleMenu(){
   menu.style.display = menu.style.display==="block"?"none":"block";
 }
-
 function toggleDark(){
   document.body.classList.toggle("dark");
   localStorage.setItem("dark",document.body.classList.contains("dark"));
@@ -220,24 +204,20 @@ function toggleDark(){
 if(localStorage.getItem("dark")==="true"){
   document.body.classList.add("dark");
 }
-
 function setPin(){
   let p = prompt("ضع رمز القفل");
   if(p){ localStorage.setItem("pin",p); alert("تم التفعيل 🔒"); }
 }
-
 function changeFont(v){
   fontSize+=v;
   if(fontSize<12) fontSize=12;
   localStorage.setItem("fontSize",fontSize);
   document.documentElement.style.setProperty("--noteSize",fontSize+"px");
 }
-
 function toggleOrder(){
   orderNewFirst=!orderNewFirst;
   showNotes();
 }
-
 function deleteAll(){
   if(confirm("حذف جميع الملاحظات؟")){
     notes=[];
@@ -245,17 +225,14 @@ function deleteAll(){
     showNotes();
   }
 }
-
 function cmd(c){
   document.execCommand(c,false,null);
 }
 
-/* ===== التلوين (مستقر 100%) ===== */
+/* ===== التلوين ===== */
 function saveSelection(){
   let sel = window.getSelection();
-  if(sel && sel.rangeCount>0){
-    savedRange = sel.getRangeAt(0);
-  }
+  if(sel && sel.rangeCount>0) savedRange = sel.getRangeAt(0);
 }
 editor.addEventListener("keyup", saveSelection);
 editor.addEventListener("mouseup", saveSelection);
@@ -263,10 +240,8 @@ editor.addEventListener("mouseup", saveSelection);
 function activateColor(color){
   currentColor = color;
   localStorage.setItem("lastColor",color);
-
   colors.forEach(c=>c.classList.remove("active"));
   document.querySelector(`[data-color="${color}"]`).classList.add("active");
-
   editor.focus();
   if(savedRange){
     let sel = window.getSelection();
@@ -276,34 +251,46 @@ function activateColor(color){
   document.execCommand("styleWithCSS",false,true);
   document.execCommand("foreColor",false,color);
 }
-
-colors.forEach(c=>{
-  c.onclick=()=>activateColor(c.dataset.color);
-});
+colors.forEach(c=>c.onclick=()=>activateColor(c.dataset.color));
 activateColor(currentColor);
+
+/* ===== الكاميرا (مضمونة AppCreator 24) ===== */
+function openCamera(){
+  cameraInput.click();
+}
+cameraInput.addEventListener("change",function(){
+  let file=this.files[0];
+  if(!file) return;
+  let reader=new FileReader();
+  reader.onload=function(){
+    let img=document.createElement("img");
+    img.src=reader.result;
+    img.style.maxWidth="100%";
+    img.style.display="block";
+    img.style.margin="6px 0";
+    editor.appendChild(img);
+  }
+  reader.readAsDataURL(file);
+});
 
 /* ===== الملاحظات ===== */
 function saveNote(){
   let ti=title.value.trim();
   let html=editor.innerHTML.trim();
   if(!ti && !html) return;
-
   let note={title:ti||"بدون عنوان",html};
   editIndex==-1 ? notes.push(note) : notes[editIndex]=note;
   editIndex=-1;
-
   localStorage.setItem("notes",JSON.stringify(notes));
   title.value="";
   editor.innerHTML="";
   showNotes();
 }
-
 function showNotes(){
   notesBox.innerHTML="";
   let q=search.value.toLowerCase();
   let arr=[...notes];
   if(orderNewFirst) arr.reverse();
-
   arr.forEach((n,i)=>{
     if(!(n.title+n.html).toLowerCase().includes(q)) return;
     let d=document.createElement("div");
@@ -311,8 +298,7 @@ function showNotes(){
     d.innerHTML=`
       <span class="delete" onclick="del(${i})">🗑️</span>
       <div class="note-title">${n.title}</div>
-      <div>${n.html}</div>
-    `;
+      <div>${n.html}</div>`;
     d.onclick=()=>{
       title.value=n.title;
       editor.innerHTML=n.html;
@@ -322,7 +308,6 @@ function showNotes(){
     notesBox.appendChild(d);
   });
 }
-
 function del(i){
   if(confirm("حذف الملاحظة؟")){
     notes.splice(i,1);
@@ -330,7 +315,6 @@ function del(i){
     showNotes();
   }
 }
-
 showNotes();
 </script>
 
