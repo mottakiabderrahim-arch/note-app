@@ -7,30 +7,18 @@
 <style>
 body{
     margin:0;
-    padding:0;
     font-family:sans-serif;
     background:#f5f5f5;
 }
+body.dark{background:#121212;color:white}
 
-/* الوضع الليلي */
-body.dark{
-    background:#121212;
-    color:#fff;
-}
+.container{max-width:600px;margin:auto;padding:8px}
 
-.container{
-    max-width:600px;
-    margin:auto;
-    padding:8px;
-}
+#home,#editor,#settings{padding:5px}
+#editor,#settings{display:none}
 
-/* الصفحات */
-#home,#editor{padding:5px;}
-#editor{display:none;}
-
-/* الملاحظات */
 .note{
-    background:#fff;
+    background:white;
     padding:8px;
     margin-bottom:8px;
     border-radius:6px;
@@ -41,12 +29,12 @@ body.dark{
 body.dark .note,
 body.dark #text,
 body.dark input,
-body.dark #menu{
+body.dark #menu,
+body.dark #settings{
     background:#1e1e1e;
-    color:#fff;
+    color:white;
 }
 
-/* inputs */
 input,button{
     padding:8px;
     font-size:15px;
@@ -54,26 +42,17 @@ input,button{
     margin-bottom:8px;
 }
 
-/* نص الملاحظة */
 #text{
     min-height:35vh;
-    max-height:45vh;
-    overflow-y:auto;
     border:1px solid #ddd;
     border-radius:6px;
     padding:10px;
-    background:#fff;
-    outline:none;
+    background:white;
 }
 
-/* الأزرار */
-#actions{
-    display:flex;
-    gap:8px;
-}
+#actions{display:flex;gap:8px}
 #actions button{flex:1}
 
-/* زر + */
 #add{
     position:fixed;
     bottom:15px;
@@ -83,17 +62,14 @@ input,button{
     border-radius:50%;
     font-size:26px;
     background:#e53935;
-    color:#fff;
+    color:white;
     border:none;
-    z-index:999;
 }
 
-/* أدوات التلوين */
 #tools{
     display:flex;
     justify-content:center;
     gap:12px;
-    margin-top:8px;
 }
 .color{
     width:22px;
@@ -104,59 +80,40 @@ input,button{
 }
 .color.active{border:3px solid #000}
 
-/* زر المينو (خاص بـ AppCreator24) */
 #menuBtn{
     position:fixed;
     top:10px;
     right:10px;
-    width:44px;
-    height:44px;
-    background:#ffffff;
-    color:#000000;
-    font-size:26px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    border-radius:50%;
-    box-shadow:0 2px 8px rgba(0,0,0,.3);
+    font-size:22px;
     cursor:pointer;
-    z-index:999999;
+    z-index:1000;
 }
-
-/* المينو */
 #menu{
     position:fixed;
-    top:60px;
+    top:40px;
     right:10px;
-    background:#ffffff;
+    background:white;
     border-radius:6px;
-    box-shadow:0 2px 8px rgba(0,0,0,.3);
+    box-shadow:0 2px 6px rgba(0,0,0,.2);
     display:none;
-    z-index:999999;
 }
-#menu div{
-    padding:12px;
-    cursor:pointer;
-    border-bottom:1px solid #eee;
-}
-#menu div:last-child{border-bottom:none}
+#menu div{padding:10px;cursor:pointer}
 
-/* رمز الحماية */
-#lockBox{display:none;}
+#lockBox{display:none}
 </style>
 </head>
 
 <body>
 
-<!-- زر المينو -->
-<div id="menuBtn" onclick="toggleMenu()">☰</div>
-
-<!-- المينو -->
+<div id="menuBtn" onclick="toggleMenu()">⋮</div>
 <div id="menu">
-    <div onclick="toggleLock()">🔐 رمز الحماية</div>
     <div onclick="toggleDark()">🌙 الوضع الليلي</div>
-    <div onclick="deleteAll()">🗑️ حذف جميع الملاحظات</div>
-    <div onclick="about()">ℹ️ حول التطبيق</div>
+    <div onclick="toggleLock()">🔐 رمز الحماية</div>
+    <div onclick="openSettings()">⚙️ الإعدادات</div>
+    <div onclick="exportNotes()">📤 تصدير</div>
+    <div onclick="importNotes()">📥 استيراد</div>
+    <div onclick="deleteAll()">🗑️ حذف الكل</div>
+    <div onclick="about()">ℹ️ حول</div>
 </div>
 
 <div class="container">
@@ -172,7 +129,7 @@ input,button{
 </div>
 
 <div id="editor">
-    <input id="title" placeholder="عنوان الملاحظة">
+    <input id="title" placeholder="عنوان">
     <div id="text" contenteditable="true"></div>
 
     <div id="actions">
@@ -189,161 +146,120 @@ input,button{
     </div>
 </div>
 
+<div id="settings">
+    <h3>⚙️ الإعدادات</h3>
+    <button onclick="fontSize(1)">تكبير الخط</button>
+    <button onclick="fontSize(-1)">تصغير الخط</button>
+    <button onclick="back()">رجوع</button>
+</div>
+
 </div>
 
 <button id="add" onclick="newNote()">+</button>
 
 <script>
-let notes = JSON.parse(localStorage.getItem("notes") || "[]");
-let current = null;
-let currentColor = localStorage.getItem("lastColor") || "black";
-let savedRange = null;
+let notes=JSON.parse(localStorage.getItem("notes")||"[]");
+let current=null;
+let font=15;
 
-const home = document.getElementById("home");
-const editor = document.getElementById("editor");
-const list = document.getElementById("notesList");
-const text = document.getElementById("text");
-const title = document.getElementById("title");
-const search = document.getElementById("search");
-const colors = document.querySelectorAll(".color");
+const home=document.getElementById("home");
+const editor=document.getElementById("editor");
+const settings=document.getElementById("settings");
+const list=document.getElementById("notesList");
+const text=document.getElementById("text");
+const title=document.getElementById("title");
+const search=document.getElementById("search");
+const colors=document.querySelectorAll(".color");
 
-/* حفظ المؤشر */
-function saveSelection(){
-    let sel = window.getSelection();
-    if(sel.rangeCount > 0){
-        savedRange = sel.getRangeAt(0);
-    }
-}
-text.addEventListener("keyup", saveSelection);
-text.addEventListener("mouseup", saveSelection);
-
-/* التلوين */
-function activateColor(color){
-    currentColor = color;
-    localStorage.setItem("lastColor", color);
-    colors.forEach(c=>c.classList.remove("active"));
-    document.querySelector(`[data-color="${color}"]`).classList.add("active");
-    text.focus();
-    if(savedRange){
-        let sel = window.getSelection();
-        sel.removeAllRanges();
-        sel.addRange(savedRange);
-    }
-    document.execCommand("styleWithCSS", false, true);
-    document.execCommand("foreColor", false, color);
-}
-colors.forEach(c=>c.onclick=()=>activateColor(c.dataset.color));
-
-/* التخزين */
-function saveStorage(){
-    localStorage.setItem("notes", JSON.stringify(notes));
-}
-
-/* العرض */
-function render(){
-    list.innerHTML="";
-    notes.forEach((n,i)=>{
-        if(n.title.includes(search.value) || n.content.includes(search.value)){
-            let d=document.createElement("div");
-            d.className="note";
-            d.innerHTML=`<strong>${n.title}</strong><br><small>${n.date}</small>`;
-            d.onclick=()=>editNote(i);
-            list.appendChild(d);
-        }
-    });
-}
-search.oninput = render;
-
-/* العمليات */
-function newNote(){
-    current=null;
-    title.value="";
-    text.innerHTML="";
-    activateColor(currentColor);
-    home.style.display="none";
-    editor.style.display="block";
-}
-
-function editNote(i){
-    current=i;
-    title.value=notes[i].title;
-    text.innerHTML=notes[i].content;
-    activateColor(currentColor);
-    home.style.display="none";
-    editor.style.display="block";
-}
-
-function saveNote(){
-    if(!title.value && !text.innerHTML) return;
-    let note={
-        title:title.value||"بدون عنوان",
-        content:text.innerHTML,
-        date:new Date().toLocaleString()
-    };
-    current===null ? notes.push(note) : notes[current]=note;
-    saveStorage();
-    back();
-}
-
-function deleteNote(){
-    if(current===null) return;
-    if(confirm("متأكد تحذف؟")){
-        notes.splice(current,1);
-        saveStorage();
-        back();
-    }
-}
-
-function deleteAll(){
-    if(confirm("متأكد تحذف جميع الملاحظات؟")){
-        notes=[];
-        saveStorage();
-        render();
-    }
-}
-
-function back(){
-    editor.style.display="none";
-    home.style.display="block";
-    render();
-}
-
-/* المينو */
 function toggleMenu(){
-    let m=document.getElementById("menu");
-    m.style.display = m.style.display==="block"?"none":"block";
+    menu.style.display=menu.style.display==="block"?"none":"block";
 }
-
-/* الوضع الليلي */
+function openSettings(){
+    home.style.display="none";
+    editor.style.display="none";
+    settings.style.display="block";
+    menu.style.display="none";
+}
+function fontSize(v){
+    font+=v;
+    text.style.fontSize=font+"px";
+}
 function toggleDark(){
     document.body.classList.toggle("dark");
     localStorage.setItem("dark",document.body.classList.contains("dark"));
 }
-
-/* رمز الحماية */
-function toggleLock(){
-    let l=document.getElementById("lockBox");
-    l.style.display = l.style.display==="block"?"none":"block";
-}
 function savePin(){
-    let p=document.getElementById("pin").value;
-    if(p){
-        localStorage.setItem("pin",p);
-        alert("تم حفظ الرمز");
-    }
+    localStorage.setItem("pin",pin.value);
+    alert("تم الحفظ");
 }
+function exportNotes(){
+    let a=document.createElement("a");
+    a.href="data:text/json,"+encodeURIComponent(JSON.stringify(notes));
+    a.download="notes.json";
+    a.click();
+}
+function importNotes(){
+    let i=document.createElement("input");
+    i.type="file";
+    i.onchange=e=>{
+        let r=new FileReader();
+        r.onload=()=>{notes=JSON.parse(r.result);save();render()};
+        r.readAsText(e.target.files[0]);
+    };
+    i.click();
+}
+function save(){localStorage.setItem("notes",JSON.stringify(notes))}
+function render(){
+    list.innerHTML="";
+    notes.forEach((n,i)=>{
+        if(n.title.includes(search.value)){
+            let d=document.createElement("div");
+            d.className="note";
+            d.innerHTML=`<b>${n.title}</b><br><small>${n.date}</small>`;
+            d.onclick=()=>edit(i);
+            list.appendChild(d);
+        }
+    });
+}
+search.oninput=render;
 
-/* حول */
+function newNote(){
+    current=null;
+    title.value="";
+    text.innerHTML="";
+    home.style.display="none";
+    editor.style.display="block";
+}
+function edit(i){
+    current=i;
+    title.value=notes[i].title;
+    text.innerHTML=notes[i].content;
+    home.style.display="none";
+    editor.style.display="block";
+}
+function saveNote(){
+    let n={title:title.value||"بدون عنوان",content:text.innerHTML,date:new Date().toLocaleString()};
+    current==null?notes.push(n):notes[current]=n;
+    save();back();
+}
+function deleteNote(){
+    if(current!=null){notes.splice(current,1);save();back()}
+}
+function deleteAll(){
+    if(confirm("متأكد؟")){notes=[];save();render()}
+}
+function back(){
+    editor.style.display="none";
+    settings.style.display="none";
+    home.style.display="block";
+    render();
+}
 function about(){
-    alert("مفكرتي\nنسخة 1.0\nتطبيق مفكرة بدون إنترنت");
+    alert("مفكرتي\nنسخة 1.0\nبدون إنترنت");
 }
 
-/* تشغيل */
-if(localStorage.getItem("dark")==="true"){
-    document.body.classList.add("dark");
-}
-activateColor(currentColor);
 render();
+if(localStorage.getItem("dark")==="true")document.body.classList.add("dark");
 </script>
 
 </body>
