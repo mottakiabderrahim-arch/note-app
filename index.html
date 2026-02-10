@@ -2,215 +2,107 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<title>مفكرتي الاحترافية</title>
+<title>دردشة بسيطة</title>
 
 <style>
-:root{
-  --bg:#f2f2f2;
-  --card:#ffffff;
-  --text:#000;
-  --main:#4CAF50;
-}
-
-body.dark{
-  --bg:#121212;
-  --card:#1e1e1e;
-  --text:#fff;
-}
-
 body{
   margin:0;
   font-family:sans-serif;
-  background:var(--bg);
-  color:var(--text);
+  background:#f0f0f0;
 }
-
 header{
-  background:var(--main);
+  background:#25D366;
   color:#fff;
+  padding:12px;
+  text-align:center;
+  font-size:18px;
+}
+#chat{
   padding:10px;
-  display:flex;
-  gap:5px;
+  height:70vh;
+  overflow-y:auto;
 }
-
-button{
-  cursor:pointer;
-}
-
-#search{
-  width:100%;
+.msg{
+  background:#fff;
+  margin:6px 0;
   padding:8px;
-}
-
-#notes{
-  padding:10px;
-}
-
-.note{
-  background:var(--card);
-  margin-bottom:10px;
-  padding:10px;
   border-radius:8px;
+  font-size:14px;
 }
-
-.note-title{
-  font-weight:bold;
+.time{
+  font-size:10px;
+  color:#666;
+  margin-top:4px;
 }
-
-textarea{
-  width:100%;
-  min-height:120px;
-  font-size:16px;
+#inputBox{
+  display:flex;
+  padding:10px;
+  background:#fff;
 }
-
-.hidden{display:none;}
-
-.toolbar button{
-  margin:2px;
+#inputBox input{
+  flex:1;
+  padding:8px;
+  border-radius:6px;
+  border:1px solid #ccc;
+}
+#inputBox button{
+  margin-right:6px;
+  background:#25D366;
+  color:#fff;
+  border:none;
+  padding:8px 14px;
+  border-radius:6px;
 }
 </style>
 </head>
 
 <body>
 
-<header>
-  <button onclick="toggleDark()">🌙</button>
-  <button onclick="newNote()">➕</button>
-  <button onclick="sortNotes()">↕️</button>
-  <input id="search" placeholder="🔍 بحث..." oninput="renderNotes()">
-</header>
+<header>💬 دردشة بسيطة</header>
 
-<div id="notes"></div>
+<div id="chat"></div>
+
+<div id="inputBox">
+  <input id="msg" placeholder="اكتب رسالة...">
+  <button onclick="send()">إرسال</button>
+</div>
 
 <script>
-let notes = JSON.parse(localStorage.getItem("notes")||"[]");
-let sortMode = "date";
+let chat = document.getElementById("chat");
+let messages = JSON.parse(localStorage.getItem("msgs") || "[]");
 
-function save(){
-  localStorage.setItem("notes", JSON.stringify(notes));
-}
-
-function newNote(){
-  notes.unshift({
-    id:Date.now(),
-    title:"ملاحظة جديدة",
-    text:"",
-    created:new Date().toLocaleString(),
-    updated:new Date().toLocaleString(),
-    locked:false,
-    pass:"",
-    image:""
-  });
-  save();
-  renderNotes();
-}
-
-function toggleDark(){
-  document.body.classList.toggle("dark");
-}
-
-function sortNotes(){
-  sortMode = sortMode==="date"?"title":"date";
-  renderNotes();
-}
-
-function renderNotes(){
-  let q = document.getElementById("search").value.toLowerCase();
-  let list = [...notes];
-
-  if(sortMode==="title"){
-    list.sort((a,b)=>a.title.localeCompare(b.title));
-  }
-
-  let html="";
-  list.forEach(n=>{
-    if(!n.title.toLowerCase().includes(q) && !n.text.toLowerCase().includes(q)) return;
-
-    html+=`
-    <div class="note">
-      <input class="note-title" value="${n.title}"
-        oninput="update(${n.id},'title',this.value)">
-      
-      <div class="toolbar">
-        <button onclick="font(${n.id},1)">A+</button>
-        <button onclick="font(${n.id},-1)">A-</button>
-        <button onclick="lock(${n.id})">🔐</button>
-        <button onclick="img(${n.id})">🖼️</button>
-        <button onclick="del(${n.id})">🗑️</button>
-      </div>
-
-      <textarea id="t${n.id}"
-        oninput="update(${n.id},'text',this.value)"
-        ${n.locked?'disabled':''}
-      >${n.text}</textarea>
-
-      ${n.image?`<img src="${n.image}" style="max-width:100%">`:""}
-
-      <small>📅 ${n.created} | ✏️ ${n.updated}</small>
-    </div>
+function render(){
+  chat.innerHTML="";
+  messages.forEach(m=>{
+    let d=document.createElement("div");
+    d.className="msg";
+    d.innerHTML = `
+      <b>${m.user}</b><br>
+      ${m.text}
+      <div class="time">${m.time}</div>
     `;
+    chat.appendChild(d);
   });
-
-  document.getElementById("notes").innerHTML = html;
+  chat.scrollTop = chat.scrollHeight;
 }
 
-function update(id,key,val){
-  let n = notes.find(x=>x.id===id);
-  n[key]=val;
-  n.updated=new Date().toLocaleString();
-  save();
-}
+function send(){
+  let input=document.getElementById("msg");
+  if(!input.value.trim()) return;
 
-function del(id){
-  if(confirm("حذف؟")){
-    notes = notes.filter(n=>n.id!==id);
-    save();
-    renderNotes();
-  }
-}
-
-function font(id,d){
-  let t=document.getElementById("t"+id);
-  let s=parseInt(window.getComputedStyle(t).fontSize);
-  t.style.fontSize=(s+d)+"px";
-}
-
-function lock(id){
-  let n=notes.find(x=>x.id===id);
-  if(!n.locked){
-    let p=prompt("رمز القفل:");
-    if(p){
-      n.locked=true;
-      n.pass=p;
-    }
-  }else{
-    let p=prompt("ادخل الرمز:");
-    if(p===n.pass){
-      n.locked=false;
-    }
-  }
-  save();
-  renderNotes();
-}
-
-function img(id){
-  let i=document.createElement("input");
-  i.type="file";
-  i.accept="image/*";
-  i.onchange=e=>{
-    let r=new FileReader();
-    r.onload=()=>{
-      let n=notes.find(x=>x.id===id);
-      n.image=r.result;
-      save();
-      renderNotes();
-    };
-    r.readAsDataURL(e.target.files[0]);
+  let msg={
+    user:"👤 مستخدم",
+    text:input.value,
+    time:new Date().toLocaleTimeString()
   };
-  i.click();
+
+  messages.push(msg);
+  localStorage.setItem("msgs",JSON.stringify(messages));
+  input.value="";
+  render();
 }
 
-renderNotes();
+render();
 </script>
 
 </body>
