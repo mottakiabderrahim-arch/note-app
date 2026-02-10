@@ -5,262 +5,173 @@
 <title>مفكرتي</title>
 
 <style>
-:root{
-  --bg:#f5f5f5;
-  --card:#fff;
-  --text:#000;
-  --main:#2196f3;
-}
-body.dark{
-  --bg:#121212;
-  --card:#1e1e1e;
-  --text:#fff;
-}
 body{
   margin:0;
-  font-family:sans-serif;
-  background:var(--bg);
-  color:var(--text);
+  font-family: Arial, sans-serif;
+  background:#f2f2f2;
 }
+
 header{
-  background:var(--main);
+  background:#333;
   color:#fff;
-  padding:12px;
-  text-align:center;
-  font-size:18px;
-  position:relative;
-}
-.menu-btn{
-  position:absolute;
-  left:10px;
-  top:10px;
-  cursor:pointer;
-}
-.menu{
-  display:none;
-  position:absolute;
-  left:10px;
-  top:45px;
-  background:var(--card);
-  border-radius:6px;
-  box-shadow:0 2px 6px rgba(0,0,0,.3);
-  z-index:10;
-}
-.menu div{
   padding:10px;
-  border-bottom:1px solid #ccc;
+  text-align:center;
+}
+
+#tools{
+  display:flex;
+  gap:5px;
+  padding:10px;
+  flex-wrap:wrap;
+  background:#fff;
+}
+
+#tools button{
+  padding:5px 10px;
   cursor:pointer;
-}
-.menu div:last-child{border:none}
-
-#container{padding:10px}
-
-input,button{
-  width:100%;
-  padding:8px;
-  margin-top:6px;
-  border-radius:6px;
-  border:1px solid #ccc;
-  box-sizing:border-box;
-}
-button{
-  background:var(--main);
-  color:#fff;
-  border:none;
-}
-
-.toolbar button{
-  width:auto;
-  margin:2px;
 }
 
 #editor{
   min-height:120px;
-  border:1px solid #ccc;
-  border-radius:6px;
-  padding:8px;
-  margin-top:6px;
+  padding:10px;
+  margin:10px;
   background:#fff;
+  border:1px solid #ccc;
 }
 
 .note{
-  background:var(--card);
-  margin-top:10px;
+  background:#fff;
+  margin:10px;
   padding:10px;
-  border-radius:6px;
-  position:relative;
+  border-radius:5px;
 }
-.note-title{
-  font-weight:bold;
-  margin-bottom:6px;
+
+.note img{
+  max-width:100%;
+  margin-top:5px;
 }
+
+.meta{
+  font-size:12px;
+  color:#666;
+  margin-top:5px;
+}
+
 .delete{
-  position:absolute;
-  left:10px;
-  top:10px;
+  color:red;
   cursor:pointer;
+  font-size:12px;
 }
 </style>
 </head>
 
 <body>
 
-<header>
-  <span class="menu-btn" onclick="toggleMenu()">⋮</span>
-  📒 مفكرتي
-  <div class="menu" id="menu">
-    <div onclick="toggleDark()">🌙 وضع ليلي</div>
-    <div onclick="toggleOrder()">↕️ ترتيب</div>
-    <div onclick="deleteAll()">🗑️ حذف الكل</div>
-  </div>
-</header>
+<header>📒 مفكرتي</header>
 
-<div id="container">
-  <input id="search" placeholder="🔍 بحث..." onkeyup="showNotes()">
-  <input id="title" placeholder="📝 عنوان الملاحظة">
-
-  <!-- Toolbar -->
-  <div class="toolbar">
-    <button onclick="cmd('bold')"><b>B</b></button>
-    <button onclick="cmd('italic')"><i>I</i></button>
-    <button onclick="cmd('underline')"><u>U</u></button>
-    <button onclick="colorText('red')">🔴</button>
-    <button onclick="colorText('blue')">🔵</button>
-    <button onclick="colorText('green')">🟢</button>
-    <button onclick="openImage()">🖼️</button>
-    <input type="file" id="imgInput" accept="image/*" style="display:none">
-  </div>
-
-  <div id="editor" contenteditable="true">اكتب ملاحظتك هنا...</div>
-
-  <button onclick="saveNote()">💾 حفظ</button>
-
-  <div id="notes"></div>
+<div id="tools">
+  <button onclick="addNote()">💾 حفظ</button>
+  <button onclick="bold()">B</button>
+  <button onclick="color('red')">🔴</button>
+  <button onclick="color('blue')">🔵</button>
+  <button onclick="fontSize(1)">A+</button>
+  <button onclick="fontSize(-1)">A-</button>
+  <input type="file" accept="image/*" onchange="addImage(event)">
 </div>
 
+<div id="editor" contenteditable="true">
+اكتب ملاحظتك هنا...
+</div>
+
+<div id="notes"></div>
+
 <script>
-let notes = JSON.parse(localStorage.getItem("notes")||"[]");
-let editIndex = -1;
-let newestFirst = true;
+let notes = JSON.parse(localStorage.getItem("notes") || "[]");
 
-const title = document.getElementById("title");
-const editor = document.getElementById("editor");
-const notesBox = document.getElementById("notes");
-const menu = document.getElementById("menu");
-
-/* ===== Menu ===== */
-function toggleMenu(){
-  menu.style.display = menu.style.display==="block"?"none":"block";
+function saveNotes(){
+  localStorage.setItem("notes", JSON.stringify(notes));
 }
 
-/* ===== Dark Mode ===== */
-function toggleDark(){
-  document.body.classList.toggle("dark");
-  localStorage.setItem("dark",
-    document.body.classList.contains("dark"));
-}
-if(localStorage.getItem("dark")==="true"){
-  document.body.classList.add("dark");
-}
+function addNote(){
+  let content = document.getElementById("editor").innerHTML.trim();
+  if(!content) return;
 
-/* ===== Order ===== */
-function toggleOrder(){
-  newestFirst = !newestFirst;
-  showNotes();
-}
+  let now = new Date().toLocaleString("ar-MA");
 
-/* ===== execCommand (محدود) ===== */
-function cmd(c){
-  document.execCommand(c,false,null);
+  notes.unshift({
+    html: content,
+    created: now,
+    updated: now
+  });
+
+  saveNotes();
+  document.getElementById("editor").innerHTML = "";
+  render();
 }
 
-/* ===== Coloring (SPAN آمن) ===== */
-function colorText(color){
-  let sel = window.getSelection();
-  if(!sel.rangeCount) return;
-  let range = sel.getRangeAt(0);
-  let span = document.createElement("span");
-  span.style.color = color;
-  range.surroundContents(span);
-}
+function render(){
+  let box = document.getElementById("notes");
+  box.innerHTML = "";
 
-/* ===== Images (صورة وحدة + حجم محدود) ===== */
-function openImage(){
-  document.getElementById("imgInput").click();
-}
-document.getElementById("imgInput").onchange=function(){
-  let file=this.files[0];
-  if(!file) return;
-  if(file.size > 300000){
-    alert("⚠️ الصورة كبيرة بزاف");
-    return;
-  }
-  let reader=new FileReader();
-  reader.onload=function(){
-    editor.innerHTML +=
-      `<img src="${reader.result}" style="max-width:100%;display:block;margin:6px 0">`;
-  }
-  reader.readAsDataURL(file);
-}
-
-/* ===== Notes ===== */
-function saveNote(){
-  let t = title.value.trim();
-  let html = editor.innerHTML.trim();
-  if(!t && !html) return;
-
-  let note={title:t||"بدون عنوان", html};
-
-  if(editIndex===-1) notes.push(note);
-  else{ notes[editIndex]=note; editIndex=-1; }
-
-  localStorage.setItem("notes",JSON.stringify(notes));
-  title.value="";
-  editor.innerHTML="";
-  showNotes();
-}
-
-function showNotes(){
-  notesBox.innerHTML="";
-  let q=document.getElementById("search").value.toLowerCase();
-  let arr=[...notes];
-  if(newestFirst) arr.reverse();
-
-  arr.forEach((n,i)=>{
-    if(!(n.title+n.html).toLowerCase().includes(q)) return;
-    let d=document.createElement("div");
+  notes.forEach((n,i)=>{
+    let d = document.createElement("div");
     d.className="note";
-    d.innerHTML=`
-      <span class="delete" onclick="del(${i});event.stopPropagation()">🗑️</span>
-      <div class="note-title">${n.title}</div>
-      <div>${n.html}</div>`;
-    d.onclick=()=>{
-      title.value=n.title;
-      editor.innerHTML=n.html;
-      editIndex=i;
-      window.scrollTo(0,0);
-    };
-    notesBox.appendChild(d);
+    d.innerHTML = `
+      ${n.html}
+      <div class="meta">
+        🕒 إنشاء: ${n.created}<br>
+        ✏️ تعديل: ${n.updated}<br>
+        <span class="delete" onclick="del(${i})">🗑 حذف</span>
+      </div>
+    `;
+    box.appendChild(d);
   });
 }
 
 function del(i){
-  if(confirm("حذف الملاحظة؟")){
-    notes.splice(i,1);
-    localStorage.setItem("notes",JSON.stringify(notes));
-    showNotes();
-  }
+  notes.splice(i,1);
+  saveNotes();
+  render();
 }
 
-function deleteAll(){
-  if(confirm("حذف جميع الملاحظات؟")){
-    notes=[];
-    localStorage.removeItem("notes");
-    showNotes();
-  }
+function bold(){
+  wrap("b");
 }
 
-showNotes();
+function color(c){
+  wrap("span",`color:${c}`);
+}
+
+function fontSize(v){
+  let sel = window.getSelection();
+  if(!sel.rangeCount) return;
+  let r = sel.getRangeAt(0);
+  let s = document.createElement("span");
+  s.style.fontSize = v>0 ? "larger" : "smaller";
+  r.surroundContents(s);
+}
+
+function wrap(tag,style){
+  let sel = window.getSelection();
+  if(!sel.rangeCount) return;
+  let r = sel.getRangeAt(0);
+  let el = document.createElement(tag);
+  if(style) el.style = style;
+  r.surroundContents(el);
+}
+
+function addImage(e){
+  let file = e.target.files[0];
+  if(!file) return;
+  let reader = new FileReader();
+  reader.onload = ()=>{
+    document.getElementById("editor").innerHTML +=
+      `<img src="${reader.result}">`;
+  };
+  reader.readAsDataURL(file);
+}
+
+render();
 </script>
 
 </body>
