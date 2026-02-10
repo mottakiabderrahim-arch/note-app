@@ -2,176 +2,215 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<title>مفكرتي</title>
+<title>مفكرتي الاحترافية</title>
 
 <style>
+:root{
+  --bg:#f2f2f2;
+  --card:#ffffff;
+  --text:#000;
+  --main:#4CAF50;
+}
+
+body.dark{
+  --bg:#121212;
+  --card:#1e1e1e;
+  --text:#fff;
+}
+
 body{
   margin:0;
-  font-family: Arial, sans-serif;
-  background:#f2f2f2;
+  font-family:sans-serif;
+  background:var(--bg);
+  color:var(--text);
 }
 
 header{
-  background:#333;
+  background:var(--main);
   color:#fff;
   padding:10px;
-  text-align:center;
-}
-
-#tools{
   display:flex;
   gap:5px;
-  padding:10px;
-  flex-wrap:wrap;
-  background:#fff;
 }
 
-#tools button{
-  padding:5px 10px;
+button{
   cursor:pointer;
 }
 
-#editor{
-  min-height:120px;
+#search{
+  width:100%;
+  padding:8px;
+}
+
+#notes{
   padding:10px;
-  margin:10px;
-  background:#fff;
-  border:1px solid #ccc;
 }
 
 .note{
-  background:#fff;
-  margin:10px;
+  background:var(--card);
+  margin-bottom:10px;
   padding:10px;
-  border-radius:5px;
+  border-radius:8px;
 }
 
-.note img{
-  max-width:100%;
-  margin-top:5px;
+.note-title{
+  font-weight:bold;
 }
 
-.meta{
-  font-size:12px;
-  color:#666;
-  margin-top:5px;
+textarea{
+  width:100%;
+  min-height:120px;
+  font-size:16px;
 }
 
-.delete{
-  color:red;
-  cursor:pointer;
-  font-size:12px;
+.hidden{display:none;}
+
+.toolbar button{
+  margin:2px;
 }
 </style>
 </head>
 
 <body>
 
-<header>📒 مفكرتي</header>
-
-<div id="tools">
-  <button onclick="addNote()">💾 حفظ</button>
-  <button onclick="bold()">B</button>
-  <button onclick="color('red')">🔴</button>
-  <button onclick="color('blue')">🔵</button>
-  <button onclick="fontSize(1)">A+</button>
-  <button onclick="fontSize(-1)">A-</button>
-  <input type="file" accept="image/*" onchange="addImage(event)">
-</div>
-
-<div id="editor" contenteditable="true">
-اكتب ملاحظتك هنا...
-</div>
+<header>
+  <button onclick="toggleDark()">🌙</button>
+  <button onclick="newNote()">➕</button>
+  <button onclick="sortNotes()">↕️</button>
+  <input id="search" placeholder="🔍 بحث..." oninput="renderNotes()">
+</header>
 
 <div id="notes"></div>
 
 <script>
-let notes = JSON.parse(localStorage.getItem("notes") || "[]");
+let notes = JSON.parse(localStorage.getItem("notes")||"[]");
+let sortMode = "date";
 
-function saveNotes(){
+function save(){
   localStorage.setItem("notes", JSON.stringify(notes));
 }
 
-function addNote(){
-  let content = document.getElementById("editor").innerHTML.trim();
-  if(!content) return;
-
-  let now = new Date().toLocaleString("ar-MA");
-
+function newNote(){
   notes.unshift({
-    html: content,
-    created: now,
-    updated: now
+    id:Date.now(),
+    title:"ملاحظة جديدة",
+    text:"",
+    created:new Date().toLocaleString(),
+    updated:new Date().toLocaleString(),
+    locked:false,
+    pass:"",
+    image:""
   });
-
-  saveNotes();
-  document.getElementById("editor").innerHTML = "";
-  render();
+  save();
+  renderNotes();
 }
 
-function render(){
-  let box = document.getElementById("notes");
-  box.innerHTML = "";
+function toggleDark(){
+  document.body.classList.toggle("dark");
+}
 
-  notes.forEach((n,i)=>{
-    let d = document.createElement("div");
-    d.className="note";
-    d.innerHTML = `
-      ${n.html}
-      <div class="meta">
-        🕒 إنشاء: ${n.created}<br>
-        ✏️ تعديل: ${n.updated}<br>
-        <span class="delete" onclick="del(${i})">🗑 حذف</span>
+function sortNotes(){
+  sortMode = sortMode==="date"?"title":"date";
+  renderNotes();
+}
+
+function renderNotes(){
+  let q = document.getElementById("search").value.toLowerCase();
+  let list = [...notes];
+
+  if(sortMode==="title"){
+    list.sort((a,b)=>a.title.localeCompare(b.title));
+  }
+
+  let html="";
+  list.forEach(n=>{
+    if(!n.title.toLowerCase().includes(q) && !n.text.toLowerCase().includes(q)) return;
+
+    html+=`
+    <div class="note">
+      <input class="note-title" value="${n.title}"
+        oninput="update(${n.id},'title',this.value)">
+      
+      <div class="toolbar">
+        <button onclick="font(${n.id},1)">A+</button>
+        <button onclick="font(${n.id},-1)">A-</button>
+        <button onclick="lock(${n.id})">🔐</button>
+        <button onclick="img(${n.id})">🖼️</button>
+        <button onclick="del(${n.id})">🗑️</button>
       </div>
+
+      <textarea id="t${n.id}"
+        oninput="update(${n.id},'text',this.value)"
+        ${n.locked?'disabled':''}
+      >${n.text}</textarea>
+
+      ${n.image?`<img src="${n.image}" style="max-width:100%">`:""}
+
+      <small>📅 ${n.created} | ✏️ ${n.updated}</small>
+    </div>
     `;
-    box.appendChild(d);
   });
+
+  document.getElementById("notes").innerHTML = html;
 }
 
-function del(i){
-  notes.splice(i,1);
-  saveNotes();
-  render();
+function update(id,key,val){
+  let n = notes.find(x=>x.id===id);
+  n[key]=val;
+  n.updated=new Date().toLocaleString();
+  save();
 }
 
-function bold(){
-  wrap("b");
+function del(id){
+  if(confirm("حذف؟")){
+    notes = notes.filter(n=>n.id!==id);
+    save();
+    renderNotes();
+  }
 }
 
-function color(c){
-  wrap("span",`color:${c}`);
+function font(id,d){
+  let t=document.getElementById("t"+id);
+  let s=parseInt(window.getComputedStyle(t).fontSize);
+  t.style.fontSize=(s+d)+"px";
 }
 
-function fontSize(v){
-  let sel = window.getSelection();
-  if(!sel.rangeCount) return;
-  let r = sel.getRangeAt(0);
-  let s = document.createElement("span");
-  s.style.fontSize = v>0 ? "larger" : "smaller";
-  r.surroundContents(s);
+function lock(id){
+  let n=notes.find(x=>x.id===id);
+  if(!n.locked){
+    let p=prompt("رمز القفل:");
+    if(p){
+      n.locked=true;
+      n.pass=p;
+    }
+  }else{
+    let p=prompt("ادخل الرمز:");
+    if(p===n.pass){
+      n.locked=false;
+    }
+  }
+  save();
+  renderNotes();
 }
 
-function wrap(tag,style){
-  let sel = window.getSelection();
-  if(!sel.rangeCount) return;
-  let r = sel.getRangeAt(0);
-  let el = document.createElement(tag);
-  if(style) el.style = style;
-  r.surroundContents(el);
-}
-
-function addImage(e){
-  let file = e.target.files[0];
-  if(!file) return;
-  let reader = new FileReader();
-  reader.onload = ()=>{
-    document.getElementById("editor").innerHTML +=
-      `<img src="${reader.result}">`;
+function img(id){
+  let i=document.createElement("input");
+  i.type="file";
+  i.accept="image/*";
+  i.onchange=e=>{
+    let r=new FileReader();
+    r.onload=()=>{
+      let n=notes.find(x=>x.id===id);
+      n.image=r.result;
+      save();
+      renderNotes();
+    };
+    r.readAsDataURL(e.target.files[0]);
   };
-  reader.readAsDataURL(file);
+  i.click();
 }
 
-render();
+renderNotes();
 </script>
 
 </body>
