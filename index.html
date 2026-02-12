@@ -6,7 +6,7 @@
 
 <style>
 body{
-  font-family: Arial;
+  font-family:Arial;
   margin:0;
   padding:15px;
   background:#f5f5f5;
@@ -48,8 +48,9 @@ input,button{
   color:white;
 }
 
-.toolbar button{
-  margin:2px;
+#toolbar{
+  display:none;
+  margin-top:5px;
 }
 </style>
 </head>
@@ -66,7 +67,9 @@ input,button{
 
 <input type="text" id="noteTitle" placeholder="عنوان الملاحظة">
 
-<div class="toolbar">
+<button onclick="toggleToolbar()">🎨 تنسيق</button>
+
+<div id="toolbar">
 
 <button onclick="format('bold')"><b>B</b></button>
 <button onclick="format('italic')"><i>I</i></button>
@@ -96,7 +99,7 @@ input,button{
 
 <br>
 
-<button onclick="addNote()">➕ إضافة</button>
+<button id="saveBtn" onclick="addOrUpdateNote()">➕ إضافة</button>
 <button onclick="deleteAll()">🗑 حذف الكل</button>
 
 <div id="notes"></div>
@@ -104,34 +107,27 @@ input,button{
 <script>
 
 let notes = JSON.parse(localStorage.getItem("notes")) || [];
+let editId = null;
+
+/* ===== إظهار/إخفاء شريط التنسيق ===== */
+function toggleToolbar(){
+  let bar=document.getElementById("toolbar");
+  bar.style.display = bar.style.display==="none" ? "block" : "none";
+}
 
 /* ===== محرر ===== */
-
-function format(cmd){
-  document.execCommand(cmd,false,null);
-}
-
-function setColor(color){
-  document.execCommand("foreColor",false,color);
-}
-
-function highlight(color){
-  document.execCommand("hiliteColor",false,color);
-}
-
-function fontSize(size){
-  document.execCommand("fontSize",false,size);
-}
+function format(cmd){ document.execCommand(cmd,false,null); }
+function setColor(color){ document.execCommand("foreColor",false,color); }
+function highlight(color){ document.execCommand("hiliteColor",false,color); }
+function fontSize(size){ document.execCommand("fontSize",false,size); }
 
 function addLink(){
-  let url = prompt("دخل الرابط:");
-  if(url){
-    document.execCommand("createLink",false,url);
-  }
+  let url=prompt("دخل الرابط:");
+  if(url) document.execCommand("createLink",false,url);
 }
 
 function addImage(){
-  let input = document.createElement("input");
+  let input=document.createElement("input");
   input.type="file";
   input.accept="image/*";
 
@@ -143,7 +139,6 @@ function addImage(){
     };
     reader.readAsDataURL(file);
   };
-
   input.click();
 }
 
@@ -158,9 +153,8 @@ document.getElementById("noteText").addEventListener("paste",function(e){
   document.execCommand("insertText",false,text);
 });
 
-/* ===== إضافة ملاحظة ===== */
-
-function addNote(){
+/* ===== إضافة أو تعديل ===== */
+function addOrUpdateNote(){
 
   let title=document.getElementById("noteTitle").value;
   let text=document.getElementById("noteText").innerHTML;
@@ -168,14 +162,27 @@ function addNote(){
 
   if(!title && !text) return;
 
-  notes.push({
-    id:Date.now(),
-    title:title,
-    text:text,
-    date:new Date().toLocaleString(),
-    reminder: reminder ? new Date(reminder).getTime() : null,
-    notified:false
-  });
+  if(editId===null){
+
+    notes.push({
+      id:Date.now(),
+      title:title,
+      text:text,
+      date:new Date().toLocaleString(),
+      reminder: reminder ? new Date(reminder).getTime() : null,
+      notified:false
+    });
+
+  }else{
+
+    let note=notes.find(n=>n.id===editId);
+    note.title=title;
+    note.text=text;
+    note.reminder= reminder ? new Date(reminder).getTime() : null;
+
+    editId=null;
+    document.getElementById("saveBtn").innerText="➕ إضافة";
+  }
 
   localStorage.setItem("notes",JSON.stringify(notes));
 
@@ -186,6 +193,7 @@ function addNote(){
   displayNotes();
 }
 
+/* ===== عرض الملاحظات ===== */
 function displayNotes(){
 
   let search=document.getElementById("search").value.toLowerCase();
@@ -202,6 +210,7 @@ function displayNotes(){
           <h3>${note.title}</h3>
           <div>${note.text}</div>
           <small>${note.date}</small><br>
+          <button onclick="editNote(${note.id})">✏️ تعديل</button>
           <button onclick="deleteNote(${note.id})">❌ حذف</button>
         </div>
       `;
@@ -209,6 +218,27 @@ function displayNotes(){
   });
 }
 
+/* ===== تعديل ===== */
+function editNote(id){
+
+  let note=notes.find(n=>n.id===id);
+
+  document.getElementById("noteTitle").value=note.title;
+  document.getElementById("noteText").innerHTML=note.text;
+
+  if(note.reminder){
+    let d=new Date(note.reminder);
+    document.getElementById("reminder").value=
+      d.toISOString().slice(0,16);
+  }
+
+  editId=id;
+  document.getElementById("saveBtn").innerText="💾 حفظ التعديل";
+
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+/* ===== حذف ===== */
 function deleteNote(id){
   notes=notes.filter(n=>n.id!==id);
   localStorage.setItem("notes",JSON.stringify(notes));
@@ -224,13 +254,11 @@ function deleteAll(){
 }
 
 /* ===== الوضع الليلي ===== */
-
 function toggleDark(){
   document.body.classList.toggle("dark");
 }
 
 /* ===== التنبيهات ===== */
-
 if("Notification" in window){
   Notification.requestPermission();
 }
