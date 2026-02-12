@@ -41,13 +41,6 @@ body{
   z-index:9999;
 }
 
-#lockScreen input{
-  padding:10px;
-  font-size:18px;
-  margin-top:10px;
-  text-align:center;
-}
-
 header{
   background:var(--main);
   color:white;
@@ -65,100 +58,95 @@ header{
   color:black;
   border:none;
   padding:5px 10px;
-  font-size:14px;
 }
 
 .container{
   padding:15px;
 }
 
-textarea{
-  width:100%;
-  height:70px;
-  padding:10px;
-  font-size:16px;
-  box-sizing:border-box;
-}
-
-input, select{
+textarea,input,select,button{
   width:100%;
   padding:8px;
-  margin-top:10px;
+  margin-top:8px;
   box-sizing:border-box;
 }
 
 button{
-  margin-top:10px;
-  padding:10px;
-  width:100%;
   background:var(--main);
   color:white;
   border:none;
-  font-size:16px;
 }
 
 .note{
-  background:var(--card);
   padding:10px;
   margin-top:10px;
   border-radius:5px;
   position:relative;
 }
 
-.delete{
+.smallBtn{
   position:absolute;
-  left:10px;
-  top:10px;
-  background:red;
-  color:white;
+  top:5px;
   border:none;
-  padding:5px 8px;
+  padding:3px 6px;
   font-size:12px;
+  cursor:pointer;
 }
+
 </style>
 </head>
-
 <body>
 
-<!-- شاشة القفل -->
 <div id="lockScreen">
   <h2 style="color:white;">🔒 أدخل الرمز</h2>
-  <input type="password" id="pinInput" placeholder="أدخل PIN">
+  <input type="password" id="pinInput">
   <button onclick="checkPin()">دخول</button>
 </div>
 
 <header>
-  مفكرتي
-  <button class="darkBtn" onclick="toggleDark()">🌙</button>
+مفكرتي
+<button class="darkBtn" onclick="toggleDark()">🌙</button>
 </header>
 
 <div class="container">
 
-  <textarea id="noteInput" placeholder="اكتب ملاحظتك هنا..."></textarea>
-  <button onclick="addNote()">إضافة</button>
+<textarea id="noteInput" placeholder="اكتب ملاحظتك..."></textarea>
 
-  <input type="text" id="searchInput" placeholder="بحث..." onkeyup="displayNotes()">
+<select id="categorySelect">
+<option value="شخصي">شخصي</option>
+<option value="دراسة">دراسة</option>
+<option value="عمل">عمل</option>
+</select>
 
-  <select id="sortSelect" onchange="displayNotes()">
-    <option value="new">الأحدث أولاً</option>
-    <option value="old">الأقدم أولاً</option>
-  </select>
+<button onclick="addNote()">إضافة</button>
 
-  <button onclick="deleteAll()" style="background:red;">
-    🗑️ حذف الكل
-  </button>
+<input type="text" id="searchInput" placeholder="بحث..." onkeyup="displayNotes()">
 
-  <div id="notesContainer"></div>
+<select id="filterCategory" onchange="displayNotes()">
+<option value="all">كل التصنيفات</option>
+<option value="شخصي">شخصي</option>
+<option value="دراسة">دراسة</option>
+<option value="عمل">عمل</option>
+</select>
+
+<select id="sortSelect" onchange="displayNotes()">
+<option value="new">الأحدث أولاً</option>
+<option value="old">الأقدم أولاً</option>
+</select>
+
+<button onclick="deleteAll()" style="background:red;">🗑️ حذف الكل</button>
+
+<div id="stats"></div>
+<div id="notesContainer"></div>
 
 </div>
 
 <script>
 
-// ===== الرمز السري =====
+// ===== القفل =====
 let savedPin = localStorage.getItem("appPin");
-
 if(!savedPin){
-  let newPin = prompt("أنشئ رمز سري جديد (PIN):");
+  let newPin = prompt("أنشئ رمز سري:");
   if(newPin){
     localStorage.setItem("appPin", newPin);
     savedPin = newPin;
@@ -170,95 +158,157 @@ function checkPin(){
   if(input === savedPin){
     document.getElementById("lockScreen").style.display="none";
   }else{
-    alert("رمز خاطئ!");
+    alert("رمز خاطئ");
   }
 }
 
 // ===== البيانات =====
 let notes = JSON.parse(localStorage.getItem("notes")) || [];
 
-// ===== عرض =====
-function displayNotes(){
-  let container = document.getElementById("notesContainer");
-  let searchValue = document.getElementById("searchInput").value.toLowerCase();
-  let sortValue = document.getElementById("sortSelect").value;
-
-  container.innerHTML = "";
-
-  let notesCopy = [...notes];
-
-  if(sortValue === "new"){
-    notesCopy.reverse();
-  }
-
-  notesCopy.forEach((note) => {
-
-    if(note.toLowerCase().includes(searchValue)){
-
-      let div = document.createElement("div");
-      div.className = "note";
-      div.textContent = note;
-
-      let del = document.createElement("button");
-      del.textContent = "حذف";
-      del.className = "delete";
-      del.onclick = function(){
-        let realIndex = notes.indexOf(note);
-        deleteNote(realIndex);
-      };
-
-      div.appendChild(del);
-      container.appendChild(div);
-    }
-
-  });
-}
-
-// ===== إضافة =====
 function addNote(){
   let input = document.getElementById("noteInput");
-  if(input.value.trim() === "") return;
+  let category = document.getElementById("categorySelect").value;
+  if(input.value.trim()==="") return;
 
-  notes.push(input.value);
-  localStorage.setItem("notes", JSON.stringify(notes));
-  input.value = "";
+  notes.push({
+    text: input.value,
+    date: new Date().toLocaleString(),
+    pinned:false,
+    color:"#ffffff",
+    done:false,
+    category:category
+  });
+
+  localStorage.setItem("notes",JSON.stringify(notes));
+  input.value="";
   displayNotes();
 }
 
-// ===== حذف =====
-function deleteNote(index){
-  notes.splice(index,1);
-  localStorage.setItem("notes", JSON.stringify(notes));
-  displayNotes();
+function displayNotes(){
+  let container=document.getElementById("notesContainer");
+  let search=document.getElementById("searchInput").value.toLowerCase();
+  let filter=document.getElementById("filterCategory").value;
+  let sort=document.getElementById("sortSelect").value;
+
+  container.innerHTML="";
+
+  let total=0, doneCount=0;
+
+  let copy=[...notes];
+  copy.sort((a,b)=>b.pinned-a.pinned);
+  if(sort==="new") copy.reverse();
+
+  copy.forEach(note=>{
+    if(
+      note.text.toLowerCase().includes(search) &&
+      (filter==="all" || note.category===filter)
+    ){
+
+      total++;
+      if(note.done) doneCount++;
+
+      let div=document.createElement("div");
+      div.className="note";
+      div.style.background=note.color;
+
+      let check=document.createElement("input");
+      check.type="checkbox";
+      check.checked=note.done;
+      check.onchange=function(){
+        note.done=this.checked;
+        localStorage.setItem("notes",JSON.stringify(notes));
+        displayNotes();
+      };
+
+      let text=document.createElement("div");
+      text.textContent=note.text;
+      if(note.done){
+        text.style.textDecoration="line-through";
+        text.style.opacity="0.6";
+      }
+
+      let date=document.createElement("small");
+      date.textContent=note.date;
+      date.style.display="block";
+
+      let cat=document.createElement("small");
+      cat.textContent="📂 "+note.category;
+      cat.style.display="block";
+
+      let pin=document.createElement("button");
+      pin.textContent=note.pinned?"⭐":"☆";
+      pin.className="smallBtn";
+      pin.style.left="5px";
+      pin.onclick=function(){
+        note.pinned=!note.pinned;
+        localStorage.setItem("notes",JSON.stringify(notes));
+        displayNotes();
+      };
+
+      let edit=document.createElement("button");
+      edit.textContent="✏️";
+      edit.className="smallBtn";
+      edit.style.left="35px";
+      edit.onclick=function(){
+        let newText=prompt("عدل:",note.text);
+        if(newText){
+          note.text=newText;
+          localStorage.setItem("notes",JSON.stringify(notes));
+          displayNotes();
+        }
+      };
+
+      let del=document.createElement("button");
+      del.textContent="🗑️";
+      del.className="smallBtn";
+      del.style.left="65px";
+      del.onclick=function(){
+        notes.splice(notes.indexOf(note),1);
+        localStorage.setItem("notes",JSON.stringify(notes));
+        displayNotes();
+      };
+
+      let color=document.createElement("input");
+      color.type="color";
+      color.value=note.color;
+      color.className="smallBtn";
+      color.style.left="95px";
+      color.onchange=function(){
+        note.color=this.value;
+        localStorage.setItem("notes",JSON.stringify(notes));
+        displayNotes();
+      };
+
+      div.append(check,text,date,cat,pin,edit,del,color);
+      container.appendChild(div);
+    }
+  });
+
+  document.getElementById("stats").textContent=
+  "📊 المجموع: "+total+" | ✅ المنجزة: "+doneCount;
 }
 
-// ===== حذف الكل =====
 function deleteAll(){
-  if(confirm("واش متأكد بغيتي تمسح جميع الملاحظات؟")){
-    notes = [];
-    localStorage.setItem("notes", JSON.stringify(notes));
+  if(confirm("مسح الكل؟")){
+    notes=[];
+    localStorage.setItem("notes",JSON.stringify(notes));
     displayNotes();
   }
 }
 
-// ===== الوضع الليلي =====
 function toggleDark(){
   document.body.classList.toggle("dark");
-
-  if(document.body.classList.contains("dark")){
-    localStorage.setItem("darkMode","on");
-  }else{
-    localStorage.setItem("darkMode","off");
-  }
+  localStorage.setItem("darkMode",
+    document.body.classList.contains("dark")?"on":"off"
+  );
 }
 
-if(localStorage.getItem("darkMode") === "on"){
+if(localStorage.getItem("darkMode")==="on"){
   document.body.classList.add("dark");
 }
 
 displayNotes();
 
 </script>
-
 </body>
 </html>
