@@ -2,107 +2,262 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<title>دردشة بسيطة</title>
+<title>مفكرتي</title>
 
 <style>
+:root{
+  --bg:#f2f2f2;
+  --card:#ffffff;
+  --text:#000000;
+  --main:#2196f3;
+}
+
+body.dark{
+  --bg:#121212;
+  --card:#1e1e1e;
+  --text:#ffffff;
+  --main:#333333;
+}
+
 body{
   margin:0;
-  font-family:sans-serif;
-  background:#f0f0f0;
+  font-family:Arial;
+  background:var(--bg);
+  color:var(--text);
 }
-header{
-  background:#25D366;
-  color:#fff;
-  padding:12px;
-  text-align:center;
-  font-size:18px;
+
+/* شاشة القفل */
+#lockScreen{
+  position:fixed;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  background:#121212;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  z-index:9999;
 }
-#chat{
+
+#lockScreen input{
   padding:10px;
-  height:70vh;
-  overflow-y:auto;
+  font-size:18px;
+  margin-top:10px;
+  text-align:center;
 }
-.msg{
-  background:#fff;
-  margin:6px 0;
-  padding:8px;
-  border-radius:8px;
+
+header{
+  background:var(--main);
+  color:white;
+  padding:15px;
+  text-align:center;
+  font-size:20px;
+  position:relative;
+}
+
+.darkBtn{
+  position:absolute;
+  left:15px;
+  top:12px;
+  background:white;
+  color:black;
+  border:none;
+  padding:5px 10px;
   font-size:14px;
 }
-.time{
-  font-size:10px;
-  color:#666;
-  margin-top:4px;
+
+.container{
+  padding:15px;
 }
-#inputBox{
-  display:flex;
+
+textarea{
+  width:100%;
+  height:70px;
   padding:10px;
-  background:#fff;
+  font-size:16px;
+  box-sizing:border-box;
 }
-#inputBox input{
-  flex:1;
+
+input, select{
+  width:100%;
   padding:8px;
-  border-radius:6px;
-  border:1px solid #ccc;
+  margin-top:10px;
+  box-sizing:border-box;
 }
-#inputBox button{
-  margin-right:6px;
-  background:#25D366;
-  color:#fff;
+
+button{
+  margin-top:10px;
+  padding:10px;
+  width:100%;
+  background:var(--main);
+  color:white;
   border:none;
-  padding:8px 14px;
-  border-radius:6px;
+  font-size:16px;
+}
+
+.note{
+  background:var(--card);
+  padding:10px;
+  margin-top:10px;
+  border-radius:5px;
+  position:relative;
+}
+
+.delete{
+  position:absolute;
+  left:10px;
+  top:10px;
+  background:red;
+  color:white;
+  border:none;
+  padding:5px 8px;
+  font-size:12px;
 }
 </style>
 </head>
 
 <body>
 
-<header>💬 دردشة بسيطة</header>
+<!-- شاشة القفل -->
+<div id="lockScreen">
+  <h2 style="color:white;">🔒 أدخل الرمز</h2>
+  <input type="password" id="pinInput" placeholder="أدخل PIN">
+  <button onclick="checkPin()">دخول</button>
+</div>
 
-<div id="chat"></div>
+<header>
+  مفكرتي
+  <button class="darkBtn" onclick="toggleDark()">🌙</button>
+</header>
 
-<div id="inputBox">
-  <input id="msg" placeholder="اكتب رسالة...">
-  <button onclick="send()">إرسال</button>
+<div class="container">
+
+  <textarea id="noteInput" placeholder="اكتب ملاحظتك هنا..."></textarea>
+  <button onclick="addNote()">إضافة</button>
+
+  <input type="text" id="searchInput" placeholder="بحث..." onkeyup="displayNotes()">
+
+  <select id="sortSelect" onchange="displayNotes()">
+    <option value="new">الأحدث أولاً</option>
+    <option value="old">الأقدم أولاً</option>
+  </select>
+
+  <button onclick="deleteAll()" style="background:red;">
+    🗑️ حذف الكل
+  </button>
+
+  <div id="notesContainer"></div>
+
 </div>
 
 <script>
-let chat = document.getElementById("chat");
-let messages = JSON.parse(localStorage.getItem("msgs") || "[]");
 
-function render(){
-  chat.innerHTML="";
-  messages.forEach(m=>{
-    let d=document.createElement("div");
-    d.className="msg";
-    d.innerHTML = `
-      <b>${m.user}</b><br>
-      ${m.text}
-      <div class="time">${m.time}</div>
-    `;
-    chat.appendChild(d);
+// ===== الرمز السري =====
+let savedPin = localStorage.getItem("appPin");
+
+if(!savedPin){
+  let newPin = prompt("أنشئ رمز سري جديد (PIN):");
+  if(newPin){
+    localStorage.setItem("appPin", newPin);
+    savedPin = newPin;
+  }
+}
+
+function checkPin(){
+  let input = document.getElementById("pinInput").value;
+  if(input === savedPin){
+    document.getElementById("lockScreen").style.display="none";
+  }else{
+    alert("رمز خاطئ!");
+  }
+}
+
+// ===== البيانات =====
+let notes = JSON.parse(localStorage.getItem("notes")) || [];
+
+// ===== عرض =====
+function displayNotes(){
+  let container = document.getElementById("notesContainer");
+  let searchValue = document.getElementById("searchInput").value.toLowerCase();
+  let sortValue = document.getElementById("sortSelect").value;
+
+  container.innerHTML = "";
+
+  let notesCopy = [...notes];
+
+  if(sortValue === "new"){
+    notesCopy.reverse();
+  }
+
+  notesCopy.forEach((note) => {
+
+    if(note.toLowerCase().includes(searchValue)){
+
+      let div = document.createElement("div");
+      div.className = "note";
+      div.textContent = note;
+
+      let del = document.createElement("button");
+      del.textContent = "حذف";
+      del.className = "delete";
+      del.onclick = function(){
+        let realIndex = notes.indexOf(note);
+        deleteNote(realIndex);
+      };
+
+      div.appendChild(del);
+      container.appendChild(div);
+    }
+
   });
-  chat.scrollTop = chat.scrollHeight;
 }
 
-function send(){
-  let input=document.getElementById("msg");
-  if(!input.value.trim()) return;
+// ===== إضافة =====
+function addNote(){
+  let input = document.getElementById("noteInput");
+  if(input.value.trim() === "") return;
 
-  let msg={
-    user:"👤 مستخدم",
-    text:input.value,
-    time:new Date().toLocaleTimeString()
-  };
-
-  messages.push(msg);
-  localStorage.setItem("msgs",JSON.stringify(messages));
-  input.value="";
-  render();
+  notes.push(input.value);
+  localStorage.setItem("notes", JSON.stringify(notes));
+  input.value = "";
+  displayNotes();
 }
 
-render();
+// ===== حذف =====
+function deleteNote(index){
+  notes.splice(index,1);
+  localStorage.setItem("notes", JSON.stringify(notes));
+  displayNotes();
+}
+
+// ===== حذف الكل =====
+function deleteAll(){
+  if(confirm("واش متأكد بغيتي تمسح جميع الملاحظات؟")){
+    notes = [];
+    localStorage.setItem("notes", JSON.stringify(notes));
+    displayNotes();
+  }
+}
+
+// ===== الوضع الليلي =====
+function toggleDark(){
+  document.body.classList.toggle("dark");
+
+  if(document.body.classList.contains("dark")){
+    localStorage.setItem("darkMode","on");
+  }else{
+    localStorage.setItem("darkMode","off");
+  }
+}
+
+if(localStorage.getItem("darkMode") === "on"){
+  document.body.classList.add("dark");
+}
+
+displayNotes();
+
 </script>
 
 </body>
