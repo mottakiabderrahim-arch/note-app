@@ -18,20 +18,19 @@ body{
   color:white;
 }
 
-input,button{
+input,button,select{
   padding:8px;
   margin:5px 0;
 }
 
 .note{
-  background:white;
   padding:10px;
   margin-top:10px;
   border-radius:8px;
 }
 
 .dark .note{
-  background:#2c2c2c;
+  background:#2c2c2c !important;
 }
 
 #noteText{
@@ -55,7 +54,7 @@ input,button{
 </style>
 </head>
 
-<body>
+<body oncontextmenu="return false">
 
 <h2>📒 مفكرتي</h2>
 
@@ -65,12 +64,21 @@ input,button{
 
 <br>
 
+<select id="sortSelect" onchange="displayNotes()">
+  <option value="new">الأحدث أولاً</option>
+  <option value="old">الأقدم أولاً</option>
+  <option value="az">حسب العنوان</option>
+</select>
+
+<input type="color" id="noteColor" value="#ffffff">
+
+<br>
+
 <input type="text" id="noteTitle" placeholder="عنوان الملاحظة">
 
 <button onclick="toggleToolbar()">🎨 تنسيق</button>
 
 <div id="toolbar">
-
 <button onclick="format('bold')"><b>B</b></button>
 <button onclick="format('italic')"><i>I</i></button>
 <button onclick="format('underline')"><u>U</u></button>
@@ -88,7 +96,6 @@ input,button{
 <button onclick="addLink()">🔗</button>
 <button onclick="addImage()">📷</button>
 <button onclick="clearFormat()">🧹</button>
-
 </div>
 
 <div id="noteText" contenteditable="true"></div>
@@ -109,13 +116,13 @@ input,button{
 let notes = JSON.parse(localStorage.getItem("notes")) || [];
 let editId = null;
 
-/* ===== إظهار/إخفاء شريط التنسيق ===== */
+/* شريط التنسيق */
 function toggleToolbar(){
   let bar=document.getElementById("toolbar");
   bar.style.display = bar.style.display==="none" ? "block" : "none";
 }
 
-/* ===== محرر ===== */
+/* محرر */
 function format(cmd){ document.execCommand(cmd,false,null); }
 function setColor(color){ document.execCommand("foreColor",false,color); }
 function highlight(color){ document.execCommand("hiliteColor",false,color); }
@@ -130,7 +137,6 @@ function addImage(){
   let input=document.createElement("input");
   input.type="file";
   input.accept="image/*";
-
   input.onchange=function(){
     let file=this.files[0];
     let reader=new FileReader();
@@ -146,19 +152,20 @@ function clearFormat(){
   document.execCommand("removeFormat",false,null);
 }
 
-/* لصق نظيف */
+/* لصق نص نظيف */
 document.getElementById("noteText").addEventListener("paste",function(e){
   e.preventDefault();
   let text=(e.clipboardData||window.clipboardData).getData("text");
   document.execCommand("insertText",false,text);
 });
 
-/* ===== إضافة أو تعديل ===== */
+/* إضافة أو تعديل */
 function addOrUpdateNote(){
 
   let title=document.getElementById("noteTitle").value;
   let text=document.getElementById("noteText").innerHTML;
   let reminder=document.getElementById("reminder").value;
+  let color=document.getElementById("noteColor").value;
 
   if(!title && !text) return;
 
@@ -170,7 +177,9 @@ function addOrUpdateNote(){
       text:text,
       date:new Date().toLocaleString(),
       reminder: reminder ? new Date(reminder).getTime() : null,
-      notified:false
+      notified:false,
+      color:color,
+      pinned:false
     });
 
   }else{
@@ -179,6 +188,7 @@ function addOrUpdateNote(){
     note.title=title;
     note.text=text;
     note.reminder= reminder ? new Date(reminder).getTime() : null;
+    note.color=color;
 
     editId=null;
     document.getElementById("saveBtn").innerText="➕ إضافة";
@@ -193,23 +203,40 @@ function addOrUpdateNote(){
   displayNotes();
 }
 
-/* ===== عرض الملاحظات ===== */
+/* عرض */
 function displayNotes(){
 
   let search=document.getElementById("search").value.toLowerCase();
+  let sort=document.getElementById("sortSelect").value;
   let container=document.getElementById("notes");
   container.innerHTML="";
 
-  notes.slice().reverse().forEach(note=>{
+  let sorted=[...notes];
 
+  if(sort==="new"){
+    sorted.sort((a,b)=>b.id-a.id);
+  }else if(sort==="old"){
+    sorted.sort((a,b)=>a.id-b.id);
+  }else if(sort==="az"){
+    sorted.sort((a,b)=>a.title.localeCompare(b.title));
+  }
+
+  sorted.sort((a,b)=>b.pinned-a.pinned);
+
+  sorted.forEach(note=>{
     if(note.title.toLowerCase().includes(search) ||
        note.text.toLowerCase().includes(search)){
 
       container.innerHTML+=`
-        <div class="note">
+        <div class="note" style="background:${note.color || '#fff'}">
           <h3>${note.title}</h3>
           <div>${note.text}</div>
           <small>${note.date}</small><br>
+
+          <button onclick="togglePin(${note.id})">
+            ${note.pinned ? "📌 مثبت" : "📍 تثبيت"}
+          </button>
+
           <button onclick="editNote(${note.id})">✏️ تعديل</button>
           <button onclick="deleteNote(${note.id})">❌ حذف</button>
         </div>
@@ -218,27 +245,33 @@ function displayNotes(){
   });
 }
 
-/* ===== تعديل ===== */
-function editNote(id){
+/* تثبيت */
+function togglePin(id){
+  let note=notes.find(n=>n.id===id);
+  note.pinned=!note.pinned;
+  localStorage.setItem("notes",JSON.stringify(notes));
+  displayNotes();
+}
 
+/* تعديل */
+function editNote(id){
   let note=notes.find(n=>n.id===id);
 
   document.getElementById("noteTitle").value=note.title;
   document.getElementById("noteText").innerHTML=note.text;
+  document.getElementById("noteColor").value=note.color || "#ffffff";
 
   if(note.reminder){
     let d=new Date(note.reminder);
-    document.getElementById("reminder").value=
-      d.toISOString().slice(0,16);
+    document.getElementById("reminder").value=d.toISOString().slice(0,16);
   }
 
   editId=id;
   document.getElementById("saveBtn").innerText="💾 حفظ التعديل";
-
   window.scrollTo({top:0,behavior:'smooth'});
 }
 
-/* ===== حذف ===== */
+/* حذف */
 function deleteNote(id){
   notes=notes.filter(n=>n.id!==id);
   localStorage.setItem("notes",JSON.stringify(notes));
@@ -253,25 +286,22 @@ function deleteAll(){
   }
 }
 
-/* ===== الوضع الليلي ===== */
+/* وضع ليلي */
 function toggleDark(){
   document.body.classList.toggle("dark");
 }
 
-/* ===== التنبيهات ===== */
+/* تنبيهات */
 if("Notification" in window){
   Notification.requestPermission();
 }
 
 function checkReminders(){
   let now=Date.now();
-
   notes.forEach(note=>{
     if(note.reminder && !note.notified){
       if(now>=note.reminder){
-        new Notification("🔔 تذكير",{
-          body:note.title
-        });
+        new Notification("🔔 تذكير",{body:note.title});
         note.notified=true;
         localStorage.setItem("notes",JSON.stringify(notes));
       }
