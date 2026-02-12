@@ -26,7 +26,6 @@ body{
   color:var(--text);
 }
 
-/* شاشة القفل */
 #lockScreen{
   position:fixed;
   top:0;
@@ -60,9 +59,7 @@ header{
   padding:5px 10px;
 }
 
-.container{
-  padding:15px;
-}
+.container{ padding:15px; }
 
 textarea,input,select,button{
   width:100%;
@@ -75,24 +72,51 @@ button{
   background:var(--main);
   color:white;
   border:none;
+  cursor:pointer;
 }
 
 .note{
   padding:10px;
   margin-top:10px;
-  border-radius:5px;
+  border-radius:8px;
   position:relative;
+  background:var(--card);
 }
 
-.smallBtn{
+.menuBtn{
   position:absolute;
   top:5px;
+  left:5px;
+  background:none;
   border:none;
-  padding:3px 6px;
-  font-size:12px;
+  font-size:20px;
   cursor:pointer;
 }
 
+.noteMenu{
+  position:absolute;
+  top:30px;
+  left:5px;
+  background:white;
+  border:1px solid #ccc;
+  border-radius:6px;
+  box-shadow:0 2px 8px rgba(0,0,0,0.2);
+  display:none;
+  z-index:100;
+}
+
+.noteMenu button{
+  width:100%;
+  background:none;
+  color:black;
+  border:none;
+  padding:6px;
+  text-align:right;
+}
+
+.noteMenu button:hover{
+  background:#f0f0f0;
+}
 </style>
 </head>
 <body>
@@ -172,7 +196,7 @@ function addNote(){
 
   notes.push({
     text: input.value,
-    date: new Date().toLocaleString(),
+    date: Date.now(),
     pinned:false,
     color:"#ffffff",
     done:false,
@@ -191,12 +215,14 @@ function displayNotes(){
   let sort=document.getElementById("sortSelect").value;
 
   container.innerHTML="";
-
   let total=0, doneCount=0;
 
   let copy=[...notes];
-  copy.sort((a,b)=>b.pinned-a.pinned);
-  if(sort==="new") copy.reverse();
+
+  copy.sort((a,b)=>{
+    if(a.pinned !== b.pinned) return b.pinned - a.pinned;
+    return sort==="new" ? b.date - a.date : a.date - b.date;
+  });
 
   copy.forEach(note=>{
     if(
@@ -211,14 +237,30 @@ function displayNotes(){
       div.className="note";
       div.style.background=note.color;
 
-      let check=document.createElement("input");
-      check.type="checkbox";
-      check.checked=note.done;
-      check.onchange=function(){
-        note.done=this.checked;
-        localStorage.setItem("notes",JSON.stringify(notes));
-        displayNotes();
+      let menuBtn=document.createElement("button");
+      menuBtn.textContent="⋮";
+      menuBtn.className="menuBtn";
+
+      let menu=document.createElement("div");
+      menu.className="noteMenu";
+
+      menu.innerHTML=`
+      <button onclick="toggleDone(${notes.indexOf(note)})">✅ منجز</button>
+      <button onclick="togglePin(${notes.indexOf(note)})">⭐ تثبيت</button>
+      <button onclick="editNote(${notes.indexOf(note)})">✏️ تعديل</button>
+      <button onclick="deleteNote(${notes.indexOf(note)})">🗑️ حذف</button>
+      <button onclick="changeColor(${notes.indexOf(note)})">🎨 لون</button>
+      `;
+
+      menuBtn.onclick=function(e){
+        e.stopPropagation();
+        document.querySelectorAll(".noteMenu").forEach(m=>m.style.display="none");
+        menu.style.display="block";
       };
+
+      document.addEventListener("click",function(){
+        menu.style.display="none";
+      });
 
       let text=document.createElement("div");
       text.textContent=note.text;
@@ -228,58 +270,14 @@ function displayNotes(){
       }
 
       let date=document.createElement("small");
-      date.textContent=note.date;
+      date.textContent=new Date(note.date).toLocaleString();
       date.style.display="block";
 
       let cat=document.createElement("small");
       cat.textContent="📂 "+note.category;
       cat.style.display="block";
 
-      let pin=document.createElement("button");
-      pin.textContent=note.pinned?"⭐":"☆";
-      pin.className="smallBtn";
-      pin.style.left="5px";
-      pin.onclick=function(){
-        note.pinned=!note.pinned;
-        localStorage.setItem("notes",JSON.stringify(notes));
-        displayNotes();
-      };
-
-      let edit=document.createElement("button");
-      edit.textContent="✏️";
-      edit.className="smallBtn";
-      edit.style.left="35px";
-      edit.onclick=function(){
-        let newText=prompt("عدل:",note.text);
-        if(newText){
-          note.text=newText;
-          localStorage.setItem("notes",JSON.stringify(notes));
-          displayNotes();
-        }
-      };
-
-      let del=document.createElement("button");
-      del.textContent="🗑️";
-      del.className="smallBtn";
-      del.style.left="65px";
-      del.onclick=function(){
-        notes.splice(notes.indexOf(note),1);
-        localStorage.setItem("notes",JSON.stringify(notes));
-        displayNotes();
-      };
-
-      let color=document.createElement("input");
-      color.type="color";
-      color.value=note.color;
-      color.className="smallBtn";
-      color.style.left="95px";
-      color.onchange=function(){
-        note.color=this.value;
-        localStorage.setItem("notes",JSON.stringify(notes));
-        displayNotes();
-      };
-
-      div.append(check,text,date,cat,pin,edit,del,color);
+      div.append(menuBtn,menu,text,date,cat);
       container.appendChild(div);
     }
   });
@@ -288,12 +286,51 @@ function displayNotes(){
   "📊 المجموع: "+total+" | ✅ المنجزة: "+doneCount;
 }
 
+// ===== العمليات =====
+
+function toggleDone(i){
+  notes[i].done=!notes[i].done;
+  save();
+}
+
+function togglePin(i){
+  notes[i].pinned=!notes[i].pinned;
+  save();
+}
+
+function editNote(i){
+  let newText=prompt("عدل:",notes[i].text);
+  if(newText){
+    notes[i].text=newText;
+    save();
+  }
+}
+
+function deleteNote(i){
+  if(confirm("حذف؟")){
+    notes.splice(i,1);
+    save();
+  }
+}
+
+function changeColor(i){
+  let color=prompt("أدخل لون (مثال: #ffcc00)");
+  if(color){
+    notes[i].color=color;
+    save();
+  }
+}
+
 function deleteAll(){
   if(confirm("مسح الكل؟")){
     notes=[];
-    localStorage.setItem("notes",JSON.stringify(notes));
-    displayNotes();
+    save();
   }
+}
+
+function save(){
+  localStorage.setItem("notes",JSON.stringify(notes));
+  displayNotes();
 }
 
 function toggleDark(){
