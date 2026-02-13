@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <title>مفكرتي</title>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
 <style>
 body{
   font-family:Arial;
@@ -95,6 +97,8 @@ input,button,select{
 
 <button onclick="addLink()">🔗</button>
 <button onclick="addImage()">📷</button>
+
+<button onclick="insertAdvancedTable()">📊 جدول+</button>
 <button onclick="clearFormat()">🧹</button>
 </div>
 
@@ -108,6 +112,7 @@ input,button,select{
 
 <button id="saveBtn" onclick="addOrUpdateNote()">➕ إضافة</button>
 <button onclick="deleteAll()">🗑 حذف الكل</button>
+<button onclick="exportPDF()">📄 تصدير PDF</button>
 
 <div id="notes"></div>
 
@@ -116,13 +121,11 @@ input,button,select{
 let notes = JSON.parse(localStorage.getItem("notes")) || [];
 let editId = null;
 
-/* شريط التنسيق */
 function toggleToolbar(){
   let bar=document.getElementById("toolbar");
   bar.style.display = bar.style.display==="none" ? "block" : "none";
 }
 
-/* محرر */
 function format(cmd){ document.execCommand(cmd,false,null); }
 function setColor(color){ document.execCommand("foreColor",false,color); }
 function highlight(color){ document.execCommand("hiliteColor",false,color); }
@@ -152,14 +155,12 @@ function clearFormat(){
   document.execCommand("removeFormat",false,null);
 }
 
-/* لصق نص نظيف */
 document.getElementById("noteText").addEventListener("paste",function(e){
   e.preventDefault();
   let text=(e.clipboardData||window.clipboardData).getData("text");
   document.execCommand("insertText",false,text);
 });
 
-/* إضافة أو تعديل */
 function addOrUpdateNote(){
 
   let title=document.getElementById("noteTitle").value;
@@ -170,7 +171,6 @@ function addOrUpdateNote(){
   if(!title && !text) return;
 
   if(editId===null){
-
     notes.push({
       id:Date.now(),
       title:title,
@@ -181,15 +181,12 @@ function addOrUpdateNote(){
       color:color,
       pinned:false
     });
-
   }else{
-
     let note=notes.find(n=>n.id===editId);
     note.title=title;
     note.text=text;
     note.reminder= reminder ? new Date(reminder).getTime() : null;
     note.color=color;
-
     editId=null;
     document.getElementById("saveBtn").innerText="➕ إضافة";
   }
@@ -203,7 +200,6 @@ function addOrUpdateNote(){
   displayNotes();
 }
 
-/* عرض */
 function displayNotes(){
 
   let search=document.getElementById("search").value.toLowerCase();
@@ -213,13 +209,9 @@ function displayNotes(){
 
   let sorted=[...notes];
 
-  if(sort==="new"){
-    sorted.sort((a,b)=>b.id-a.id);
-  }else if(sort==="old"){
-    sorted.sort((a,b)=>a.id-b.id);
-  }else if(sort==="az"){
-    sorted.sort((a,b)=>a.title.localeCompare(b.title));
-  }
+  if(sort==="new"){ sorted.sort((a,b)=>b.id-a.id); }
+  else if(sort==="old"){ sorted.sort((a,b)=>a.id-b.id); }
+  else if(sort==="az"){ sorted.sort((a,b)=>a.title.localeCompare(b.title)); }
 
   sorted.sort((a,b)=>b.pinned-a.pinned);
 
@@ -245,7 +237,6 @@ function displayNotes(){
   });
 }
 
-/* تثبيت */
 function togglePin(id){
   let note=notes.find(n=>n.id===id);
   note.pinned=!note.pinned;
@@ -253,10 +244,8 @@ function togglePin(id){
   displayNotes();
 }
 
-/* تعديل */
 function editNote(id){
   let note=notes.find(n=>n.id===id);
-
   document.getElementById("noteTitle").value=note.title;
   document.getElementById("noteText").innerHTML=note.text;
   document.getElementById("noteColor").value=note.color || "#ffffff";
@@ -271,7 +260,6 @@ function editNote(id){
   window.scrollTo({top:0,behavior:'smooth'});
 }
 
-/* حذف */
 function deleteNote(id){
   notes=notes.filter(n=>n.id!==id);
   localStorage.setItem("notes",JSON.stringify(notes));
@@ -286,12 +274,10 @@ function deleteAll(){
   }
 }
 
-/* وضع ليلي */
 function toggleDark(){
   document.body.classList.toggle("dark");
 }
 
-/* تنبيهات */
 if("Notification" in window){
   Notification.requestPermission();
 }
@@ -308,8 +294,98 @@ function checkReminders(){
     }
   });
 }
-
 setInterval(checkReminders,30000);
+
+/* جدول احترافي */
+
+function insertAdvancedTable(){
+  let rows=parseInt(prompt("عدد الصفوف؟",2));
+  let cols=parseInt(prompt("عدد الأعمدة؟",2));
+  if(!rows||!cols) return;
+
+  let id="table_"+Date.now();
+
+  let table=`<div style="overflow:auto;margin-top:5px;">
+  <table id="${id}" border="1"
+  style="border-collapse:collapse;width:100%;text-align:center;">`;
+
+  for(let i=0;i<rows;i++){
+    table+="<tr>";
+    for(let j=0;j<cols;j++){
+      table+=`<td contenteditable="true" style="padding:6px;">خانة</td>`;
+    }
+    table+="</tr>";
+  }
+
+  table+=`</table>
+  <div style="margin-top:5px;">
+  <button onclick="addRow('${id}')">➕ صف</button>
+  <button onclick="deleteRow('${id}')">➖ صف</button>
+  <button onclick="addCol('${id}')">➕ عمود</button>
+  <button onclick="deleteCol('${id}')">➖ عمود</button>
+  </div></div><br>`;
+
+  document.execCommand("insertHTML",false,table);
+}
+
+function addRow(id){
+  let table=document.getElementById(id);
+  let cols=table.rows[0].cells.length;
+  let row=table.insertRow();
+  for(let i=0;i<cols;i++){
+    let cell=row.insertCell();
+    cell.contentEditable="true";
+    cell.innerHTML="خانة";
+    cell.style.padding="6px";
+  }
+}
+
+function deleteRow(id){
+  let table=document.getElementById(id);
+  if(table.rows.length>1){
+    table.deleteRow(table.rows.length-1);
+  }
+}
+
+function addCol(id){
+  let table=document.getElementById(id);
+  for(let i=0;i<table.rows.length;i++){
+    let cell=table.rows[i].insertCell();
+    cell.contentEditable="true";
+    cell.innerHTML="خانة";
+    cell.style.padding="6px";
+  }
+}
+
+function deleteCol(id){
+  let table=document.getElementById(id);
+  let cols=table.rows[0].cells.length;
+  if(cols>1){
+    for(let i=0;i<table.rows.length;i++){
+      table.rows[i].deleteCell(cols-1);
+    }
+  }
+}
+
+/* PDF */
+
+function exportPDF(){
+  let element=document.getElementById("noteText");
+  if(!element.innerHTML.trim()){
+    alert("ما كايناش ملاحظة باش تتصدر");
+    return;
+  }
+
+  let opt={
+    margin:10,
+    filename:'mofakirti.pdf',
+    image:{type:'jpeg',quality:0.98},
+    html2canvas:{scale:2},
+    jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}
+  };
+
+  html2pdf().set(opt).from(element).save();
+}
 
 displayNotes();
 
