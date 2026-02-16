@@ -1,343 +1,582 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="ar">
 <head>
 <meta charset="UTF-8">
-<title>مفكرتي Pro+</title>
-
-<!-- icons -->
-<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-
-<!-- pdf -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<title>SmartNote Pro Ultimate</title>
 
 <style>
 
-:root{
- --bg:#f2f2f2;
- --card:#fff;
- --text:#000;
- --main:#2196f3;
-}
-
-body.dark{
- --bg:#121212;
- --card:#1e1e1e;
- --text:#fff;
-}
-
 body{
- margin:0;
- font-family:Arial;
- background:var(--bg);
- color:var(--text);
+font-family:Arial;
+margin:0;
+background:#f0f2f5;
+}
+
+.dark{
+background:#121212;
+color:white;
 }
 
 header{
- background:var(--main);
- color:#fff;
- padding:12px;
- display:flex;
- justify-content:space-between;
- align-items:center;
-}
-
-.icon{
- cursor:pointer;
- padding:5px;
-}
-
-.container{
- padding:10px;
-}
-
-textarea, input{
- width:100%;
- padding:10px;
- margin:5px 0;
+background:#1976d2;
+color:white;
+padding:12px;
+display:flex;
+justify-content:space-between;
+align-items:center;
 }
 
 button{
- background:var(--main);
- color:#fff;
- border:none;
- padding:6px 10px;
- margin:3px;
- cursor:pointer;
- border-radius:4px;
+cursor:pointer;
+border:none;
+padding:8px 12px;
+border-radius:6px;
+margin:2px;
 }
+
+.primary{
+background:#1976d2;
+color:white;
+}
+
+.secondary{
+background:#555;
+color:white;
+}
+
+.danger{
+background:#d32f2f;
+color:white;
+}
+
+.container{
+padding:10px;
+}
+
+/* notes list */
 
 .note{
- background:var(--card);
- padding:10px;
- margin-top:10px;
- border-radius:6px;
+background:white;
+padding:12px;
+margin:8px 0;
+border-radius:10px;
+box-shadow:0 2px 6px rgba(0,0,0,0.2);
 }
 
-.date{
- font-size:12px;
- opacity:0.6;
+.dark .note{
+background:#1e1e1e;
 }
+
+.noteTitle{
+font-weight:bold;
+font-size:18px;
+}
+
+.noteDate{
+font-size:12px;
+opacity:0.6;
+}
+
+/* editor */
+
+#editor{
+min-height:200px;
+border:1px solid #ccc;
+padding:10px;
+border-radius:10px;
+background:white;
+}
+
+.dark #editor{
+background:#2a2a2a;
+color:white;
+}
+
+.toolbar button{
+background:#444;
+color:white;
+}
+
+/* screens */
+
+.screen{
+display:none;
+}
+
+.active{
+display:block;
+}
+
+/* menu */
 
 .menu{
- position:fixed;
- top:50px;
- left:10px;
- background:var(--card);
- border-radius:6px;
- display:none;
- padding:5px;
- box-shadow:0 0 5px rgba(0,0,0,0.3);
+position:fixed;
+top:50px;
+right:10px;
+background:white;
+box-shadow:0 2px 10px rgba(0,0,0,0.3);
+border-radius:8px;
+display:none;
+z-index:999;
 }
 
 .menu div{
- padding:8px;
- cursor:pointer;
+padding:10px;
+cursor:pointer;
 }
 
 .menu div:hover{
- background:#ddd;
+background:#eee;
+}
+
+.dark .menu{
+background:#2a2a2a;
 }
 
 </style>
-</head>
 
+</head>
 <body>
 
 <header>
 
-<span>📒 مفكرتي Pro+</span>
+<span>🧠 SmartNote Pro Ultimate</span>
 
-<span class="material-icons icon" onclick="toggleMenu()">more_vert</span>
+<div>
+
+<button onclick="showScreen('list')" class="secondary">📋</button>
+
+<button onclick="newNote()" class="primary">➕</button>
+
+<button onclick="toggleMenu()" class="secondary">⋮</button>
+
+</div>
 
 </header>
 
 <div class="menu" id="menu">
 
-<div onclick="toggleDark()">
-<span class="material-icons">dark_mode</span>
- وضع ليلي
-</div>
+<div onclick="backup()">💾 Backup</div>
 
-<div onclick="backup()">
-<span class="material-icons">backup</span>
- Backup
-</div>
+<div onclick="restore()">📂 Restore</div>
 
-<div onclick="restore()">
-<span class="material-icons">restore</span>
- Restore
-</div>
+<div onclick="deleteAll()">🗑️ Delete All</div>
+
+<div onclick="toggleDark()">🌙 Dark Mode</div>
 
 </div>
 
 <div class="container">
 
-<input id="search" placeholder="🔍 بحث..." oninput="loadNotes()">
+<!-- LIST SCREEN -->
 
-<textarea id="input" placeholder="اكتب ملاحظة..."></textarea>
+<div id="listScreen" class="screen active">
 
-<input type="datetime-local" id="reminder">
-
-<button onclick="addNote()">
-<span class="material-icons">add</span>
- إضافة
-</button>
+<input id="search" placeholder="🔍 بحث" oninput="displayNotes()">
 
 <div id="notes"></div>
 
 </div>
 
+<!-- VIEW SCREEN -->
+
+<div id="viewScreen" class="screen">
+
+<h2 id="viewTitle"></h2>
+
+<div id="viewDate"></div>
+
+<hr>
+
+<div id="viewContent"></div>
+
+<br>
+
+<button onclick="editCurrent()" class="primary">✏️ تعديل</button>
+
+<button onclick="exportPDF()" class="secondary">📄 PDF</button>
+
+<button onclick="showScreen('list')" class="secondary">⬅️ رجوع</button>
+
+</div>
+
+<!-- EDIT SCREEN -->
+
+<div id="editScreen" class="screen">
+
+<input id="title" placeholder="عنوان">
+
+<div class="toolbar">
+
+<button onclick="format('bold')"><b>B</b></button>
+
+<button onclick="format('italic')"><i>I</i></button>
+
+<button onclick="format('underline')"><u>U</u></button>
+
+<button onclick="color('red')">🔴</button>
+
+<button onclick="color('blue')">🔵</button>
+
+<button onclick="color('green')">🟢</button>
+
+<button onclick="size(3)">A-</button>
+
+<button onclick="size(5)">A+</button>
+
+<button onclick="insertImage()">📷</button>
+
+<button onclick="insertTable()">📊</button>
+
+</div>
+
+<div id="editor" contenteditable="true"></div>
+
+<br>
+
+<button onclick="saveNote()" class="primary">💾 حفظ</button>
+
+<button onclick="showScreen('list')" class="secondary">⬅️ رجوع</button>
+
+</div>
+
+</div>
+
 <script>
 
-let notes = JSON.parse(localStorage.getItem("notes")||"[]");
+let notes=JSON.parse(localStorage.getItem("smartNotes"))||[];
 
-function save(){
- localStorage.setItem("notes", JSON.stringify(notes));
+let currentId=null;
+
+/* screens */
+
+function showScreen(name){
+
+document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+
+if(name=="list") listScreen.classList.add("active");
+
+if(name=="view") viewScreen.classList.add("active");
+
+if(name=="edit") editScreen.classList.add("active");
+
 }
+
+/* menu */
 
 function toggleMenu(){
 
- let m=document.getElementById("menu");
+menu.style.display=menu.style.display=="block"?"none":"block";
 
- m.style.display=
- m.style.display=="block"?"none":"block";
 }
 
-function toggleDark(){
+/* editor */
 
- document.body.classList.toggle("dark");
+function format(cmd){
+
+document.execCommand(cmd,false,null);
+
 }
 
-function addNote(){
+function color(c){
 
- let text=input.value;
- let reminder=document.getElementById("reminder").value;
+document.execCommand("foreColor",false,c);
 
- if(!text) return;
-
- notes.unshift({
-
-  text,
-  date:new Date().toLocaleString(),
-  reminder,
-  alerted:false
-
- });
-
- save();
- loadNotes();
-
- input.value="";
 }
 
-function deleteNote(i){
+function size(s){
 
- notes.splice(i,1);
- save();
- loadNotes();
+document.execCommand("fontSize",false,s);
+
 }
 
-function editNote(i){
+function insertImage(){
 
- let t=prompt("تعديل:",notes[i].text);
+let input=document.createElement("input");
 
- if(t){
+input.type="file";
 
- notes[i].text=t;
- save();
- loadNotes();
+input.onchange=function(){
 
- }
+let reader=new FileReader();
+
+reader.onload=e=>{
+
+document.execCommand("insertImage",false,e.target.result);
+
+};
+
+reader.readAsDataURL(this.files[0]);
+
+};
+
+input.click();
+
 }
 
-function exportPDF(i){
+function insertTable(){
 
- let note=notes[i];
+let html="<table border=1 style='width:100%'>";
 
- let element=document.createElement("div");
+html+="<tr><td>خانة</td><td>خانة</td></tr>";
 
- element.innerHTML=
- `
- <h2>ملاحظة</h2>
- <hr>
- <p>${note.text}</p>
- <hr>
- <small>${note.date}</small>
- `;
+html+="<tr><td>خانة</td><td>خانة</td></tr>";
 
- html2pdf()
- .set({
-  margin:10,
-  filename:"note.pdf",
-  html2canvas:{scale:2},
-  jsPDF:{unit:"mm", format:"a4"}
- })
- .from(element)
- .save();
+html+="</table>";
+
+document.execCommand("insertHTML",false,html);
+
 }
+
+/* notes */
+
+function newNote(){
+
+currentId=null;
+
+title.value="";
+
+editor.innerHTML="";
+
+showScreen("edit");
+
+}
+
+function saveNote(){
+
+let t=title.value;
+
+let c=editor.innerHTML;
+
+if(!t && !c) return;
+
+if(currentId){
+
+let n=notes.find(x=>x.id==currentId);
+
+n.title=t;
+
+n.content=c;
+
+}else{
+
+notes.push({
+
+id:Date.now(),
+
+title:t,
+
+content:c,
+
+date:new Date().toLocaleString(),
+
+pinned:false
+
+});
+
+}
+
+localStorage.setItem("smartNotes",JSON.stringify(notes));
+
+showScreen("list");
+
+displayNotes();
+
+}
+
+function displayNotes(){
+
+let search=document.getElementById("search").value.toLowerCase();
+
+notes.sort((a,b)=>b.pinned-a.pinned);
+
+notesDiv="";
+
+notes.forEach(n=>{
+
+if(n.title.toLowerCase().includes(search) || n.content.toLowerCase().includes(search)){
+
+notesDiv+=`
+
+<div class="note">
+
+<div class="noteTitle">${n.title}</div>
+
+<div class="noteDate">${n.date}</div>
+
+<button onclick="viewNote(${n.id})">📖 فتح</button>
+
+<button onclick="pin(${n.id})">📌</button>
+
+<button onclick="editNote(${n.id})">✏️</button>
+
+<button onclick="deleteNote(${n.id})">🗑️</button>
+
+</div>
+
+`;
+
+}
+
+});
+
+notes.innerHTML=notesDiv;
+
+}
+
+/* view */
+
+function viewNote(id){
+
+let n=notes.find(x=>x.id==id);
+
+currentId=id;
+
+viewTitle.innerHTML=n.title;
+
+viewDate.innerHTML=n.date;
+
+viewContent.innerHTML=n.content;
+
+showScreen("view");
+
+}
+
+function editNote(id){
+
+let n=notes.find(x=>x.id==id);
+
+currentId=id;
+
+title.value=n.title;
+
+editor.innerHTML=n.content;
+
+showScreen("edit");
+
+}
+
+function editCurrent(){
+
+editNote(currentId);
+
+}
+
+/* delete */
+
+function deleteNote(id){
+
+if(confirm("تأكيد الحذف؟")){
+
+notes=notes.filter(x=>x.id!=id);
+
+localStorage.setItem("smartNotes",JSON.stringify(notes));
+
+displayNotes();
+
+showScreen("list");
+
+}
+
+}
+
+function deleteAll(){
+
+if(confirm("حذف جميع الملاحظات؟")){
+
+notes=[];
+
+localStorage.removeItem("smartNotes");
+
+displayNotes();
+
+}
+
+}
+
+/* pin */
+
+function pin(id){
+
+let n=notes.find(x=>x.id==id);
+
+n.pinned=!n.pinned;
+
+localStorage.setItem("smartNotes",JSON.stringify(notes));
+
+displayNotes();
+
+}
+
+/* pdf */
+
+function exportPDF(){
+
+let win=window.open();
+
+win.document.write(viewContent.innerHTML);
+
+win.print();
+
+}
+
+/* backup */
 
 function backup(){
 
- let data=JSON.stringify(notes);
+let data=JSON.stringify(notes);
 
- let blob=new Blob([data]);
+let blob=new Blob([data]);
 
- let a=document.createElement("a");
+let a=document.createElement("a");
 
- a.href=URL.createObjectURL(blob);
+a.href=URL.createObjectURL(blob);
 
- a.download="backup.notes";
+a.download="SmartNoteBackup.json";
 
- a.click();
+a.click();
+
 }
+
+/* restore */
 
 function restore(){
 
- let input=document.createElement("input");
+let input=document.createElement("input");
 
- input.type="file";
+input.type="file";
 
- input.onchange=e=>{
+input.onchange=function(){
 
-  let file=e.target.files[0];
+let reader=new FileReader();
 
-  let reader=new FileReader();
+reader.onload=e=>{
 
-  reader.onload=function(){
+notes=JSON.parse(e.target.result);
 
-   notes=JSON.parse(reader.result);
+localStorage.setItem("smartNotes",JSON.stringify(notes));
 
-   save();
-   loadNotes();
+displayNotes();
 
-  }
+};
 
-  reader.readAsText(file);
+reader.readAsText(this.files[0]);
 
- }
+};
 
- input.click();
+input.click();
+
 }
 
-function loadNotes(){
+/* dark */
 
- let s=search.value.toLowerCase();
+function toggleDark(){
 
- let html="";
+document.body.classList.toggle("dark");
 
- notes.forEach((n,i)=>{
-
- if(!n.text.toLowerCase().includes(s)) return;
-
- html+=`
- <div class="note">
-
- ${n.text}
-
- <div class="date">${n.date}</div>
-
- <button onclick="editNote(${i})">
- <span class="material-icons">edit</span>
- </button>
-
- <button onclick="deleteNote(${i})">
- <span class="material-icons">delete</span>
- </button>
-
- <button onclick="exportPDF(${i})">
- <span class="material-icons">picture_as_pdf</span>
- </button>
-
- </div>
- `;
-
- if(n.reminder){
-
-  let now=Date.now();
-
-  let r=new Date(n.reminder).getTime();
-
-  if(now>=r && !n.alerted){
-
-   alert("⏰ تذكير:\n"+n.text);
-
-   n.alerted=true;
-   save();
-
-  }
-
- }
-
- });
-
- notes.innerHTML=html;
-
- document.getElementById("notes").innerHTML=html;
 }
 
-loadNotes();
-
-setInterval(loadNotes,5000);
+displayNotes();
 
 </script>
 
