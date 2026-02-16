@@ -15,74 +15,55 @@ background:#f0f2f5;
 header{
 background:#1976d2;
 color:white;
-padding:12px;
+padding:15px;
 font-size:20px;
 display:flex;
 justify-content:space-between;
 align-items:center;
 }
 
-.container{
-padding:15px;
-}
-
 button{
-padding:8px 12px;
-margin:4px;
+padding:8px;
 border:none;
 border-radius:6px;
-background:#1976d2;
-color:white;
+margin:3px;
 cursor:pointer;
 }
 
-.note{
+.primary{background:#1976d2;color:white;}
+.danger{background:#e53935;color:white;}
+.gray{background:#555;color:white;}
+
+#notesList{
+padding:10px;
+}
+
+.noteCard{
 background:white;
-padding:12px;
-margin-top:10px;
+padding:15px;
+margin-bottom:10px;
 border-radius:10px;
 box-shadow:0 2px 5px rgba(0,0,0,0.2);
 }
 
-.noteTitle{
-font-size:18px;
-font-weight:bold;
-}
-
-.noteDate{
-font-size:12px;
-color:gray;
-}
-
-.editor{
+.hidden{
 display:none;
 }
 
 #editor{
 min-height:200px;
 border:1px solid #ccc;
-border-radius:8px;
 padding:10px;
+border-radius:10px;
 background:white;
 }
 
 .toolbar button{
 background:#444;
-}
-
-.menu{
-position:fixed;
-top:50px;
-right:10px;
-background:white;
-box-shadow:0 0 10px rgba(0,0,0,0.3);
-display:none;
-padding:10px;
-border-radius:8px;
+color:white;
 }
 
 </style>
-
 </head>
 <body>
 
@@ -90,36 +71,37 @@ border-radius:8px;
 
 <span>🧠 SmartNote Pro Ultimate</span>
 
+<div>
+
+<button onclick="showEditor()">➕</button>
+
+<button onclick="backup()">💾</button>
+
+<button onclick="restore()">📂</button>
+
 <button onclick="toggleMenu()">⋮</button>
-
-</header>
-
-
-<div class="menu" id="menu">
-
-<button onclick="backup()">💾 Backup</button><br>
-<button onclick="restore()">📂 Restore</button><br>
-<button onclick="exportPDF()">📄 Export PDF</button>
 
 </div>
 
+</header>
 
-<div class="container">
+<div id="menu" class="hidden" style="padding:10px;">
+<button onclick="toggleDark()" class="gray">🌙 وضع ليلي</button>
+</div>
 
+<div style="padding:10px;">
 
-<input id="search" placeholder="🔍 بحث" oninput="displayNotes()">
+<input id="search" placeholder="🔍 بحث" oninput="displayNotes()" style="width:100%;padding:10px;">
 
+</div>
 
+<div id="notesList"></div>
 
-<div id="notesView"></div>
+<div id="editorScreen" class="hidden" style="padding:10px;">
 
+<input id="title" placeholder="عنوان" style="width:100%;padding:10px;">
 
-
-<div class="editor" id="editorView">
-
-<button onclick="back()">⬅ رجوع</button>
-
-<input id="title" placeholder="عنوان">
+<input type="datetime-local" id="reminder">
 
 <div class="toolbar">
 
@@ -129,7 +111,10 @@ border-radius:8px;
 
 <button onclick="color('red')">🔴</button>
 <button onclick="color('blue')">🔵</button>
-<button onclick="color('green')">🟢</button>
+<button onclick="highlight()">🟡</button>
+
+<button onclick="size(3)">A-</button>
+<button onclick="size(5)">A+</button>
 
 <button onclick="image()">📷</button>
 <button onclick="table()">📊</button>
@@ -140,178 +125,133 @@ border-radius:8px;
 
 <br>
 
-<button onclick="saveNote()">💾 حفظ</button>
+<button onclick="saveNote()" class="primary">💾 حفظ</button>
+
+<button onclick="cancelEdit()" class="gray">⬅ رجوع</button>
+
+<button onclick="exportPDF()" class="primary">📄 PDF</button>
 
 </div>
-
-
-<button onclick="newNote()">➕ ملاحظة جديدة</button>
-
-
-</div>
-
-
 
 <script>
 
 let notes=JSON.parse(localStorage.getItem("notes"))||[];
-
-let currentId=null;
-
-
+let current=null;
 
 function toggleMenu(){
+menu.classList.toggle("hidden");
+}
 
-let m=document.getElementById("menu");
+function toggleDark(){
+document.body.style.background=
+document.body.style.background=="black"?"#f0f2f5":"black";
+}
 
-m.style.display=m.style.display=="block"?"none":"block";
+function showEditor(note=null){
+
+editorScreen.classList.remove("hidden");
+notesList.classList.add("hidden");
+
+if(note){
+current=note.id;
+title.value=note.title;
+editor.innerHTML=note.text;
+reminder.value=note.reminder||"";
+}else{
+current=null;
+title.value="";
+editor.innerHTML="";
+}
 
 }
 
-
-
-function newNote(){
-
-currentId=null;
-
-document.getElementById("title").value="";
-
-document.getElementById("editor").innerHTML="";
-
-showEditor();
-
-}
-
-
-
-function showEditor(){
-
-document.getElementById("notesView").style.display="none";
-
-document.getElementById("editorView").style.display="block";
-
-}
-
-
-
-function back(){
-
-document.getElementById("editorView").style.display="none";
-
-document.getElementById("notesView").style.display="block";
-
+function cancelEdit(){
+editorScreen.classList.add("hidden");
+notesList.classList.remove("hidden");
 displayNotes();
-
 }
-
-
 
 function saveNote(){
 
-let title=document.getElementById("title").value;
+if(!title.value && !editor.innerHTML)return;
 
-let content=document.getElementById("editor").innerHTML;
+let note={
+id:current||Date.now(),
+title:title.value,
+text:editor.innerHTML,
+date:new Date().toLocaleString(),
+pinned:false,
+reminder:reminder.value
+};
 
-if(!title && !content) return;
+if(current){
 
-if(currentId){
-
-let n=notes.find(x=>x.id==currentId);
-
-n.title=title;
-n.content=content;
+let i=notes.findIndex(n=>n.id==current);
+notes[i]=note;
 
 }else{
-
-notes.push({
-
-id:Date.now(),
-title:title,
-content:content,
-date:new Date().toLocaleString(),
-pinned:false
-
-});
-
+notes.push(note);
 }
 
 localStorage.setItem("notes",JSON.stringify(notes));
 
-back();
+cancelEdit();
 
 }
 
-
-
 function displayNotes(){
 
-let container=document.getElementById("notesView");
+notesList.innerHTML="";
 
 let search=document.getElementById("search").value.toLowerCase();
 
-container.innerHTML="";
+notes
+.sort((a,b)=>b.pinned-a.pinned)
+.forEach(n=>{
 
-notes.sort((a,b)=>b.pinned-a.pinned);
+if(!n.title.toLowerCase().includes(search)
+&&!n.text.toLowerCase().includes(search))return;
 
-notes.forEach(n=>{
+notesList.innerHTML+=`
 
-if(n.title.toLowerCase().includes(search) || n.content.toLowerCase().includes(search)){
+<div class="noteCard">
 
-container.innerHTML+=`
+<h3 onclick="openNote(${n.id})">${n.title}</h3>
 
-<div class="note">
+<small>${n.date}</small>
 
-<div class="noteTitle">${n.title}</div>
-
-<div class="noteDate">${n.date}</div>
-
-<button onclick="viewNote(${n.id})">📖 فتح</button>
-
-<button onclick="editNote(${n.id})">✏️ تعديل</button>
+<br>
 
 <button onclick="pin(${n.id})">📌</button>
 
-<button onclick="deleteNote(${n.id})">🗑️</button>
+<button onclick="edit(${n.id})">✏️</button>
+
+<button onclick="del(${n.id})" class="danger">🗑</button>
 
 </div>
 
 `;
 
-}
-
 });
 
 }
 
-
-
-function viewNote(id){
+function openNote(id){
 
 let n=notes.find(x=>x.id==id);
 
-document.getElementById("title").value=n.title;
-
-document.getElementById("editor").innerHTML=n.content;
-
-showEditor();
+alert(n.title+"\n\n"+n.text.replace(/<[^>]*>/g,''));
 
 }
 
-
-
-function editNote(id){
-
-currentId=id;
-
-viewNote(id);
-
+function edit(id){
+let n=notes.find(x=>x.id==id);
+showEditor(n);
 }
 
+function del(id){
 
-
-function deleteNote(id){
-
-if(confirm("هل تريد حذف الملاحظة؟")){
+if(!confirm("تأكيد الحذف؟"))return;
 
 notes=notes.filter(x=>x.id!=id);
 
@@ -320,10 +260,6 @@ localStorage.setItem("notes",JSON.stringify(notes));
 displayNotes();
 
 }
-
-}
-
-
 
 function pin(id){
 
@@ -337,23 +273,21 @@ displayNotes();
 
 }
 
-
-
 function format(cmd){
-
 document.execCommand(cmd,false,null);
-
 }
-
-
 
 function color(c){
-
 document.execCommand("foreColor",false,c);
-
 }
 
+function highlight(){
+document.execCommand("hiliteColor",false,"yellow");
+}
 
+function size(s){
+document.execCommand("fontSize",false,s);
+}
 
 function image(){
 
@@ -371,7 +305,7 @@ document.execCommand("insertImage",false,e.target.result);
 
 }
 
-reader.readAsDataURL(this.files[0]);
+reader.readAsDataURL(input.files[0]);
 
 }
 
@@ -379,21 +313,25 @@ input.click();
 
 }
 
-
-
 function table(){
 
 let html="<table border=1 style='width:100%'>";
-
 html+="<tr><td contenteditable=true>خانة</td><td contenteditable=true>خانة</td></tr>";
-
 html+="</table>";
 
 document.execCommand("insertHTML",false,html);
 
 }
 
+function exportPDF(){
 
+let w=window.open();
+
+w.document.write("<h1>"+title.value+"</h1>");
+w.document.write(editor.innerHTML);
+w.print();
+
+}
 
 function backup(){
 
@@ -405,13 +343,11 @@ let a=document.createElement("a");
 
 a.href=URL.createObjectURL(blob);
 
-a.download="backup.json";
+a.download="backup.smartnote";
 
 a.click();
 
 }
-
-
 
 function restore(){
 
@@ -427,41 +363,19 @@ reader.onload=function(){
 
 notes=JSON.parse(reader.result);
 
-localStorage.setItem("notes",reader.result);
+localStorage.setItem("notes",JSON.stringify(notes));
 
 displayNotes();
 
-}
+};
 
-reader.readAsText(this.files[0]);
+reader.readAsText(input.files[0]);
 
-}
+};
 
 input.click();
 
 }
-
-
-
-function exportPDF(){
-
-let win=window.open();
-
-notes.forEach(n=>{
-
-win.document.write("<h2>"+n.title+"</h2>");
-
-win.document.write("<small>"+n.date+"</small>");
-
-win.document.write(n.content+"<hr>");
-
-});
-
-win.print();
-
-}
-
-
 
 displayNotes();
 
