@@ -12,125 +12,73 @@ margin:0;
 background:#f0f2f5;
 }
 
-.dark{
-background:#121212;
-color:white;
-}
-
 header{
 background:#1976d2;
 color:white;
 padding:12px;
+font-size:20px;
 display:flex;
 justify-content:space-between;
 align-items:center;
 }
 
-button{
-cursor:pointer;
-border:none;
-padding:8px 12px;
-border-radius:6px;
-margin:2px;
+.container{
+padding:15px;
 }
 
-.primary{
+button{
+padding:8px 12px;
+margin:4px;
+border:none;
+border-radius:6px;
 background:#1976d2;
 color:white;
+cursor:pointer;
 }
-
-.secondary{
-background:#555;
-color:white;
-}
-
-.danger{
-background:#d32f2f;
-color:white;
-}
-
-.container{
-padding:10px;
-}
-
-/* notes list */
 
 .note{
 background:white;
 padding:12px;
-margin:8px 0;
+margin-top:10px;
 border-radius:10px;
-box-shadow:0 2px 6px rgba(0,0,0,0.2);
-}
-
-.dark .note{
-background:#1e1e1e;
+box-shadow:0 2px 5px rgba(0,0,0,0.2);
 }
 
 .noteTitle{
-font-weight:bold;
 font-size:18px;
+font-weight:bold;
 }
 
 .noteDate{
 font-size:12px;
-opacity:0.6;
+color:gray;
 }
 
-/* editor */
+.editor{
+display:none;
+}
 
 #editor{
 min-height:200px;
 border:1px solid #ccc;
+border-radius:8px;
 padding:10px;
-border-radius:10px;
 background:white;
-}
-
-.dark #editor{
-background:#2a2a2a;
-color:white;
 }
 
 .toolbar button{
 background:#444;
-color:white;
 }
-
-/* screens */
-
-.screen{
-display:none;
-}
-
-.active{
-display:block;
-}
-
-/* menu */
 
 .menu{
 position:fixed;
 top:50px;
 right:10px;
 background:white;
-box-shadow:0 2px 10px rgba(0,0,0,0.3);
-border-radius:8px;
+box-shadow:0 0 10px rgba(0,0,0,0.3);
 display:none;
-z-index:999;
-}
-
-.menu div{
 padding:10px;
-cursor:pointer;
-}
-
-.menu div:hover{
-background:#eee;
-}
-
-.dark .menu{
-background:#2a2a2a;
+border-radius:8px;
 }
 
 </style>
@@ -142,91 +90,49 @@ background:#2a2a2a;
 
 <span>🧠 SmartNote Pro Ultimate</span>
 
-<div>
-
-<button onclick="showScreen('list')" class="secondary">📋</button>
-
-<button onclick="newNote()" class="primary">➕</button>
-
-<button onclick="toggleMenu()" class="secondary">⋮</button>
-
-</div>
+<button onclick="toggleMenu()">⋮</button>
 
 </header>
 
+
 <div class="menu" id="menu">
 
-<div onclick="backup()">💾 Backup</div>
-
-<div onclick="restore()">📂 Restore</div>
-
-<div onclick="deleteAll()">🗑️ Delete All</div>
-
-<div onclick="toggleDark()">🌙 Dark Mode</div>
+<button onclick="backup()">💾 Backup</button><br>
+<button onclick="restore()">📂 Restore</button><br>
+<button onclick="exportPDF()">📄 Export PDF</button>
 
 </div>
+
 
 <div class="container">
 
-<!-- LIST SCREEN -->
-
-<div id="listScreen" class="screen active">
 
 <input id="search" placeholder="🔍 بحث" oninput="displayNotes()">
 
-<div id="notes"></div>
 
-</div>
 
-<!-- VIEW SCREEN -->
+<div id="notesView"></div>
 
-<div id="viewScreen" class="screen">
 
-<h2 id="viewTitle"></h2>
 
-<div id="viewDate"></div>
+<div class="editor" id="editorView">
 
-<hr>
-
-<div id="viewContent"></div>
-
-<br>
-
-<button onclick="editCurrent()" class="primary">✏️ تعديل</button>
-
-<button onclick="exportPDF()" class="secondary">📄 PDF</button>
-
-<button onclick="showScreen('list')" class="secondary">⬅️ رجوع</button>
-
-</div>
-
-<!-- EDIT SCREEN -->
-
-<div id="editScreen" class="screen">
+<button onclick="back()">⬅ رجوع</button>
 
 <input id="title" placeholder="عنوان">
 
 <div class="toolbar">
 
 <button onclick="format('bold')"><b>B</b></button>
-
 <button onclick="format('italic')"><i>I</i></button>
-
 <button onclick="format('underline')"><u>U</u></button>
 
 <button onclick="color('red')">🔴</button>
-
 <button onclick="color('blue')">🔵</button>
-
 <button onclick="color('green')">🟢</button>
 
-<button onclick="size(3)">A-</button>
-
-<button onclick="size(5)">A+</button>
-
-<button onclick="insertImage()">📷</button>
-
-<button onclick="insertTable()">📊</button>
+<button onclick="image()">📷</button>
+<button onclick="table()">📊</button>
 
 </div>
 
@@ -234,169 +140,124 @@ background:#2a2a2a;
 
 <br>
 
-<button onclick="saveNote()" class="primary">💾 حفظ</button>
-
-<button onclick="showScreen('list')" class="secondary">⬅️ رجوع</button>
+<button onclick="saveNote()">💾 حفظ</button>
 
 </div>
 
+
+<button onclick="newNote()">➕ ملاحظة جديدة</button>
+
+
 </div>
+
+
 
 <script>
 
-let notes=JSON.parse(localStorage.getItem("smartNotes"))||[];
+let notes=JSON.parse(localStorage.getItem("notes"))||[];
 
 let currentId=null;
 
-/* screens */
 
-function showScreen(name){
-
-document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
-
-if(name=="list") listScreen.classList.add("active");
-
-if(name=="view") viewScreen.classList.add("active");
-
-if(name=="edit") editScreen.classList.add("active");
-
-}
-
-/* menu */
 
 function toggleMenu(){
 
-menu.style.display=menu.style.display=="block"?"none":"block";
+let m=document.getElementById("menu");
+
+m.style.display=m.style.display=="block"?"none":"block";
 
 }
 
-/* editor */
 
-function format(cmd){
-
-document.execCommand(cmd,false,null);
-
-}
-
-function color(c){
-
-document.execCommand("foreColor",false,c);
-
-}
-
-function size(s){
-
-document.execCommand("fontSize",false,s);
-
-}
-
-function insertImage(){
-
-let input=document.createElement("input");
-
-input.type="file";
-
-input.onchange=function(){
-
-let reader=new FileReader();
-
-reader.onload=e=>{
-
-document.execCommand("insertImage",false,e.target.result);
-
-};
-
-reader.readAsDataURL(this.files[0]);
-
-};
-
-input.click();
-
-}
-
-function insertTable(){
-
-let html="<table border=1 style='width:100%'>";
-
-html+="<tr><td>خانة</td><td>خانة</td></tr>";
-
-html+="<tr><td>خانة</td><td>خانة</td></tr>";
-
-html+="</table>";
-
-document.execCommand("insertHTML",false,html);
-
-}
-
-/* notes */
 
 function newNote(){
 
 currentId=null;
 
-title.value="";
+document.getElementById("title").value="";
 
-editor.innerHTML="";
+document.getElementById("editor").innerHTML="";
 
-showScreen("edit");
+showEditor();
 
 }
 
+
+
+function showEditor(){
+
+document.getElementById("notesView").style.display="none";
+
+document.getElementById("editorView").style.display="block";
+
+}
+
+
+
+function back(){
+
+document.getElementById("editorView").style.display="none";
+
+document.getElementById("notesView").style.display="block";
+
+displayNotes();
+
+}
+
+
+
 function saveNote(){
 
-let t=title.value;
+let title=document.getElementById("title").value;
 
-let c=editor.innerHTML;
+let content=document.getElementById("editor").innerHTML;
 
-if(!t && !c) return;
+if(!title && !content) return;
 
 if(currentId){
 
 let n=notes.find(x=>x.id==currentId);
 
-n.title=t;
-
-n.content=c;
+n.title=title;
+n.content=content;
 
 }else{
 
 notes.push({
 
 id:Date.now(),
-
-title:t,
-
-content:c,
-
+title:title,
+content:content,
 date:new Date().toLocaleString(),
-
 pinned:false
 
 });
 
 }
 
-localStorage.setItem("smartNotes",JSON.stringify(notes));
+localStorage.setItem("notes",JSON.stringify(notes));
 
-showScreen("list");
-
-displayNotes();
+back();
 
 }
 
+
+
 function displayNotes(){
+
+let container=document.getElementById("notesView");
 
 let search=document.getElementById("search").value.toLowerCase();
 
-notes.sort((a,b)=>b.pinned-a.pinned);
+container.innerHTML="";
 
-notesDiv="";
+notes.sort((a,b)=>b.pinned-a.pinned);
 
 notes.forEach(n=>{
 
 if(n.title.toLowerCase().includes(search) || n.content.toLowerCase().includes(search)){
 
-notesDiv+=`
+container.innerHTML+=`
 
 <div class="note">
 
@@ -406,9 +267,9 @@ notesDiv+=`
 
 <button onclick="viewNote(${n.id})">📖 فتح</button>
 
-<button onclick="pin(${n.id})">📌</button>
+<button onclick="editNote(${n.id})">✏️ تعديل</button>
 
-<button onclick="editNote(${n.id})">✏️</button>
+<button onclick="pin(${n.id})">📌</button>
 
 <button onclick="deleteNote(${n.id})">🗑️</button>
 
@@ -420,73 +281,41 @@ notesDiv+=`
 
 });
 
-notes.innerHTML=notesDiv;
-
 }
 
-/* view */
+
 
 function viewNote(id){
 
 let n=notes.find(x=>x.id==id);
 
-currentId=id;
+document.getElementById("title").value=n.title;
 
-viewTitle.innerHTML=n.title;
+document.getElementById("editor").innerHTML=n.content;
 
-viewDate.innerHTML=n.date;
-
-viewContent.innerHTML=n.content;
-
-showScreen("view");
+showEditor();
 
 }
+
+
 
 function editNote(id){
 
-let n=notes.find(x=>x.id==id);
-
 currentId=id;
 
-title.value=n.title;
-
-editor.innerHTML=n.content;
-
-showScreen("edit");
+viewNote(id);
 
 }
 
-function editCurrent(){
 
-editNote(currentId);
-
-}
-
-/* delete */
 
 function deleteNote(id){
 
-if(confirm("تأكيد الحذف؟")){
+if(confirm("هل تريد حذف الملاحظة؟")){
 
 notes=notes.filter(x=>x.id!=id);
 
-localStorage.setItem("smartNotes",JSON.stringify(notes));
-
-displayNotes();
-
-showScreen("list");
-
-}
-
-}
-
-function deleteAll(){
-
-if(confirm("حذف جميع الملاحظات؟")){
-
-notes=[];
-
-localStorage.removeItem("smartNotes");
+localStorage.setItem("notes",JSON.stringify(notes));
 
 displayNotes();
 
@@ -494,7 +323,7 @@ displayNotes();
 
 }
 
-/* pin */
+
 
 function pin(id){
 
@@ -502,25 +331,69 @@ let n=notes.find(x=>x.id==id);
 
 n.pinned=!n.pinned;
 
-localStorage.setItem("smartNotes",JSON.stringify(notes));
+localStorage.setItem("notes",JSON.stringify(notes));
 
 displayNotes();
 
 }
 
-/* pdf */
 
-function exportPDF(){
 
-let win=window.open();
+function format(cmd){
 
-win.document.write(viewContent.innerHTML);
-
-win.print();
+document.execCommand(cmd,false,null);
 
 }
 
-/* backup */
+
+
+function color(c){
+
+document.execCommand("foreColor",false,c);
+
+}
+
+
+
+function image(){
+
+let input=document.createElement("input");
+
+input.type="file";
+
+input.onchange=function(){
+
+let reader=new FileReader();
+
+reader.onload=function(e){
+
+document.execCommand("insertImage",false,e.target.result);
+
+}
+
+reader.readAsDataURL(this.files[0]);
+
+}
+
+input.click();
+
+}
+
+
+
+function table(){
+
+let html="<table border=1 style='width:100%'>";
+
+html+="<tr><td contenteditable=true>خانة</td><td contenteditable=true>خانة</td></tr>";
+
+html+="</table>";
+
+document.execCommand("insertHTML",false,html);
+
+}
+
+
 
 function backup(){
 
@@ -532,13 +405,13 @@ let a=document.createElement("a");
 
 a.href=URL.createObjectURL(blob);
 
-a.download="SmartNoteBackup.json";
+a.download="backup.json";
 
 a.click();
 
 }
 
-/* restore */
+
 
 function restore(){
 
@@ -550,31 +423,45 @@ input.onchange=function(){
 
 let reader=new FileReader();
 
-reader.onload=e=>{
+reader.onload=function(){
 
-notes=JSON.parse(e.target.result);
+notes=JSON.parse(reader.result);
 
-localStorage.setItem("smartNotes",JSON.stringify(notes));
+localStorage.setItem("notes",reader.result);
 
 displayNotes();
 
-};
+}
 
 reader.readAsText(this.files[0]);
 
-};
+}
 
 input.click();
 
 }
 
-/* dark */
 
-function toggleDark(){
 
-document.body.classList.toggle("dark");
+function exportPDF(){
+
+let win=window.open();
+
+notes.forEach(n=>{
+
+win.document.write("<h2>"+n.title+"</h2>");
+
+win.document.write("<small>"+n.date+"</small>");
+
+win.document.write(n.content+"<hr>");
+
+});
+
+win.print();
 
 }
+
+
 
 displayNotes();
 
