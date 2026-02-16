@@ -1,244 +1,404 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="ar">
 <head>
 <meta charset="UTF-8">
-<title>مفكرتي</title>
+<title>SmartNote Pro</title>
 
 <style>
 body{
 font-family:Arial;
 margin:0;
-background:#f0f0f0;
-}
-
-header{
-background:#2196f3;
-color:white;
 padding:15px;
-text-align:center;
-font-size:20px;
+background:#f0f2f5;
+transition:0.3s;
 }
 
-.container{
+.dark{
+background:#121212;
+color:white;
+}
+
+h2{
+margin:0 0 10px 0;
+}
+
+input,button{
 padding:10px;
+margin:5px 0;
+border-radius:6px;
+border:none;
+}
+
+button{
+background:#1976d2;
+color:white;
+cursor:pointer;
 }
 
 .note{
 background:white;
-padding:15px;
-margin-bottom:10px;
+padding:12px;
+margin-top:10px;
 border-radius:10px;
-cursor:pointer;
-box-shadow:0 2px 5px rgba(0,0,0,0.2);
-}
-
-button{
-padding:10px;
-margin:5px;
-border:none;
-border-radius:8px;
+box-shadow:0 2px 6px rgba(0,0,0,0.2);
 cursor:pointer;
 }
 
-.addBtn{
-background:#4caf50;
-color:white;
-width:100%;
+.dark .note{
+background:#1e1e1e;
 }
 
-.deleteBtn{
-background:red;
-color:white;
-}
-
-.editBtn{
-background:orange;
-color:white;
-}
-
-.backBtn{
-background:gray;
-color:white;
-}
-
-.hidden{
-display:none;
-}
-
-#viewer, #editor{
-background:white;
-padding:15px;
-border-radius:10px;
-}
-
-#noteContent{
+#editor{
 min-height:150px;
-border:1px solid #ccc;
+background:white;
 padding:10px;
-border-radius:5px;
+border-radius:10px;
+border:1px solid #ccc;
+outline:none;
+}
+
+.dark #editor{
+background:#2a2a2a;
+color:white;
+}
+
+.toolbar button{
+background:#444;
+margin:2px;
+}
+
+/* شاشة القفل */
+.lockScreen{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:black;
+color:white;
+display:flex;
+justify-content:center;
+align-items:center;
+flex-direction:column;
+z-index:9999;
+}
+
+/* شاشة عرض الملاحظة */
+.viewer{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:white;
+overflow:auto;
+padding:20px;
+z-index:9998;
+}
+
+.dark .viewer{
+background:#121212;
+color:white;
+}
+
+.viewer button{
+margin-top:10px;
 }
 </style>
 
 </head>
 <body>
 
-<header>📒 مفكرتي</header>
+<h2>🧠 SmartNote Pro</h2>
 
-<div class="container">
+<button onclick="toggleDark()">🌙 وضع ليلي</button>
+<button onclick="lockApp()">🔒 قفل</button>
 
-<!-- قائمة الملاحظات -->
-<div id="listView">
+<br>
 
-<button class="addBtn" onclick="newNote()">➕ إضافة ملاحظة</button>
+<input id="search" placeholder="🔍 بحث" oninput="displayNotes()">
 
-<div id="notesList"></div>
+<br>
 
-</div>
+<input id="title" placeholder="عنوان الملاحظة">
 
-<!-- عرض الملاحظة -->
-<div id="viewer" class="hidden">
+<div class="toolbar">
 
-<h3 id="viewTitle"></h3>
+<button onclick="format('bold')"><b>B</b></button>
+<button onclick="format('italic')"><i>I</i></button>
+<button onclick="format('underline')"><u>U</u></button>
 
-<div id="viewContent"></div>
+<button onclick="color('red')">🔴</button>
+<button onclick="color('blue')">🔵</button>
+<button onclick="color('green')">🟢</button>
 
-<button class="editBtn" onclick="editNote()">✏️ تعديل</button>
+<button onclick="size(3)">A-</button>
+<button onclick="size(5)">A+</button>
 
-<button class="deleteBtn" onclick="confirmDelete()">🗑️ حذف</button>
+<button onclick="image()">📷</button>
 
-<button class="backBtn" onclick="back()">⬅️ رجوع</button>
-
-</div>
-
-<!-- التعديل -->
-<div id="editor" class="hidden">
-
-<input id="titleInput" placeholder="العنوان" style="width:100%;padding:10px">
-
-<div id="noteContent" contenteditable="true"></div>
-
-<button class="addBtn" onclick="saveNote()">💾 حفظ</button>
-
-<button class="backBtn" onclick="back()">⬅️ رجوع</button>
+<button onclick="table()">📊</button>
 
 </div>
 
-</div>
+<div id="editor" contenteditable="true"></div>
+
+<br>
+
+<button onclick="saveNote()">💾 حفظ</button>
+
+<div id="notes"></div>
 
 <script>
 
-let notes = JSON.parse(localStorage.getItem("notes") || "[]");
-let currentIndex = null;
+let notes=JSON.parse(localStorage.getItem("smartNotes"))||[];
+let editingId=null;
 
-function saveStorage(){
-localStorage.setItem("notes", JSON.stringify(notes));
+/* تنسيق */
+function format(cmd){
+document.execCommand(cmd,false,null);
 }
 
-function renderNotes(){
+function color(c){
+document.execCommand("foreColor",false,c);
+}
 
-let list = document.getElementById("notesList");
-list.innerHTML="";
+function size(s){
+document.execCommand("fontSize",false,s);
+}
 
-notes.forEach((note,index)=>{
+/* إدراج صورة */
+function image(){
 
-let div=document.createElement("div");
+let input=document.createElement("input");
 
-div.className="note";
+input.type="file";
 
-div.innerHTML=note.title || "بدون عنوان";
+input.onchange=function(){
 
-div.onclick=function(){
-openNote(index);
-};
+let file=this.files[0];
 
-list.appendChild(div);
+let reader=new FileReader();
+
+reader.onload=function(e){
+
+document.execCommand("insertImage",false,e.target.result);
+
+}
+
+reader.readAsDataURL(file);
+
+}
+
+input.click();
+
+}
+
+/* جدول */
+function table(){
+
+let html="<table border=1 style='width:100%'>";
+
+html+="<tr><td contenteditable=true>خانة</td><td contenteditable=true>خانة</td></tr>";
+
+html+="<tr><td contenteditable=true>خانة</td><td contenteditable=true>خانة</td></tr>";
+
+html+="</table>";
+
+document.execCommand("insertHTML",false,html);
+
+}
+
+/* حفظ أو تعديل */
+function saveNote(){
+
+let title=document.getElementById("title").value;
+let text=document.getElementById("editor").innerHTML;
+
+if(!title && !text)return;
+
+if(editingId){
+
+let n=notes.find(x=>x.id==editingId);
+n.title=title;
+n.text=text;
+editingId=null;
+
+}else{
+
+notes.push({
+id:Date.now(),
+title:title,
+text:text,
+pinned:false
+});
+
+}
+
+localStorage.setItem("smartNotes",JSON.stringify(notes));
+
+document.getElementById("title").value="";
+document.getElementById("editor").innerHTML="";
+
+displayNotes();
+
+}
+
+/* عرض الملاحظات */
+function displayNotes(){
+
+let search=document.getElementById("search").value.toLowerCase();
+let div=document.getElementById("notes");
+
+div.innerHTML="";
+
+notes.sort((a,b)=>b.pinned-a.pinned);
+
+notes.forEach(n=>{
+
+if(n.title.toLowerCase().includes(search) || n.text.toLowerCase().includes(search)){
+
+div.innerHTML+=`
+
+<div class="note" onclick="openNote(${n.id})">
+
+<h3>${n.pinned?"📌 ":""}${n.title}</h3>
+
+<div>${n.text.substring(0,100)}...</div>
+
+<button onclick="event.stopPropagation();pin(${n.id})">📌</button>
+
+<button onclick="event.stopPropagation();del(${n.id})">🗑️</button>
+
+</div>
+
+`;
+
+}
 
 });
 
 }
 
-function openNote(index){
+/* فتح الملاحظة */
+function openNote(id){
 
-currentIndex=index;
+let n=notes.find(x=>x.id==id);
 
-document.getElementById("listView").classList.add("hidden");
-document.getElementById("viewer").classList.remove("hidden");
+let view=document.createElement("div");
 
-document.getElementById("viewTitle").innerHTML=notes[index].title;
-document.getElementById("viewContent").innerHTML=notes[index].content;
+view.className="viewer";
 
-}
+view.innerHTML=`
 
-function newNote(){
+<h2>${n.title}</h2>
 
-currentIndex=null;
+<div>${n.text}</div>
 
-document.getElementById("listView").classList.add("hidden");
-document.getElementById("editor").classList.remove("hidden");
+<button onclick="edit(${n.id})">✏️ تعديل</button>
 
-document.getElementById("titleInput").value="";
-document.getElementById("noteContent").innerHTML="";
+<button onclick="this.parentElement.remove()">⬅️ رجوع</button>
 
-}
+`;
 
-function editNote(){
-
-document.getElementById("viewer").classList.add("hidden");
-document.getElementById("editor").classList.remove("hidden");
-
-document.getElementById("titleInput").value=notes[currentIndex].title;
-document.getElementById("noteContent").innerHTML=notes[currentIndex].content;
+document.body.appendChild(view);
 
 }
 
-function saveNote(){
+/* تعديل */
+function edit(id){
 
-let title=document.getElementById("titleInput").value;
-let content=document.getElementById("noteContent").innerHTML;
+let n=notes.find(x=>x.id==id);
 
-if(currentIndex==null){
+document.getElementById("title").value=n.title;
+document.getElementById("editor").innerHTML=n.text;
 
-notes.push({title,content});
+editingId=id;
 
-}else{
+document.querySelector(".viewer").remove();
 
-notes[currentIndex]={title,content};
-
-}
-
-saveStorage();
-
-back();
-
-renderNotes();
+window.scrollTo(0,0);
 
 }
 
-function confirmDelete(){
+/* تثبيت */
+function pin(id){
+
+let n=notes.find(x=>x.id==id);
+n.pinned=!n.pinned;
+
+localStorage.setItem("smartNotes",JSON.stringify(notes));
+
+displayNotes();
+
+}
+
+/* حذف مع تأكيد */
+function del(id){
 
 if(confirm("هل أنت متأكد من حذف الملاحظة؟")){
 
-notes.splice(currentIndex,1);
+notes=notes.filter(x=>x.id!=id);
 
-saveStorage();
+localStorage.setItem("smartNotes",JSON.stringify(notes));
 
-back();
-
-renderNotes();
+displayNotes();
 
 }
 
 }
 
-function back(){
+/* الوضع الليلي */
+function toggleDark(){
 
-document.getElementById("viewer").classList.add("hidden");
-document.getElementById("editor").classList.add("hidden");
-document.getElementById("listView").classList.remove("hidden");
+document.body.classList.toggle("dark");
 
 }
 
-renderNotes();
+/* القفل */
+function lockApp(){
+
+let pass=prompt("ضع رمز القفل");
+
+localStorage.setItem("lockPass",pass);
+
+location.reload();
+
+}
+
+let pass=localStorage.getItem("lockPass");
+
+if(pass){
+
+let lock=document.createElement("div");
+
+lock.className="lockScreen";
+
+lock.innerHTML=`
+
+<h2>🔒 مقفل</h2>
+
+<input id="unlock">
+
+<button onclick="unlock()">فتح</button>
+
+`;
+
+document.body.appendChild(lock);
+
+}
+
+function unlock(){
+
+let p=document.getElementById("unlock").value;
+
+if(p===localStorage.getItem("lockPass"))
+
+document.querySelector(".lockScreen").remove();
+
+}
+
+displayNotes();
 
 </script>
 
