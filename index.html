@@ -2,13 +2,25 @@
 <html lang="ar">
 <head>
 <meta charset="UTF-8">
-<title>مفكرتي Offline</title>
+<title>📒 مفكرتي Pro Offline</title>
 
 <style>
+
 body{
 font-family:Arial;
 padding:15px;
 background:#f5f5f5;
+transition:0.3s;
+}
+
+.dark{
+background:#1e1e1e;
+color:white;
+}
+
+input,button{
+padding:8px;
+margin:5px 0;
 }
 
 .note{
@@ -17,33 +29,373 @@ padding:10px;
 margin-top:10px;
 border-radius:8px;
 }
+
+.dark .note{
+background:#333;
+}
+
+#noteText{
+min-height:120px;
+padding:10px;
+border:1px solid #ccc;
+border-radius:8px;
+background:white;
+}
+
+.dark #noteText{
+background:#222;
+color:white;
+}
+
+.pinned{
+border:2px solid gold;
+}
+
+#lockScreen{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:#000;
+color:white;
+display:flex;
+flex-direction:column;
+justify-content:center;
+align-items:center;
+z-index:999;
+}
+
+table,td{
+border:1px solid #000;
+border-collapse:collapse;
+padding:5px;
+}
+
+@media print{
+
+body *{
+visibility:hidden;
+}
+
+#printArea, #printArea *{
+visibility:visible;
+}
+
+#printArea{
+position:absolute;
+top:0;
+right:0;
+width:100%;
+}
+
+}
+
 </style>
+
 </head>
 
 <body>
 
-<h2>📒 مفكرتي Offline</h2>
+<div id="lockScreen">
 
-<input id="title" placeholder="العنوان">
-<br><br>
+<h2>🔒 أدخل الرمز</h2>
 
-<textarea id="text" placeholder="الملاحظة"></textarea>
-<br><br>
+<input type="password" id="passInput">
+
+<button onclick="unlock()">فتح</button>
+
+<button onclick="setPass()">تعيين رمز جديد</button>
+
+</div>
+
+<h2>📒 مفكرتي Pro Offline</h2>
+
+<button onclick="toggleDark()">🌙 وضع ليلي</button>
+
+<input id="search" placeholder="🔍 بحث..." oninput="display()">
+
+<br>
+
+<input id="noteTitle" placeholder="عنوان">
+
+<br>
+
+<div>
+
+<button onclick="format('bold')"><b>B</b></button>
+<button onclick="format('italic')"><i>I</i></button>
+<button onclick="format('underline')"><u>U</u></button>
+
+<button onclick="color('red')">🔴</button>
+<button onclick="color('blue')">🔵</button>
+
+<button onclick="highlight()">🟡</button>
+
+<button onclick="fontSize(5)">A+</button>
+
+<button onclick="insertImage()">📷 صورة</button>
+
+<button onclick="insertTable()">📊 جدول</button>
+
+</div>
+
+<div id="noteText" contenteditable="true"></div>
+
+<br>
+
+<input type="datetime-local" id="reminder">
+
+<br>
 
 <button onclick="save()">💾 حفظ</button>
 
+<button onclick="exportPDF()">📄 PDF</button>
+
+<button onclick="deleteAll()">🗑 حذف الكل</button>
+
 <div id="notes"></div>
+
+<div id="printArea"></div>
 
 <script>
 
-let notes = JSON.parse(localStorage.getItem("notes")) || [];
+/* lock */
+
+let savedPass=localStorage.getItem("pass");
+
+if(!savedPass){
+
+document.getElementById("lockScreen").style.display="none";
+
+}
+
+function setPass(){
+
+let p=prompt("أدخل رمز جديد");
+
+if(p){
+
+localStorage.setItem("pass",p);
+
+alert("تم الحفظ");
+
+}
+
+}
+
+function unlock(){
+
+let p=passInput.value;
+
+if(p===savedPass){
+
+lockScreen.style.display="none";
+
+}else{
+
+alert("رمز خطأ");
+
+}
+
+}
+
+/* notes */
+
+let notes=JSON.parse(localStorage.getItem("notes"))||[];
+
+let editId=null;
+
+function format(cmd){
+document.execCommand(cmd,false,null);
+}
+
+function color(c){
+document.execCommand("foreColor",false,c);
+}
+
+function highlight(){
+document.execCommand("hiliteColor",false,"yellow");
+}
+
+function fontSize(s){
+document.execCommand("fontSize",false,s);
+}
+
+/* image */
+
+function insertImage(){
+
+let input=document.createElement("input");
+
+input.type="file";
+
+input.accept="image/*";
+
+input.onchange=function(){
+
+let file=this.files[0];
+
+let reader=new FileReader();
+
+reader.onload=function(e){
+
+document.execCommand("insertImage",false,e.target.result);
+
+};
+
+reader.readAsDataURL(file);
+
+};
+
+input.click();
+
+}
+
+/* table */
+
+function insertTable(){
+
+let rows=prompt("عدد الصفوف",2);
+
+let cols=prompt("عدد الأعمدة",2);
+
+let html="<table>";
+
+for(let i=0;i<rows;i++){
+
+html+="<tr>";
+
+for(let j=0;j<cols;j++){
+
+html+="<td contenteditable='true'>خانة</td>";
+
+}
+
+html+="</tr>";
+
+}
+
+html+="</table>";
+
+document.execCommand("insertHTML",false,html);
+
+}
+
+/* save */
 
 function save(){
 
-let title=document.getElementById("title").value;
-let text=document.getElementById("text").value;
+let title=noteTitle.value;
 
-notes.push({title,text});
+let text=noteText.innerHTML;
+
+let reminder=document.getElementById("reminder").value;
+
+if(!title&&!text)return;
+
+if(editId){
+
+let n=notes.find(n=>n.id==editId);
+
+n.title=title;
+n.text=text;
+
+editId=null;
+
+}else{
+
+notes.push({
+
+id:Date.now(),
+title,
+text,
+pinned:false,
+reminder: reminder ? new Date(reminder).getTime():null,
+notified:false
+
+});
+
+}
+
+localStorage.setItem("notes",JSON.stringify(notes));
+
+noteTitle.value="";
+noteText.innerHTML="";
+
+display();
+
+}
+
+/* display */
+
+function display(){
+
+let search=document.getElementById("search").value.toLowerCase();
+
+let div=document.getElementById("notes");
+
+div.innerHTML="";
+
+let sorted=[...notes];
+
+sorted.sort((a,b)=>b.pinned-a.pinned);
+
+sorted.forEach(n=>{
+
+if(n.title.toLowerCase().includes(search)||n.text.toLowerCase().includes(search)){
+
+div.innerHTML+=`
+
+<div class="note ${n.pinned?'pinned':''}">
+
+<h3>${n.title}</h3>
+
+<div>${n.text}</div>
+
+<button onclick="edit(${n.id})">✏️ تعديل</button>
+
+<button onclick="pin(${n.id})">
+
+${n.pinned?"📌 مثبت":"📍 تثبيت"}
+
+</button>
+
+<button onclick="remove(${n.id})">❌ حذف</button>
+
+<button onclick="exportOne(${n.id})">📄 PDF</button>
+
+</div>
+
+`;
+
+}
+
+});
+
+}
+
+/* edit */
+
+function edit(id){
+
+let n=notes.find(n=>n.id==id);
+
+noteTitle.value=n.title;
+
+noteText.innerHTML=n.text;
+
+editId=id;
+
+}
+
+/* pin */
+
+function pin(id){
+
+let n=notes.find(n=>n.id==id);
+
+n.pinned=!n.pinned;
 
 localStorage.setItem("notes",JSON.stringify(notes));
 
@@ -51,24 +403,83 @@ display();
 
 }
 
-function display(){
+/* delete */
 
-let div=document.getElementById("notes");
+function remove(id){
 
-div.innerHTML="";
+notes=notes.filter(n=>n.id!=id);
+
+localStorage.setItem("notes",JSON.stringify(notes));
+
+display();
+
+}
+
+function deleteAll(){
+
+if(confirm("حذف الكل؟")){
+
+notes=[];
+
+localStorage.removeItem("notes");
+
+display();
+
+}
+
+}
+
+/* dark */
+
+function toggleDark(){
+
+document.body.classList.toggle("dark");
+
+}
+
+/* PDF */
+
+function exportPDF(){
+
+printArea.innerHTML=noteText.innerHTML;
+
+window.print();
+
+}
+
+function exportOne(id){
+
+let n=notes.find(n=>n.id==id);
+
+printArea.innerHTML="<h2>"+n.title+"</h2>"+n.text;
+
+window.print();
+
+}
+
+/* reminder */
+
+function checkReminders(){
+
+let now=Date.now();
 
 notes.forEach(n=>{
 
-div.innerHTML+=`
-<div class="note">
-<b>${n.title}</b>
-<p>${n.text}</p>
-</div>
-`;
+if(n.reminder&&!n.notified&&now>=n.reminder){
+
+alert("🔔 تذكير: "+n.title);
+
+n.notified=true;
+
+localStorage.setItem("notes",JSON.stringify(notes));
+
+}
 
 });
 
 }
+
+setInterval(checkReminders,5000);
 
 display();
 
