@@ -2,10 +2,9 @@
 <html lang="ar">
 <head>
 <meta charset="UTF-8">
-<title>SmartNote Pro Ultimate</title>
+<title>SmartNote PRO MAX</title>
 
 <style>
-
 body{
 font-family:Arial;
 margin:0;
@@ -16,105 +15,123 @@ header{
 background:#1976d2;
 color:white;
 padding:15px;
-font-size:20px;
 display:flex;
 justify-content:space-between;
 align-items:center;
 }
 
+.container{
+padding:15px;
+}
+
 button{
-padding:8px;
+padding:8px 12px;
+margin:3px;
 border:none;
 border-radius:6px;
-margin:3px;
+background:#1976d2;
+color:white;
 cursor:pointer;
 }
 
-.primary{background:#1976d2;color:white;}
-.danger{background:#e53935;color:white;}
-.gray{background:#555;color:white;}
-
-#notesList{
-padding:10px;
-}
-
-.noteCard{
+.note{
 background:white;
-padding:15px;
-margin-bottom:10px;
+padding:10px;
+margin-top:10px;
 border-radius:10px;
 box-shadow:0 2px 5px rgba(0,0,0,0.2);
+}
+
+.dark{
+background:#121212;
+color:white;
+}
+
+.dark .note{
+background:#1e1e1e;
+}
+
+#editor{
+min-height:200px;
+background:white;
+padding:10px;
+border-radius:10px;
+border:1px solid #ccc;
+}
+
+.toolbar button{
+background:#444;
 }
 
 .hidden{
 display:none;
 }
 
-#editor{
-min-height:200px;
-border:1px solid #ccc;
-padding:10px;
-border-radius:10px;
+.menu{
+position:absolute;
+right:10px;
+top:60px;
 background:white;
+padding:10px;
+border-radius:8px;
+box-shadow:0 2px 5px rgba(0,0,0,0.3);
+display:none;
 }
 
-.toolbar button{
-background:#444;
-color:white;
+.dark .menu{
+background:#1e1e1e;
 }
-
 </style>
+
 </head>
 <body>
 
 <header>
-
-<span>🧠 SmartNote Pro Ultimate</span>
+<span>🧠 SmartNote PRO MAX</span>
 
 <div>
-
-<button onclick="showEditor()">➕</button>
-
-<button onclick="backup()">💾</button>
-
-<button onclick="restore()">📂</button>
-
 <button onclick="toggleMenu()">⋮</button>
-
 </div>
 
 </header>
 
-<div id="menu" class="hidden" style="padding:10px;">
-<button onclick="toggleDark()" class="gray">🌙 وضع ليلي</button>
+<div class="menu" id="menu">
+
+<button onclick="toggleDark()">🌙 وضع ليلي</button><br>
+<button onclick="backup()">💾 Backup</button><br>
+<button onclick="restore()">📂 Restore</button><br>
+<button onclick="deleteAll()">🗑 حذف الكل</button>
+
 </div>
 
-<div style="padding:10px;">
+<div class="container">
 
-<input id="search" placeholder="🔍 بحث" oninput="displayNotes()" style="width:100%;padding:10px;">
+<div id="listView">
+
+<input id="search" placeholder="🔍 بحث" oninput="displayNotes()">
+
+<button onclick="newNote()">➕ ملاحظة جديدة</button>
+
+<div id="notes"></div>
 
 </div>
 
-<div id="notesList"></div>
+<div id="editorView" class="hidden">
 
-<div id="editorScreen" class="hidden" style="padding:10px;">
-
-<input id="title" placeholder="عنوان" style="width:100%;padding:10px;">
-
-<input type="datetime-local" id="reminder">
+<input id="title" placeholder="عنوان">
 
 <div class="toolbar">
 
-<button onclick="format('bold')"><b>B</b></button>
-<button onclick="format('italic')"><i>I</i></button>
-<button onclick="format('underline')"><u>U</u></button>
+<button onclick="cmd('bold')"><b>B</b></button>
+<button onclick="cmd('italic')"><i>I</i></button>
+<button onclick="cmd('underline')"><u>U</u></button>
+
+<button onclick="cmd('justifyRight')">➡</button>
+<button onclick="cmd('justifyCenter')">⬜</button>
+<button onclick="cmd('justifyLeft')">⬅</button>
 
 <button onclick="color('red')">🔴</button>
 <button onclick="color('blue')">🔵</button>
-<button onclick="highlight()">🟡</button>
-
-<button onclick="size(3)">A-</button>
-<button onclick="size(5)">A+</button>
 
 <button onclick="image()">📷</button>
 <button onclick="table()">📊</button>
@@ -125,168 +142,48 @@ color:white;
 
 <br>
 
-<button onclick="saveNote()" class="primary">💾 حفظ</button>
+<input type="datetime-local" id="reminder">
 
-<button onclick="cancelEdit()" class="gray">⬅ رجوع</button>
+<br>
 
-<button onclick="exportPDF()" class="primary">📄 PDF</button>
+<button onclick="saveNote()">💾 حفظ</button>
+<button onclick="exportPDF()">📄 PDF</button>
+<button onclick="back()">⬅ رجوع</button>
+
+</div>
 
 </div>
 
 <script>
 
 let notes=JSON.parse(localStorage.getItem("notes"))||[];
-let current=null;
+
+let editId=null;
 
 function toggleMenu(){
-menu.classList.toggle("hidden");
+
+let m=document.getElementById("menu");
+
+m.style.display=m.style.display=="block"?"none":"block";
+
 }
 
 function toggleDark(){
-document.body.style.background=
-document.body.style.background=="black"?"#f0f2f5":"black";
-}
 
-function showEditor(note=null){
-
-editorScreen.classList.remove("hidden");
-notesList.classList.add("hidden");
-
-if(note){
-current=note.id;
-title.value=note.title;
-editor.innerHTML=note.text;
-reminder.value=note.reminder||"";
-}else{
-current=null;
-title.value="";
-editor.innerHTML="";
-}
+document.body.classList.toggle("dark");
 
 }
 
-function cancelEdit(){
-editorScreen.classList.add("hidden");
-notesList.classList.remove("hidden");
-displayNotes();
-}
+function cmd(c){
 
-function saveNote(){
+document.execCommand(c,false,null);
 
-if(!title.value && !editor.innerHTML)return;
-
-let note={
-id:current||Date.now(),
-title:title.value,
-text:editor.innerHTML,
-date:new Date().toLocaleString(),
-pinned:false,
-reminder:reminder.value
-};
-
-if(current){
-
-let i=notes.findIndex(n=>n.id==current);
-notes[i]=note;
-
-}else{
-notes.push(note);
-}
-
-localStorage.setItem("notes",JSON.stringify(notes));
-
-cancelEdit();
-
-}
-
-function displayNotes(){
-
-notesList.innerHTML="";
-
-let search=document.getElementById("search").value.toLowerCase();
-
-notes
-.sort((a,b)=>b.pinned-a.pinned)
-.forEach(n=>{
-
-if(!n.title.toLowerCase().includes(search)
-&&!n.text.toLowerCase().includes(search))return;
-
-notesList.innerHTML+=`
-
-<div class="noteCard">
-
-<h3 onclick="openNote(${n.id})">${n.title}</h3>
-
-<small>${n.date}</small>
-
-<br>
-
-<button onclick="pin(${n.id})">📌</button>
-
-<button onclick="edit(${n.id})">✏️</button>
-
-<button onclick="del(${n.id})" class="danger">🗑</button>
-
-</div>
-
-`;
-
-});
-
-}
-
-function openNote(id){
-
-let n=notes.find(x=>x.id==id);
-
-alert(n.title+"\n\n"+n.text.replace(/<[^>]*>/g,''));
-
-}
-
-function edit(id){
-let n=notes.find(x=>x.id==id);
-showEditor(n);
-}
-
-function del(id){
-
-if(!confirm("تأكيد الحذف؟"))return;
-
-notes=notes.filter(x=>x.id!=id);
-
-localStorage.setItem("notes",JSON.stringify(notes));
-
-displayNotes();
-
-}
-
-function pin(id){
-
-let n=notes.find(x=>x.id==id);
-
-n.pinned=!n.pinned;
-
-localStorage.setItem("notes",JSON.stringify(notes));
-
-displayNotes();
-
-}
-
-function format(cmd){
-document.execCommand(cmd,false,null);
 }
 
 function color(c){
+
 document.execCommand("foreColor",false,c);
-}
 
-function highlight(){
-document.execCommand("hiliteColor",false,"yellow");
-}
-
-function size(s){
-document.execCommand("fontSize",false,s);
 }
 
 function image(){
@@ -303,11 +200,11 @@ reader.onload=function(e){
 
 document.execCommand("insertImage",false,e.target.result);
 
-}
+};
 
-reader.readAsDataURL(input.files[0]);
+reader.readAsDataURL(this.files[0]);
 
-}
+};
 
 input.click();
 
@@ -316,20 +213,202 @@ input.click();
 function table(){
 
 let html="<table border=1 style='width:100%'>";
+
 html+="<tr><td contenteditable=true>خانة</td><td contenteditable=true>خانة</td></tr>";
+
 html+="</table>";
 
 document.execCommand("insertHTML",false,html);
 
 }
 
+function newNote(){
+
+editId=null;
+
+document.getElementById("title").value="";
+
+document.getElementById("editor").innerHTML="";
+
+showEditor();
+
+}
+
+function saveNote(){
+
+let title=document.getElementById("title").value;
+
+let text=document.getElementById("editor").innerHTML;
+
+let reminder=document.getElementById("reminder").value;
+
+if(!title && !text)return;
+
+if(editId){
+
+let n=notes.find(x=>x.id==editId);
+
+n.title=title;
+
+n.text=text;
+
+n.reminder=reminder;
+
+}else{
+
+notes.push({
+
+id:Date.now(),
+
+title,
+
+text,
+
+date:new Date().toLocaleString(),
+
+pinned:false,
+
+reminder
+
+});
+
+}
+
+localStorage.setItem("notes",JSON.stringify(notes));
+
+displayNotes();
+
+back();
+
+}
+
+function displayNotes(){
+
+let div=document.getElementById("notes");
+
+div.innerHTML="";
+
+let search=document.getElementById("search").value.toLowerCase();
+
+notes.sort((a,b)=>b.pinned-a.pinned);
+
+notes.forEach(n=>{
+
+if(n.title.toLowerCase().includes(search) || n.text.toLowerCase().includes(search)){
+
+div.innerHTML+=`
+
+<div class="note">
+
+<h3>${n.title}</h3>
+
+<small>${n.date||""}</small>
+
+<div>${n.text.substring(0,100)}</div>
+
+<button onclick="openNote(${n.id})">📂 فتح</button>
+
+<button onclick="editNote(${n.id})">✏️ تعديل</button>
+
+<button onclick="pin(${n.id})">📌</button>
+
+<button onclick="del(${n.id})">🗑</button>
+
+</div>
+
+`;
+
+}
+
+});
+
+}
+
+function openNote(id){
+
+let n=notes.find(x=>x.id==id);
+
+document.getElementById("title").value=n.title;
+
+document.getElementById("editor").innerHTML=n.text;
+
+editId=id;
+
+showEditor();
+
+}
+
+function editNote(id){
+
+openNote(id);
+
+}
+
+function pin(id){
+
+let n=notes.find(x=>x.id==id);
+
+n.pinned=!n.pinned;
+
+localStorage.setItem("notes",JSON.stringify(notes));
+
+displayNotes();
+
+}
+
+function del(id){
+
+if(confirm("تأكيد الحذف؟")){
+
+notes=notes.filter(x=>x.id!=id);
+
+localStorage.setItem("notes",JSON.stringify(notes));
+
+displayNotes();
+
+}
+
+}
+
+function deleteAll(){
+
+if(confirm("حذف جميع الملاحظات؟")){
+
+notes=[];
+
+localStorage.removeItem("notes");
+
+displayNotes();
+
+}
+
+}
+
+function showEditor(){
+
+document.getElementById("listView").classList.add("hidden");
+
+document.getElementById("editorView").classList.remove("hidden");
+
+}
+
+function back(){
+
+document.getElementById("listView").classList.remove("hidden");
+
+document.getElementById("editorView").classList.add("hidden");
+
+}
+
 function exportPDF(){
 
-let w=window.open();
+let win=window.open();
 
-w.document.write("<h1>"+title.value+"</h1>");
-w.document.write(editor.innerHTML);
-w.print();
+win.document.write("<h1>"+title.value+"</h1>");
+
+win.document.write(editor.innerHTML);
+
+win.print();
 
 }
 
@@ -343,7 +422,7 @@ let a=document.createElement("a");
 
 a.href=URL.createObjectURL(blob);
 
-a.download="backup.smartnote";
+a.download="backup.json";
 
 a.click();
 
@@ -369,13 +448,29 @@ displayNotes();
 
 };
 
-reader.readAsText(input.files[0]);
+reader.readAsText(this.files[0]);
 
 };
 
 input.click();
 
 }
+
+setInterval(()=>{
+
+let now=new Date().toISOString().slice(0,16);
+
+notes.forEach(n=>{
+
+if(n.reminder==now){
+
+alert("🔔 تذكير: "+n.title);
+
+}
+
+});
+
+},60000);
 
 displayNotes();
 
