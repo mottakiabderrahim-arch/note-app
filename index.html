@@ -2,57 +2,66 @@
 <html lang="ar">
 <head>
 <meta charset="UTF-8">
-<title>مفكرتي</title>
+<title>📒 مفكرتي</title>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<!-- Offline PDF -->
+<script src="html2pdf.bundle.min.js"></script>
 
 <style>
+
 body{
-  font-family:Arial;
-  margin:0;
-  padding:15px;
-  background:#f5f5f5;
-  transition:0.3s;
+font-family:Arial;
+margin:0;
+padding:15px;
+background:#f5f5f5;
+transition:0.3s;
 }
 
 .dark{
-  background:#1e1e1e;
-  color:white;
+background:#1e1e1e;
+color:white;
 }
 
 input,button,select{
-  padding:8px;
-  margin:5px 0;
+padding:8px;
+margin:5px 0;
 }
 
 .note{
-  padding:10px;
-  margin-top:10px;
-  border-radius:8px;
+padding:10px;
+margin-top:10px;
+border-radius:8px;
 }
 
 .dark .note{
-  background:#2c2c2c !important;
+background:#2c2c2c !important;
 }
 
 #noteText{
-  min-height:120px;
-  padding:10px;
-  border:1px solid #ccc;
-  border-radius:8px;
-  outline:none;
-  background:white;
+min-height:120px;
+padding:10px;
+border:1px solid #ccc;
+border-radius:8px;
+outline:none;
+background:white;
 }
 
 .dark #noteText{
-  background:#333;
-  color:white;
+background:#333;
+color:white;
 }
 
 #toolbar{
-  display:none;
-  margin-top:5px;
+display:none;
+margin-top:5px;
 }
+
+button{
+cursor:pointer;
+border:none;
+border-radius:6px;
+}
+
 </style>
 </head>
 
@@ -62,14 +71,20 @@ input,button,select{
 
 <button onclick="toggleDark()">🌙 وضع ليلي</button>
 
+<br>
+
 <input type="text" id="search" placeholder="بحث..." oninput="displayNotes()">
 
 <br>
 
 <select id="sortSelect" onchange="displayNotes()">
-  <option value="new">الأحدث أولاً</option>
-  <option value="old">الأقدم أولاً</option>
-  <option value="az">حسب العنوان</option>
+
+<option value="new">الأحدث أولاً</option>
+
+<option value="old">الأقدم أولاً</option>
+
+<option value="az">حسب العنوان</option>
+
 </select>
 
 <input type="color" id="noteColor" value="#ffffff">
@@ -81,25 +96,35 @@ input,button,select{
 <button onclick="toggleToolbar()">🎨 تنسيق</button>
 
 <div id="toolbar">
+
 <button onclick="format('bold')"><b>B</b></button>
+
 <button onclick="format('italic')"><i>I</i></button>
+
 <button onclick="format('underline')"><u>U</u></button>
 
 <button onclick="setColor('red')">🔴</button>
+
 <button onclick="setColor('blue')">🔵</button>
+
 <button onclick="setColor('green')">🟢</button>
+
 <button onclick="setColor('black')">⚫</button>
 
 <button onclick="highlight('yellow')">🟡</button>
 
 <button onclick="fontSize(3)">A-</button>
+
 <button onclick="fontSize(5)">A+</button>
 
 <button onclick="addLink()">🔗</button>
+
 <button onclick="addImage()">📷</button>
 
 <button onclick="insertAdvancedTable()">📊 جدول+</button>
+
 <button onclick="clearFormat()">🧹</button>
+
 </div>
 
 <div id="noteText" contenteditable="true"></div>
@@ -111,7 +136,9 @@ input,button,select{
 <br>
 
 <button id="saveBtn" onclick="addOrUpdateNote()">➕ إضافة</button>
+
 <button onclick="deleteAll()">🗑 حذف الكل</button>
+
 <button onclick="exportPDF()">📄 تصدير PDF</button>
 
 <div id="notes"></div>
@@ -119,272 +146,295 @@ input,button,select{
 <script>
 
 let notes = JSON.parse(localStorage.getItem("notes")) || [];
+
 let editId = null;
 
 function toggleToolbar(){
-  let bar=document.getElementById("toolbar");
-  bar.style.display = bar.style.display==="none" ? "block" : "none";
+
+let bar=document.getElementById("toolbar");
+
+bar.style.display = bar.style.display==="none" ? "block" : "none";
+
 }
 
-function format(cmd){ document.execCommand(cmd,false,null); }
-function setColor(color){ document.execCommand("foreColor",false,color); }
-function highlight(color){ document.execCommand("hiliteColor",false,color); }
-function fontSize(size){ document.execCommand("fontSize",false,size); }
+function format(cmd){
+
+document.execCommand(cmd,false,null);
+
+}
+
+function setColor(color){
+
+document.execCommand("foreColor",false,color);
+
+}
+
+function highlight(color){
+
+document.execCommand("hiliteColor",false,color);
+
+}
+
+function fontSize(size){
+
+document.execCommand("fontSize",false,size);
+
+}
 
 function addLink(){
-  let url=prompt("دخل الرابط:");
-  if(url) document.execCommand("createLink",false,url);
+
+let url=prompt("دخل الرابط:");
+
+if(url)
+
+document.execCommand("createLink",false,url);
+
 }
 
 function addImage(){
-  let input=document.createElement("input");
-  input.type="file";
-  input.accept="image/*";
-  input.onchange=function(){
-    let file=this.files[0];
-    let reader=new FileReader();
-    reader.onload=function(e){
-      document.execCommand("insertImage",false,e.target.result);
-    };
-    reader.readAsDataURL(file);
-  };
-  input.click();
+
+let input=document.createElement("input");
+
+input.type="file";
+
+input.accept="image/*";
+
+input.onchange=function(){
+
+let file=this.files[0];
+
+let reader=new FileReader();
+
+reader.onload=function(e){
+
+document.execCommand("insertImage",false,e.target.result);
+
+};
+
+reader.readAsDataURL(file);
+
+};
+
+input.click();
+
 }
 
 function clearFormat(){
-  document.execCommand("removeFormat",false,null);
+
+document.execCommand("removeFormat",false,null);
+
 }
 
 document.getElementById("noteText").addEventListener("paste",function(e){
-  e.preventDefault();
-  let text=(e.clipboardData||window.clipboardData).getData("text");
-  document.execCommand("insertText",false,text);
+
+e.preventDefault();
+
+let text=(e.clipboardData||window.clipboardData).getData("text");
+
+document.execCommand("insertText",false,text);
+
 });
 
 function addOrUpdateNote(){
 
-  let title=document.getElementById("noteTitle").value;
-  let text=document.getElementById("noteText").innerHTML;
-  let reminder=document.getElementById("reminder").value;
-  let color=document.getElementById("noteColor").value;
+let title=document.getElementById("noteTitle").value;
 
-  if(!title && !text) return;
+let text=document.getElementById("noteText").innerHTML;
 
-  if(editId===null){
-    notes.push({
-      id:Date.now(),
-      title:title,
-      text:text,
-      date:new Date().toLocaleString(),
-      reminder: reminder ? new Date(reminder).getTime() : null,
-      notified:false,
-      color:color,
-      pinned:false
-    });
-  }else{
-    let note=notes.find(n=>n.id===editId);
-    note.title=title;
-    note.text=text;
-    note.reminder= reminder ? new Date(reminder).getTime() : null;
-    note.color=color;
-    editId=null;
-    document.getElementById("saveBtn").innerText="➕ إضافة";
-  }
+let reminder=document.getElementById("reminder").value;
 
-  localStorage.setItem("notes",JSON.stringify(notes));
+let color=document.getElementById("noteColor").value;
 
-  document.getElementById("noteTitle").value="";
-  document.getElementById("noteText").innerHTML="";
-  document.getElementById("reminder").value="";
+if(!title && !text) return;
 
-  displayNotes();
+if(editId===null){
+
+notes.push({
+
+id:Date.now(),
+
+title,
+
+text,
+
+date:new Date().toLocaleString(),
+
+reminder: reminder ? new Date(reminder).getTime() : null,
+
+notified:false,
+
+color,
+
+pinned:false
+
+});
+
+}else{
+
+let note=notes.find(n=>n.id===editId);
+
+note.title=title;
+
+note.text=text;
+
+note.reminder= reminder ? new Date(reminder).getTime() : null;
+
+note.color=color;
+
+editId=null;
+
+document.getElementById("saveBtn").innerText="➕ إضافة";
+
+}
+
+localStorage.setItem("notes",JSON.stringify(notes));
+
+document.getElementById("noteTitle").value="";
+
+document.getElementById("noteText").innerHTML="";
+
+document.getElementById("reminder").value="";
+
+displayNotes();
+
 }
 
 function displayNotes(){
 
-  let search=document.getElementById("search").value.toLowerCase();
-  let sort=document.getElementById("sortSelect").value;
-  let container=document.getElementById("notes");
-  container.innerHTML="";
+let search=document.getElementById("search").value.toLowerCase();
 
-  let sorted=[...notes];
+let sort=document.getElementById("sortSelect").value;
 
-  if(sort==="new"){ sorted.sort((a,b)=>b.id-a.id); }
-  else if(sort==="old"){ sorted.sort((a,b)=>a.id-b.id); }
-  else if(sort==="az"){ sorted.sort((a,b)=>a.title.localeCompare(b.title)); }
+let container=document.getElementById("notes");
 
-  sorted.sort((a,b)=>b.pinned-a.pinned);
+container.innerHTML="";
 
-  sorted.forEach(note=>{
-    if(note.title.toLowerCase().includes(search) ||
-       note.text.toLowerCase().includes(search)){
+let sorted=[...notes];
 
-      container.innerHTML+=`
-        <div class="note" style="background:${note.color || '#fff'}">
-          <h3>${note.title}</h3>
-          <div>${note.text}</div>
-          <small>${note.date}</small><br>
+if(sort==="new") sorted.sort((a,b)=>b.id-a.id);
 
-          <button onclick="togglePin(${note.id})">
-            ${note.pinned ? "📌 مثبت" : "📍 تثبيت"}
-          </button>
+else if(sort==="old") sorted.sort((a,b)=>a.id-b.id);
 
-          <button onclick="editNote(${note.id})">✏️ تعديل</button>
-          <button onclick="deleteNote(${note.id})">❌ حذف</button>
-        </div>
-      `;
-    }
-  });
+else if(sort==="az") sorted.sort((a,b)=>a.title.localeCompare(b.title));
+
+sorted.sort((a,b)=>b.pinned-a.pinned);
+
+sorted.forEach(note=>{
+
+if(note.title.toLowerCase().includes(search) ||
+
+note.text.toLowerCase().includes(search)){
+
+container.innerHTML+=`
+
+<div class="note" style="background:${note.color}">
+
+<h3>${note.title}</h3>
+
+<div>${note.text}</div>
+
+<small>${note.date}</small><br>
+
+<button onclick="togglePin(${note.id})">
+
+${note.pinned ? "📌 مثبت" : "📍 تثبيت"}
+
+</button>
+
+<button onclick="editNote(${note.id})">✏️ تعديل</button>
+
+<button onclick="deleteNote(${note.id})">❌ حذف</button>
+
+</div>
+
+`;
+
+}
+
+});
+
 }
 
 function togglePin(id){
-  let note=notes.find(n=>n.id===id);
-  note.pinned=!note.pinned;
-  localStorage.setItem("notes",JSON.stringify(notes));
-  displayNotes();
+
+let note=notes.find(n=>n.id===id);
+
+note.pinned=!note.pinned;
+
+localStorage.setItem("notes",JSON.stringify(notes));
+
+displayNotes();
+
 }
 
 function editNote(id){
-  let note=notes.find(n=>n.id===id);
-  document.getElementById("noteTitle").value=note.title;
-  document.getElementById("noteText").innerHTML=note.text;
-  document.getElementById("noteColor").value=note.color || "#ffffff";
 
-  if(note.reminder){
-    let d=new Date(note.reminder);
-    document.getElementById("reminder").value=d.toISOString().slice(0,16);
-  }
+let note=notes.find(n=>n.id===id);
 
-  editId=id;
-  document.getElementById("saveBtn").innerText="💾 حفظ التعديل";
-  window.scrollTo({top:0,behavior:'smooth'});
+document.getElementById("noteTitle").value=note.title;
+
+document.getElementById("noteText").innerHTML=note.text;
+
+document.getElementById("noteColor").value=note.color;
+
+if(note.reminder){
+
+let d=new Date(note.reminder);
+
+document.getElementById("reminder").value=d.toISOString().slice(0,16);
+
+}
+
+editId=id;
+
+document.getElementById("saveBtn").innerText="💾 حفظ التعديل";
+
 }
 
 function deleteNote(id){
-  notes=notes.filter(n=>n.id!==id);
-  localStorage.setItem("notes",JSON.stringify(notes));
-  displayNotes();
+
+notes=notes.filter(n=>n.id!==id);
+
+localStorage.setItem("notes",JSON.stringify(notes));
+
+displayNotes();
+
 }
 
 function deleteAll(){
-  if(confirm("تأكيد حذف الكل؟")){
-    notes=[];
-    localStorage.removeItem("notes");
-    displayNotes();
-  }
+
+if(confirm("تأكيد حذف الكل؟")){
+
+notes=[];
+
+localStorage.removeItem("notes");
+
+displayNotes();
+
+}
+
 }
 
 function toggleDark(){
-  document.body.classList.toggle("dark");
+
+document.body.classList.toggle("dark");
+
 }
-
-if("Notification" in window){
-  Notification.requestPermission();
-}
-
-function checkReminders(){
-  let now=Date.now();
-  notes.forEach(note=>{
-    if(note.reminder && !note.notified){
-      if(now>=note.reminder){
-        new Notification("🔔 تذكير",{body:note.title});
-        note.notified=true;
-        localStorage.setItem("notes",JSON.stringify(notes));
-      }
-    }
-  });
-}
-setInterval(checkReminders,30000);
-
-/* جدول احترافي */
-
-function insertAdvancedTable(){
-  let rows=parseInt(prompt("عدد الصفوف؟",2));
-  let cols=parseInt(prompt("عدد الأعمدة؟",2));
-  if(!rows||!cols) return;
-
-  let id="table_"+Date.now();
-
-  let table=`<div style="overflow:auto;margin-top:5px;">
-  <table id="${id}" border="1"
-  style="border-collapse:collapse;width:100%;text-align:center;">`;
-
-  for(let i=0;i<rows;i++){
-    table+="<tr>";
-    for(let j=0;j<cols;j++){
-      table+=`<td contenteditable="true" style="padding:6px;">خانة</td>`;
-    }
-    table+="</tr>";
-  }
-
-  table+=`</table>
-  <div style="margin-top:5px;">
-  <button onclick="addRow('${id}')">➕ صف</button>
-  <button onclick="deleteRow('${id}')">➖ صف</button>
-  <button onclick="addCol('${id}')">➕ عمود</button>
-  <button onclick="deleteCol('${id}')">➖ عمود</button>
-  </div></div><br>`;
-
-  document.execCommand("insertHTML",false,table);
-}
-
-function addRow(id){
-  let table=document.getElementById(id);
-  let cols=table.rows[0].cells.length;
-  let row=table.insertRow();
-  for(let i=0;i<cols;i++){
-    let cell=row.insertCell();
-    cell.contentEditable="true";
-    cell.innerHTML="خانة";
-    cell.style.padding="6px";
-  }
-}
-
-function deleteRow(id){
-  let table=document.getElementById(id);
-  if(table.rows.length>1){
-    table.deleteRow(table.rows.length-1);
-  }
-}
-
-function addCol(id){
-  let table=document.getElementById(id);
-  for(let i=0;i<table.rows.length;i++){
-    let cell=table.rows[i].insertCell();
-    cell.contentEditable="true";
-    cell.innerHTML="خانة";
-    cell.style.padding="6px";
-  }
-}
-
-function deleteCol(id){
-  let table=document.getElementById(id);
-  let cols=table.rows[0].cells.length;
-  if(cols>1){
-    for(let i=0;i<table.rows.length;i++){
-      table.rows[i].deleteCell(cols-1);
-    }
-  }
-}
-
-/* PDF */
 
 function exportPDF(){
-  let element=document.getElementById("noteText");
-  if(!element.innerHTML.trim()){
-    alert("ما كايناش ملاحظة باش تتصدر");
-    return;
-  }
 
-  let opt={
-    margin:10,
-    filename:'mofakirti.pdf',
-    image:{type:'jpeg',quality:0.98},
-    html2canvas:{scale:2},
-    jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}
-  };
+let element=document.getElementById("noteText");
 
-  html2pdf().set(opt).from(element).save();
+if(!element.innerHTML.trim()){
+
+alert("ما كايناش ملاحظة");
+
+return;
+
+}
+
+html2pdf().from(element).save("mofakirti.pdf");
+
 }
 
 displayNotes();
