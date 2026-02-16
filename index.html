@@ -1,487 +1,244 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<title>📒 مفكرتي Pro Offline</title>
+<title>مفكرتي</title>
 
 <style>
-
 body{
 font-family:Arial;
-padding:15px;
-background:#f5f5f5;
-transition:0.3s;
+margin:0;
+background:#f0f0f0;
 }
 
-.dark{
-background:#1e1e1e;
+header{
+background:#2196f3;
 color:white;
+padding:15px;
+text-align:center;
+font-size:20px;
 }
 
-input,button{
-padding:8px;
-margin:5px 0;
+.container{
+padding:10px;
 }
 
 .note{
 background:white;
-padding:10px;
-margin-top:10px;
-border-radius:8px;
+padding:15px;
+margin-bottom:10px;
+border-radius:10px;
+cursor:pointer;
+box-shadow:0 2px 5px rgba(0,0,0,0.2);
 }
 
-.dark .note{
-background:#333;
+button{
+padding:10px;
+margin:5px;
+border:none;
+border-radius:8px;
+cursor:pointer;
 }
 
-#noteText{
-min-height:120px;
-padding:10px;
-border:1px solid #ccc;
-border-radius:8px;
+.addBtn{
+background:#4caf50;
+color:white;
+width:100%;
+}
+
+.deleteBtn{
+background:red;
+color:white;
+}
+
+.editBtn{
+background:orange;
+color:white;
+}
+
+.backBtn{
+background:gray;
+color:white;
+}
+
+.hidden{
+display:none;
+}
+
+#viewer, #editor{
 background:white;
+padding:15px;
+border-radius:10px;
 }
 
-.dark #noteText{
-background:#222;
-color:white;
+#noteContent{
+min-height:150px;
+border:1px solid #ccc;
+padding:10px;
+border-radius:5px;
 }
-
-.pinned{
-border:2px solid gold;
-}
-
-#lockScreen{
-position:fixed;
-top:0;
-left:0;
-width:100%;
-height:100%;
-background:#000;
-color:white;
-display:flex;
-flex-direction:column;
-justify-content:center;
-align-items:center;
-z-index:999;
-}
-
-table,td{
-border:1px solid #000;
-border-collapse:collapse;
-padding:5px;
-}
-
-@media print{
-
-body *{
-visibility:hidden;
-}
-
-#printArea, #printArea *{
-visibility:visible;
-}
-
-#printArea{
-position:absolute;
-top:0;
-right:0;
-width:100%;
-}
-
-}
-
 </style>
 
 </head>
-
 <body>
 
-<div id="lockScreen">
+<header>📒 مفكرتي</header>
 
-<h2>🔒 أدخل الرمز</h2>
+<div class="container">
 
-<input type="password" id="passInput">
+<!-- قائمة الملاحظات -->
+<div id="listView">
 
-<button onclick="unlock()">فتح</button>
+<button class="addBtn" onclick="newNote()">➕ إضافة ملاحظة</button>
 
-<button onclick="setPass()">تعيين رمز جديد</button>
-
-</div>
-
-<h2>📒 مفكرتي Pro Offline</h2>
-
-<button onclick="toggleDark()">🌙 وضع ليلي</button>
-
-<input id="search" placeholder="🔍 بحث..." oninput="display()">
-
-<br>
-
-<input id="noteTitle" placeholder="عنوان">
-
-<br>
-
-<div>
-
-<button onclick="format('bold')"><b>B</b></button>
-<button onclick="format('italic')"><i>I</i></button>
-<button onclick="format('underline')"><u>U</u></button>
-
-<button onclick="color('red')">🔴</button>
-<button onclick="color('blue')">🔵</button>
-
-<button onclick="highlight()">🟡</button>
-
-<button onclick="fontSize(5)">A+</button>
-
-<button onclick="insertImage()">📷 صورة</button>
-
-<button onclick="insertTable()">📊 جدول</button>
+<div id="notesList"></div>
 
 </div>
 
-<div id="noteText" contenteditable="true"></div>
+<!-- عرض الملاحظة -->
+<div id="viewer" class="hidden">
 
-<br>
+<h3 id="viewTitle"></h3>
 
-<input type="datetime-local" id="reminder">
+<div id="viewContent"></div>
 
-<br>
+<button class="editBtn" onclick="editNote()">✏️ تعديل</button>
 
-<button onclick="save()">💾 حفظ</button>
+<button class="deleteBtn" onclick="confirmDelete()">🗑️ حذف</button>
 
-<button onclick="exportPDF()">📄 PDF</button>
+<button class="backBtn" onclick="back()">⬅️ رجوع</button>
 
-<button onclick="deleteAll()">🗑 حذف الكل</button>
+</div>
 
-<div id="notes"></div>
+<!-- التعديل -->
+<div id="editor" class="hidden">
 
-<div id="printArea"></div>
+<input id="titleInput" placeholder="العنوان" style="width:100%;padding:10px">
+
+<div id="noteContent" contenteditable="true"></div>
+
+<button class="addBtn" onclick="saveNote()">💾 حفظ</button>
+
+<button class="backBtn" onclick="back()">⬅️ رجوع</button>
+
+</div>
+
+</div>
 
 <script>
 
-/* lock */
+let notes = JSON.parse(localStorage.getItem("notes") || "[]");
+let currentIndex = null;
 
-let savedPass=localStorage.getItem("pass");
+function saveStorage(){
+localStorage.setItem("notes", JSON.stringify(notes));
+}
 
-if(!savedPass){
+function renderNotes(){
 
-document.getElementById("lockScreen").style.display="none";
+let list = document.getElementById("notesList");
+list.innerHTML="";
+
+notes.forEach((note,index)=>{
+
+let div=document.createElement("div");
+
+div.className="note";
+
+div.innerHTML=note.title || "بدون عنوان";
+
+div.onclick=function(){
+openNote(index);
+};
+
+list.appendChild(div);
+
+});
 
 }
 
-function setPass(){
+function openNote(index){
 
-let p=prompt("أدخل رمز جديد");
+currentIndex=index;
 
-if(p){
+document.getElementById("listView").classList.add("hidden");
+document.getElementById("viewer").classList.remove("hidden");
 
-localStorage.setItem("pass",p);
-
-alert("تم الحفظ");
-
-}
+document.getElementById("viewTitle").innerHTML=notes[index].title;
+document.getElementById("viewContent").innerHTML=notes[index].content;
 
 }
 
-function unlock(){
+function newNote(){
 
-let p=passInput.value;
+currentIndex=null;
 
-if(p===savedPass){
+document.getElementById("listView").classList.add("hidden");
+document.getElementById("editor").classList.remove("hidden");
 
-lockScreen.style.display="none";
+document.getElementById("titleInput").value="";
+document.getElementById("noteContent").innerHTML="";
+
+}
+
+function editNote(){
+
+document.getElementById("viewer").classList.add("hidden");
+document.getElementById("editor").classList.remove("hidden");
+
+document.getElementById("titleInput").value=notes[currentIndex].title;
+document.getElementById("noteContent").innerHTML=notes[currentIndex].content;
+
+}
+
+function saveNote(){
+
+let title=document.getElementById("titleInput").value;
+let content=document.getElementById("noteContent").innerHTML;
+
+if(currentIndex==null){
+
+notes.push({title,content});
 
 }else{
 
-alert("رمز خطأ");
+notes[currentIndex]={title,content};
+
+}
+
+saveStorage();
+
+back();
+
+renderNotes();
+
+}
+
+function confirmDelete(){
+
+if(confirm("هل أنت متأكد من حذف الملاحظة؟")){
+
+notes.splice(currentIndex,1);
+
+saveStorage();
+
+back();
+
+renderNotes();
 
 }
 
 }
 
-/* notes */
+function back(){
 
-let notes=JSON.parse(localStorage.getItem("notes"))||[];
-
-let editId=null;
-
-function format(cmd){
-document.execCommand(cmd,false,null);
-}
-
-function color(c){
-document.execCommand("foreColor",false,c);
-}
-
-function highlight(){
-document.execCommand("hiliteColor",false,"yellow");
-}
-
-function fontSize(s){
-document.execCommand("fontSize",false,s);
-}
-
-/* image */
-
-function insertImage(){
-
-let input=document.createElement("input");
-
-input.type="file";
-
-input.accept="image/*";
-
-input.onchange=function(){
-
-let file=this.files[0];
-
-let reader=new FileReader();
-
-reader.onload=function(e){
-
-document.execCommand("insertImage",false,e.target.result);
-
-};
-
-reader.readAsDataURL(file);
-
-};
-
-input.click();
+document.getElementById("viewer").classList.add("hidden");
+document.getElementById("editor").classList.add("hidden");
+document.getElementById("listView").classList.remove("hidden");
 
 }
 
-/* table */
-
-function insertTable(){
-
-let rows=prompt("عدد الصفوف",2);
-
-let cols=prompt("عدد الأعمدة",2);
-
-let html="<table>";
-
-for(let i=0;i<rows;i++){
-
-html+="<tr>";
-
-for(let j=0;j<cols;j++){
-
-html+="<td contenteditable='true'>خانة</td>";
-
-}
-
-html+="</tr>";
-
-}
-
-html+="</table>";
-
-document.execCommand("insertHTML",false,html);
-
-}
-
-/* save */
-
-function save(){
-
-let title=noteTitle.value;
-
-let text=noteText.innerHTML;
-
-let reminder=document.getElementById("reminder").value;
-
-if(!title&&!text)return;
-
-if(editId){
-
-let n=notes.find(n=>n.id==editId);
-
-n.title=title;
-n.text=text;
-
-editId=null;
-
-}else{
-
-notes.push({
-
-id:Date.now(),
-title,
-text,
-pinned:false,
-reminder: reminder ? new Date(reminder).getTime():null,
-notified:false
-
-});
-
-}
-
-localStorage.setItem("notes",JSON.stringify(notes));
-
-noteTitle.value="";
-noteText.innerHTML="";
-
-display();
-
-}
-
-/* display */
-
-function display(){
-
-let search=document.getElementById("search").value.toLowerCase();
-
-let div=document.getElementById("notes");
-
-div.innerHTML="";
-
-let sorted=[...notes];
-
-sorted.sort((a,b)=>b.pinned-a.pinned);
-
-sorted.forEach(n=>{
-
-if(n.title.toLowerCase().includes(search)||n.text.toLowerCase().includes(search)){
-
-div.innerHTML+=`
-
-<div class="note ${n.pinned?'pinned':''}">
-
-<h3>${n.title}</h3>
-
-<div>${n.text}</div>
-
-<button onclick="edit(${n.id})">✏️ تعديل</button>
-
-<button onclick="pin(${n.id})">
-
-${n.pinned?"📌 مثبت":"📍 تثبيت"}
-
-</button>
-
-<button onclick="remove(${n.id})">❌ حذف</button>
-
-<button onclick="exportOne(${n.id})">📄 PDF</button>
-
-</div>
-
-`;
-
-}
-
-});
-
-}
-
-/* edit */
-
-function edit(id){
-
-let n=notes.find(n=>n.id==id);
-
-noteTitle.value=n.title;
-
-noteText.innerHTML=n.text;
-
-editId=id;
-
-}
-
-/* pin */
-
-function pin(id){
-
-let n=notes.find(n=>n.id==id);
-
-n.pinned=!n.pinned;
-
-localStorage.setItem("notes",JSON.stringify(notes));
-
-display();
-
-}
-
-/* delete */
-
-function remove(id){
-
-notes=notes.filter(n=>n.id!=id);
-
-localStorage.setItem("notes",JSON.stringify(notes));
-
-display();
-
-}
-
-function deleteAll(){
-
-if(confirm("حذف الكل؟")){
-
-notes=[];
-
-localStorage.removeItem("notes");
-
-display();
-
-}
-
-}
-
-/* dark */
-
-function toggleDark(){
-
-document.body.classList.toggle("dark");
-
-}
-
-/* PDF */
-
-function exportPDF(){
-
-printArea.innerHTML=noteText.innerHTML;
-
-window.print();
-
-}
-
-function exportOne(id){
-
-let n=notes.find(n=>n.id==id);
-
-printArea.innerHTML="<h2>"+n.title+"</h2>"+n.text;
-
-window.print();
-
-}
-
-/* reminder */
-
-function checkReminders(){
-
-let now=Date.now();
-
-notes.forEach(n=>{
-
-if(n.reminder&&!n.notified&&now>=n.reminder){
-
-alert("🔔 تذكير: "+n.title);
-
-n.notified=true;
-
-localStorage.setItem("notes",JSON.stringify(notes));
-
-}
-
-});
-
-}
-
-setInterval(checkReminders,5000);
-
-display();
+renderNotes();
 
 </script>
 
