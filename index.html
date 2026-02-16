@@ -2,33 +2,32 @@
 <html lang="ar">
 <head>
 <meta charset="UTF-8">
-<title>SmartNote PRO MAX</title>
+<title>SmartNote ULTIMATE FINAL</title>
 
 <style>
 body{
 font-family:Arial;
 margin:0;
+padding:15px;
 background:#f0f2f5;
 }
 
-header{
-background:#1976d2;
+.dark{
+background:#121212;
 color:white;
-padding:15px;
+}
+
+.header{
 display:flex;
 justify-content:space-between;
 align-items:center;
-}
-
-.container{
-padding:15px;
 }
 
 button{
 padding:8px 12px;
 margin:3px;
 border:none;
-border-radius:6px;
+border-radius:8px;
 background:#1976d2;
 color:white;
 cursor:pointer;
@@ -36,15 +35,10 @@ cursor:pointer;
 
 .note{
 background:white;
-padding:10px;
+padding:12px;
 margin-top:10px;
 border-radius:10px;
 box-shadow:0 2px 5px rgba(0,0,0,0.2);
-}
-
-.dark{
-background:#121212;
-color:white;
 }
 
 .dark .note{
@@ -59,236 +53,179 @@ border-radius:10px;
 border:1px solid #ccc;
 }
 
+.dark #editor{
+background:#2a2a2a;
+color:white;
+}
+
 .toolbar button{
 background:#444;
 }
 
-.hidden{
-display:none;
-}
-
 .menu{
+display:none;
 position:absolute;
 right:10px;
-top:60px;
 background:white;
 padding:10px;
-border-radius:8px;
-box-shadow:0 2px 5px rgba(0,0,0,0.3);
-display:none;
+border-radius:10px;
+box-shadow:0 0 10px rgba(0,0,0,0.3);
 }
 
 .dark .menu{
-background:#1e1e1e;
+background:#2a2a2a;
+}
+
+.hidden{
+display:none;
 }
 </style>
 
 </head>
 <body>
 
-<header>
-<span>🧠 SmartNote PRO MAX</span>
-
-<div>
+<div class="header">
+<h2>🧠 SmartNote ULTIMATE</h2>
 <button onclick="toggleMenu()">⋮</button>
 </div>
 
-</header>
-
-<div class="menu" id="menu">
-
+<div id="menu" class="menu">
 <button onclick="toggleDark()">🌙 وضع ليلي</button><br>
 <button onclick="backup()">💾 Backup</button><br>
-<button onclick="restore()">📂 Restore</button><br>
-<button onclick="deleteAll()">🗑 حذف الكل</button>
-
+<button onclick="restore()">📂 Restore</button>
 </div>
 
-<div class="container">
+<input id="search" placeholder="🔍 بحث..." oninput="displayNotes()">
 
-<div id="listView">
+<div id="notesView"></div>
 
-<input id="search" placeholder="🔍 بحث" oninput="displayNotes()">
+<hr>
 
-<button onclick="newNote()">➕ ملاحظة جديدة</button>
+<h3 id="modeTitle">➕ ملاحظة جديدة</h3>
 
-<div id="notes"></div>
-
-</div>
-
-<div id="editorView" class="hidden">
-
-<input id="title" placeholder="عنوان">
+<input id="title" placeholder="العنوان">
 
 <div class="toolbar">
-
-<button onclick="cmd('bold')"><b>B</b></button>
-<button onclick="cmd('italic')"><i>I</i></button>
-<button onclick="cmd('underline')"><u>U</u></button>
-
-<button onclick="cmd('justifyRight')">➡</button>
-<button onclick="cmd('justifyCenter')">⬜</button>
-<button onclick="cmd('justifyLeft')">⬅</button>
-
+<button onclick="format('bold')"><b>B</b></button>
+<button onclick="format('italic')"><i>I</i></button>
+<button onclick="format('underline')"><u>U</u></button>
+<button onclick="format('insertUnorderedList')">• List</button>
 <button onclick="color('red')">🔴</button>
 <button onclick="color('blue')">🔵</button>
-
+<button onclick="color('green')">🟢</button>
+<button onclick="size(3)">A-</button>
+<button onclick="size(5)">A+</button>
 <button onclick="image()">📷</button>
 <button onclick="table()">📊</button>
-
 </div>
 
 <div id="editor" contenteditable="true"></div>
-
-<br>
 
 <input type="datetime-local" id="reminder">
 
 <br>
 
 <button onclick="saveNote()">💾 حفظ</button>
+<button onclick="clearEditor()">➕ جديد</button>
 <button onclick="exportPDF()">📄 PDF</button>
-<button onclick="back()">⬅ رجوع</button>
-
-</div>
-
-</div>
 
 <script>
 
-let notes=JSON.parse(localStorage.getItem("notes"))||[];
-
+let notes=JSON.parse(localStorage.getItem("ultimateNotes"))||[];
 let editId=null;
 
 function toggleMenu(){
-
 let m=document.getElementById("menu");
-
 m.style.display=m.style.display=="block"?"none":"block";
-
 }
 
 function toggleDark(){
-
 document.body.classList.toggle("dark");
-
 }
 
-function cmd(c){
-
-document.execCommand(c,false,null);
-
+function format(cmd){
+document.execCommand(cmd,false,null);
 }
 
 function color(c){
-
 document.execCommand("foreColor",false,c);
+}
 
+function size(s){
+document.execCommand("fontSize",false,s);
 }
 
 function image(){
-
 let input=document.createElement("input");
-
 input.type="file";
+input.accept="image/*";
 
 input.onchange=function(){
-
 let reader=new FileReader();
-
 reader.onload=function(e){
-
 document.execCommand("insertImage",false,e.target.result);
-
-};
-
-reader.readAsDataURL(this.files[0]);
-
-};
-
+}
+reader.readAsDataURL(input.files[0]);
+}
 input.click();
-
 }
 
 function table(){
-
 let html="<table border=1 style='width:100%'>";
-
 html+="<tr><td contenteditable=true>خانة</td><td contenteditable=true>خانة</td></tr>";
-
 html+="</table>";
-
 document.execCommand("insertHTML",false,html);
-
-}
-
-function newNote(){
-
-editId=null;
-
-document.getElementById("title").value="";
-
-document.getElementById("editor").innerHTML="";
-
-showEditor();
-
 }
 
 function saveNote(){
 
 let title=document.getElementById("title").value;
-
 let text=document.getElementById("editor").innerHTML;
-
 let reminder=document.getElementById("reminder").value;
 
-if(!title && !text)return;
+if(!title && !text) return;
 
 if(editId){
 
 let n=notes.find(x=>x.id==editId);
-
 n.title=title;
-
 n.text=text;
-
 n.reminder=reminder;
 
 }else{
 
 notes.push({
-
 id:Date.now(),
-
-title,
-
-text,
-
+title:title,
+text:text,
 date:new Date().toLocaleString(),
-
-pinned:false,
-
-reminder
-
+reminder:reminder,
+pinned:false
 });
 
 }
 
-localStorage.setItem("notes",JSON.stringify(notes));
+localStorage.setItem("ultimateNotes",JSON.stringify(notes));
+
+clearEditor();
 
 displayNotes();
+}
 
-back();
-
+function clearEditor(){
+editId=null;
+document.getElementById("title").value="";
+document.getElementById("editor").innerHTML="";
+document.getElementById("modeTitle").innerText="➕ ملاحظة جديدة";
 }
 
 function displayNotes(){
 
-let div=document.getElementById("notes");
+let search=document.getElementById("search").value.toLowerCase();
+
+let div=document.getElementById("notesView");
 
 div.innerHTML="";
-
-let search=document.getElementById("search").value.toLowerCase();
 
 notes.sort((a,b)=>b.pinned-a.pinned);
 
@@ -300,19 +237,15 @@ div.innerHTML+=`
 
 <div class="note">
 
-<h3>${n.title}</h3>
+<h3 onclick="viewNote(${n.id})">${n.pinned?"📌":""} ${n.title}</h3>
 
-<small>${n.date||""}</small>
-
-<div>${n.text.substring(0,100)}</div>
-
-<button onclick="openNote(${n.id})">📂 فتح</button>
+<small>${n.date}</small><br>
 
 <button onclick="editNote(${n.id})">✏️ تعديل</button>
 
 <button onclick="pin(${n.id})">📌</button>
 
-<button onclick="del(${n.id})">🗑</button>
+<button onclick="del(${n.id})">🗑 حذف</button>
 
 </div>
 
@@ -321,26 +254,37 @@ div.innerHTML+=`
 }
 
 });
-
 }
 
-function openNote(id){
+function viewNote(id){
 
 let n=notes.find(x=>x.id==id);
 
-document.getElementById("title").value=n.title;
-
-document.getElementById("editor").innerHTML=n.text;
-
-editId=id;
-
-showEditor();
+alert(n.title+"\n\n"+n.text.replace(/<[^>]+>/g,''));
 
 }
 
 function editNote(id){
 
-openNote(id);
+let n=notes.find(x=>x.id==id);
+
+editId=id;
+
+document.getElementById("title").value=n.title;
+document.getElementById("editor").innerHTML=n.text;
+document.getElementById("modeTitle").innerText="✏️ تعديل";
+
+}
+
+function del(id){
+
+if(!confirm("تأكيد الحذف؟")) return;
+
+notes=notes.filter(x=>x.id!=id);
+
+localStorage.setItem("ultimateNotes",JSON.stringify(notes));
+
+displayNotes();
 
 }
 
@@ -350,53 +294,9 @@ let n=notes.find(x=>x.id==id);
 
 n.pinned=!n.pinned;
 
-localStorage.setItem("notes",JSON.stringify(notes));
+localStorage.setItem("ultimateNotes",JSON.stringify(notes));
 
 displayNotes();
-
-}
-
-function del(id){
-
-if(confirm("تأكيد الحذف؟")){
-
-notes=notes.filter(x=>x.id!=id);
-
-localStorage.setItem("notes",JSON.stringify(notes));
-
-displayNotes();
-
-}
-
-}
-
-function deleteAll(){
-
-if(confirm("حذف جميع الملاحظات؟")){
-
-notes=[];
-
-localStorage.removeItem("notes");
-
-displayNotes();
-
-}
-
-}
-
-function showEditor(){
-
-document.getElementById("listView").classList.add("hidden");
-
-document.getElementById("editorView").classList.remove("hidden");
-
-}
-
-function back(){
-
-document.getElementById("listView").classList.remove("hidden");
-
-document.getElementById("editorView").classList.add("hidden");
 
 }
 
@@ -404,9 +304,11 @@ function exportPDF(){
 
 let win=window.open();
 
-win.document.write("<h1>"+title.value+"</h1>");
+win.document.write("<h1>"+document.getElementById("title").value+"</h1>");
 
-win.document.write(editor.innerHTML);
+win.document.write(document.getElementById("editor").innerHTML);
+
+win.document.write("<br><small>"+new Date().toLocaleString()+"</small>");
 
 win.print();
 
@@ -422,10 +324,9 @@ let a=document.createElement("a");
 
 a.href=URL.createObjectURL(blob);
 
-a.download="backup.json";
+a.download="SmartNoteBackup.json";
 
 a.click();
-
 }
 
 function restore(){
@@ -442,21 +343,20 @@ reader.onload=function(){
 
 notes=JSON.parse(reader.result);
 
-localStorage.setItem("notes",JSON.stringify(notes));
+localStorage.setItem("ultimateNotes",JSON.stringify(notes));
 
 displayNotes();
 
-};
+}
 
-reader.readAsText(this.files[0]);
-
-};
-
-input.click();
+reader.readAsText(input.files[0]);
 
 }
 
-setInterval(()=>{
+input.click();
+}
+
+function checkReminders(){
 
 let now=new Date().toISOString().slice(0,16);
 
@@ -470,7 +370,9 @@ alert("🔔 تذكير: "+n.title);
 
 });
 
-},60000);
+}
+
+setInterval(checkReminders,60000);
 
 displayNotes();
 
