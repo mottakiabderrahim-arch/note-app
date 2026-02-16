@@ -5,119 +5,128 @@
 <title>SmartNote Pro</title>
 
 <style>
+
 body{
 font-family:Arial;
 margin:0;
+padding:15px;
 background:#f0f2f5;
 }
 
-header{
-background:#1976d2;
+.dark{
+background:#121212;
 color:white;
-padding:15px;
-font-size:20px;
 }
 
-.container{
-padding:15px;
+button,input,select{
+padding:10px;
+margin:5px 0;
+border-radius:6px;
+border:none;
 }
 
 button{
-padding:10px;
-margin:5px;
-border:none;
-border-radius:8px;
 background:#1976d2;
 color:white;
-cursor:pointer;
 }
 
 .note{
 background:white;
 padding:15px;
 margin-top:10px;
-border-radius:12px;
-box-shadow:0 2px 6px rgba(0,0,0,0.2);
-cursor:pointer;
-}
-
-#editor{
-min-height:200px;
-border:1px solid #ccc;
-padding:10px;
 border-radius:10px;
-background:white;
+box-shadow:0 2px 6px rgba(0,0,0,0.2);
 }
 
-.toolbar button{
-background:#444;
+.dark .note{
+background:#1e1e1e;
 }
 
 .hidden{
 display:none;
 }
 
-.lockScreen{
-position:fixed;
-top:0;
-left:0;
-width:100%;
-height:100%;
-background:black;
+#editor{
+min-height:150px;
+background:white;
+padding:10px;
+border-radius:10px;
+border:1px solid #ccc;
+}
+
+.dark #editor{
+background:#2a2a2a;
 color:white;
-display:flex;
-justify-content:center;
-align-items:center;
-flex-direction:column;
-z-index:9999;
+}
+
+.toolbar button{
+background:#444;
+margin:2px;
 }
 
 </style>
-</head>
 
+</head>
 <body>
 
-<header>
-🧠 SmartNote Pro
-</header>
+<h2>🧠 SmartNote Pro</h2>
 
-<div class="container">
-
-<div id="listView">
-
-<input id="search" placeholder="🔍 بحث" oninput="displayNotes()">
+<button onclick="toggleDark()">🌙 وضع ليلي</button>
+<button onclick="showEditor()">➕ ملاحظة</button>
 
 <br>
 
-<button onclick="newNote()">➕ ملاحظة جديدة</button>
-<button onclick="lockApp()">🔒 قفل</button>
+<select id="folderSelect" onchange="displayNotes()">
+<option value="all">📁 كل المجلدات</option>
+</select>
 
-<div id="notes"></div>
+<input id="newFolder" placeholder="اسم مجلد جديد">
 
-</div>
+<button onclick="addFolder()">📁 إنشاء مجلد</button>
 
+<br>
 
-<div id="editorView" class="hidden">
+<input id="search" placeholder="🔍 بحث" oninput="displayNotes()">
+
+<div id="notesView"></div>
+
+<div id="viewer" class="hidden">
 
 <button onclick="back()">⬅ رجوع</button>
 
-<input id="title" placeholder="عنوان">
+<h2 id="viewTitle"></h2>
+
+<div id="viewText"></div>
+
+<br>
+
+<button onclick="exportPDF()">📄 PDF</button>
+<button onclick="editCurrent()">✏️ تعديل</button>
+<button onclick="pin(currentId)">📌 تثبيت</button>
+<button onclick="deleteNote(currentId)">🗑 حذف</button>
+
+</div>
+
+<div id="editorView" class="hidden">
+
+<input id="title" placeholder="العنوان">
+
+<select id="noteFolder"></select>
+
+<input type="datetime-local" id="reminder">
 
 <div class="toolbar">
 
-<button onclick="format('bold')"><b>B</b></button>
-<button onclick="format('italic')"><i>I</i></button>
-<button onclick="format('underline')"><u>U</u></button>
+<button onclick="format('bold')">B</button>
+<button onclick="format('italic')">I</button>
+<button onclick="format('underline')">U</button>
 
 <button onclick="color('red')">🔴</button>
 <button onclick="color('blue')">🔵</button>
 <button onclick="color('green')">🟢</button>
 
-<button onclick="size(3)">A-</button>
-<button onclick="size(5)">A+</button>
-
-<button onclick="insertImage()">📷</button>
-<button onclick="insertTable()">📊</button>
+<button onclick="image()">📷</button>
+<button onclick="table()">📊</button>
 
 </div>
 
@@ -126,192 +135,86 @@ z-index:9999;
 <br>
 
 <button onclick="saveNote()">💾 حفظ</button>
-<button onclick="deleteNote()">🗑 حذف</button>
-<button onclick="exportPDF()">📄 PDF</button>
-<button onclick="pinNote()">📌 تثبيت</button>
-
-</div>
+<button onclick="cancelEdit()">❌ إلغاء</button>
 
 </div>
 
 <script>
 
-let notes = JSON.parse(localStorage.getItem("smartNotes")||"[]");
+let notes=JSON.parse(localStorage.getItem("smartNotes"))||[];
+let folders=JSON.parse(localStorage.getItem("folders"))||["عام"];
 
-let current=null;
+let currentId=null;
+let editMode=false;
 
-function newNote(){
-
-current=null;
-
-document.getElementById("title").value="";
-document.getElementById("editor").innerHTML="";
-
-openEditor();
-
-}
-
-function openEditor(){
-
-listView.classList.add("hidden");
-editorView.classList.remove("hidden");
-
-}
-
-function back(){
-
-editorView.classList.add("hidden");
-listView.classList.remove("hidden");
-
-displayNotes();
-
-}
-
-function saveNote(){
-
-let title=titleInput();
-let text=editorHTML();
-
-if(!title && !text)return;
-
-if(current){
-
-current.title=title;
-current.text=text;
-
-}else{
-
-notes.push({
-
-id:Date.now(),
-title:title,
-text:text,
-pinned:false,
-date:new Date().toLocaleString()
-
-});
-
-}
-
-saveStorage();
-back();
-
-}
-
-function deleteNote(){
-
-if(!current)return;
-
-if(confirm("تأكيد الحذف؟")){
-
-notes=notes.filter(n=>n.id!=current.id);
-saveStorage();
-back();
-
-}
-
-}
-
-function pinNote(){
-
-if(!current)return;
-
-current.pinned=!current.pinned;
-saveStorage();
-
-}
-
-function displayNotes(){
-
-let s=search.value.toLowerCase();
-
-notes.sort((a,b)=>b.pinned-a.pinned);
-
-notesDiv().innerHTML="";
-
-notes.forEach(n=>{
-
-if(n.title.toLowerCase().includes(s)||n.text.toLowerCase().includes(s)){
-
-let div=document.createElement("div");
-
-div.className="note";
-
-div.innerHTML=`
-
-<h3>${n.pinned?"📌 ":""}${n.title}</h3>
-<div>${n.text.substring(0,100)}</div>
-<small>${n.date}</small>
-
-`;
-
-div.onclick=()=>{
-
-current=n;
-
-title.value=n.title;
-editor.innerHTML=n.text;
-
-openEditor();
-
-};
-
-notesDiv().appendChild(div);
-
-}
-
-});
-
-}
-
-function saveStorage(){
+function saveData(){
 
 localStorage.setItem("smartNotes",JSON.stringify(notes));
+localStorage.setItem("folders",JSON.stringify(folders));
 
 }
 
-function titleInput(){
+function addFolder(){
 
-return document.getElementById("title").value;
+let name=document.getElementById("newFolder").value;
 
-}
+if(!name)return;
 
-function editorHTML(){
+folders.push(name);
 
-return document.getElementById("editor").innerHTML;
+saveData();
 
-}
-
-function notesDiv(){
-
-return document.getElementById("notes");
+loadFolders();
 
 }
 
+function loadFolders(){
+
+let f=document.getElementById("folderSelect");
+let nf=document.getElementById("noteFolder");
+
+f.innerHTML='<option value="all">📁 كل المجلدات</option>';
+nf.innerHTML='';
+
+folders.forEach(x=>{
+
+f.innerHTML+=`<option value="${x}">${x}</option>`;
+nf.innerHTML+=`<option value="${x}">${x}</option>`;
+
+});
+
+}
+
+function showEditor(){
+
+editMode=false;
+
+document.getElementById("editorView").classList.remove("hidden");
+document.getElementById("notesView").classList.add("hidden");
+document.getElementById("viewer").classList.add("hidden");
+
+}
+
+function cancelEdit(){
+
+document.getElementById("editorView").classList.add("hidden");
+document.getElementById("notesView").classList.remove("hidden");
+
+}
 
 function format(cmd){
-
 document.execCommand(cmd,false,null);
-
 }
 
 function color(c){
-
 document.execCommand("foreColor",false,c);
-
 }
 
-function size(s){
-
-document.execCommand("fontSize",false,s);
-
-}
-
-function insertImage(){
+function image(){
 
 let input=document.createElement("input");
-
 input.type="file";
+input.accept="image/*";
 
 input.onchange=function(){
 
@@ -321,106 +224,207 @@ reader.onload=function(e){
 
 document.execCommand("insertImage",false,e.target.result);
 
-};
+}
 
-reader.readAsDataURL(input.files[0]);
+reader.readAsDataURL(this.files[0]);
 
-};
+}
 
 input.click();
 
 }
 
-function insertTable(){
+function table(){
 
-let html=`
-<table border=1 style="width:100%">
-<tr>
-<td contenteditable=true>خانة</td>
-<td contenteditable=true>خانة</td>
-</tr>
-<tr>
-<td contenteditable=true>خانة</td>
-<td contenteditable=true>خانة</td>
-</tr>
-</table>
-`;
+let html="<table border=1 style='width:100%'>";
+
+html+="<tr><td contenteditable=true>خانة</td><td contenteditable=true>خانة</td></tr>";
+
+html+="</table>";
 
 document.execCommand("insertHTML",false,html);
 
 }
 
+function saveNote(){
 
-function exportPDF(){
+let title=document.getElementById("title").value;
+let text=document.getElementById("editor").innerHTML;
+let folder=document.getElementById("noteFolder").value;
+let reminder=document.getElementById("reminder").value;
 
-let w=window.open("");
+if(!title && !text)return;
 
-w.document.write(`
-<html>
-<head>
-<title>PDF</title>
-</head>
-<body>
-<h2>${titleInput()}</h2>
-${editorHTML()}
-<script>
-window.print();
-<\/script>
-</body>
-</html>
-`);
+if(editMode){
+
+let n=notes.find(x=>x.id==currentId);
+
+n.title=title;
+n.text=text;
+n.folder=folder;
+n.reminder=reminder;
+
+}else{
+
+notes.push({
+
+id:Date.now(),
+title:title,
+text:text,
+folder:folder,
+reminder:reminder,
+pinned:false
+
+});
 
 }
 
+saveData();
 
-function lockApp(){
+cancelEdit();
 
-let pass=prompt("ضع رمز");
-
-localStorage.setItem("lockPass",pass);
-
-location.reload();
+displayNotes();
 
 }
 
+function displayNotes(){
 
-let pass=localStorage.getItem("lockPass");
+let search=document.getElementById("search").value.toLowerCase();
+let folder=document.getElementById("folderSelect").value;
 
-if(pass){
+let div=document.getElementById("notesView");
 
-let div=document.createElement("div");
+div.innerHTML="";
 
-div.className="lockScreen";
+notes.sort((a,b)=>b.pinned-a.pinned);
 
-div.innerHTML=`
+notes.forEach(n=>{
 
-<h2>🔒 مقفل</h2>
+if((folder=="all"||n.folder==folder)
+&&(n.title.toLowerCase().includes(search)
+||n.text.toLowerCase().includes(search))){
 
-<input id="unlock">
+div.innerHTML+=`
 
-<button onclick="unlock()">فتح</button>
+<div class="note">
+
+<h3 onclick="viewNote(${n.id})">
+
+${n.pinned?"📌 ":""}${n.title}
+
+</h3>
+
+<small>${n.folder||""}</small>
+
+</div>
 
 `;
 
-document.body.appendChild(div);
+}
+
+});
 
 }
 
-function unlock(){
+function viewNote(id){
 
-if(unlockInput()==localStorage.getItem("lockPass")){
+let n=notes.find(x=>x.id==id);
 
-document.querySelector(".lockScreen").remove();
+currentId=id;
+
+document.getElementById("notesView").classList.add("hidden");
+document.getElementById("viewer").classList.remove("hidden");
+
+document.getElementById("viewTitle").innerHTML=n.title;
+document.getElementById("viewText").innerHTML=n.text;
+
+}
+
+function back(){
+
+document.getElementById("viewer").classList.add("hidden");
+document.getElementById("notesView").classList.remove("hidden");
 
 }
 
+function editCurrent(){
+
+let n=notes.find(x=>x.id==currentId);
+
+editMode=true;
+
+document.getElementById("title").value=n.title;
+document.getElementById("editor").innerHTML=n.text;
+document.getElementById("noteFolder").value=n.folder;
+
+document.getElementById("viewer").classList.add("hidden");
+document.getElementById("editorView").classList.remove("hidden");
+
 }
 
-function unlockInput(){
+function deleteNote(id){
 
-return document.getElementById("unlock").value;
+if(!confirm("تأكيد الحذف؟")) return;
+
+notes=notes.filter(x=>x.id!=id);
+
+saveData();
+
+back();
+
+displayNotes();
 
 }
+
+function pin(id){
+
+let n=notes.find(x=>x.id==id);
+
+n.pinned=!n.pinned;
+
+saveData();
+
+displayNotes();
+
+}
+
+function exportPDF(){
+
+let n=notes.find(x=>x.id==currentId);
+
+let win=window.open();
+
+win.document.write(n.text);
+
+win.print();
+
+}
+
+function toggleDark(){
+
+document.body.classList.toggle("dark");
+
+}
+
+function checkReminders(){
+
+let now=new Date().toISOString().slice(0,16);
+
+notes.forEach(n=>{
+
+if(n.reminder && n.reminder==now){
+
+alert("🔔 تذكير: "+n.title);
+
+}
+
+});
+
+}
+
+setInterval(checkReminders,60000);
+
+loadFolders();
 
 displayNotes();
 
