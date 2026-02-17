@@ -2,9 +2,12 @@
 <html lang="ar">
 <head>
 <meta charset="UTF-8">
-<title>مفكرتي</title>
+<title>مفكرتي Ultimate</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
 <style>
+
 body{
 font-family:Arial;
 margin:0;
@@ -17,17 +20,17 @@ padding:8px;
 color:white;
 }
 
-#topbar button, #topbar select{
+button, select{
 margin:2px;
-padding:5px;
+padding:6px;
 border:none;
+cursor:pointer;
 }
 
 #toolbar{
 background:#fff;
 padding:5px;
 display:none;
-border-bottom:1px solid #ccc;
 }
 
 #editor{
@@ -36,6 +39,22 @@ min-height:400px;
 padding:10px;
 outline:none;
 }
+
+table{
+border-collapse:collapse;
+width:100%;
+}
+
+td, th{
+border:1px solid #999;
+padding:8px;
+}
+
+#progress{
+font-weight:bold;
+color:green;
+}
+
 </style>
 
 </head>
@@ -47,15 +66,18 @@ outline:none;
 
 <button onclick="save()">💾 حفظ</button>
 
-<button onclick="deleteNote()">🗑 حذف</button>
+<button onclick="templateWord()">📄 Word</button>
 
-<button onclick="simpleMode()">📒 مفكرة</button>
+<button onclick="templateTasks()">📋 مهام</button>
 
-<button onclick="wordMode()">📄 Word</button>
+<button onclick="templateExcel()">📊 Excel</button>
+
+<button onclick="exportPDF()">📄 PDF</button>
 
 <select id="noteList" onchange="loadNote(this.value)"></select>
 
 </div>
+
 
 <div id="toolbar">
 
@@ -65,110 +87,250 @@ outline:none;
 
 <button onclick="format('underline')"><u>U</u></button>
 
+<button onclick="format('justifyLeft')">⬅️</button>
+
+<button onclick="format('justifyCenter')">⬜</button>
+
+<button onclick="format('justifyRight')">➡️</button>
+
+<select onchange="fontSize(this.value)">
+<option value="3">عادي</option>
+<option value="5">كبير</option>
+<option value="7">ضخم</option>
+</select>
+
 <input type="color" onchange="color(this.value)">
 
 </div>
 
+
 <div id="editor" contenteditable="true"></div>
+
+<div id="progress"></div>
+
 
 <script>
 
-let editor = document.getElementById("editor");
-let currentNote = "";
+let editor=document.getElementById("editor");
 
-function wordMode(){
-toolbar.style.display="block";
-}
+let currentNote="";
 
-function simpleMode(){
-toolbar.style.display="none";
-}
 
+// Word tools
 function format(cmd){
 document.execCommand(cmd,false,null);
 }
 
 function color(c){
-document.execCommand("foreColor", false, c);
+document.execCommand("foreColor",false,c);
 }
 
+function fontSize(s){
+document.execCommand("fontSize",false,s);
+}
+
+
+// new note
+function newNote(){
+
+let name=prompt("اسم الملاحظة");
+
+if(!name) return;
+
+currentNote="note_"+name;
+
+localStorage.setItem(currentNote,"");
+
+editor.innerHTML="";
+
+updateList();
+
+}
+
+
+// save
 function save(){
 
-if(currentNote==""){
-alert("اختار أو أنشئ ملاحظة");
-return;
-}
+if(!currentNote) return;
 
-localStorage.setItem(currentNote, editor.innerHTML);
+localStorage.setItem(currentNote,editor.innerHTML);
 
 alert("تم الحفظ");
 
 updateList();
-}
-
-function newNote(){
-
-let name = prompt("اسم الملاحظة:");
-
-if(!name) return;
-
-currentNote = "note_"+name;
-
-editor.innerHTML="";
-
-save();
-
-updateList();
 
 }
 
+
+// load
 function loadNote(name){
 
-currentNote = name;
+currentNote=name;
 
-editor.innerHTML = localStorage.getItem(name);
-
-}
-
-function deleteNote(){
-
-if(currentNote=="") return;
-
-localStorage.removeItem(currentNote);
-
-editor.innerHTML="";
-
-currentNote="";
-
-updateList();
+editor.innerHTML=localStorage.getItem(name)||"";
 
 }
 
+
+// update list
 function updateList(){
 
-let list = document.getElementById("noteList");
+let list=document.getElementById("noteList");
 
 list.innerHTML="";
 
 for(let i=0;i<localStorage.length;i++){
 
-let key = localStorage.key(i);
+let key=localStorage.key(i);
 
 if(key.startsWith("note_")){
 
-let option=document.createElement("option");
+let o=document.createElement("option");
 
-option.value=key;
+o.value=key;
 
-option.text=key.replace("note_","");
+o.text=key.replace("note_","");
 
-list.appendChild(option);
-
-}
+list.appendChild(o);
 
 }
 
 }
+
+}
+
+
+// WORD TEMPLATE
+function templateWord(){
+
+document.getElementById("toolbar").style.display="block";
+
+editor.innerHTML="<h2>وثيقة Word</h2><p>اكتب هنا...</p>";
+
+}
+
+
+// TASK TEMPLATE
+function templateTasks(){
+
+document.getElementById("toolbar").style.display="none";
+
+editor.innerHTML=`
+
+<h2>قائمة المهام</h2>
+
+<label><input type="checkbox" onclick="calcProgress()"> مهمة 1</label><br>
+
+<label><input type="checkbox" onclick="calcProgress()"> مهمة 2</label><br>
+
+<label><input type="checkbox" onclick="calcProgress()"> مهمة 3</label><br>
+
+`;
+
+calcProgress();
+
+}
+
+
+// progress %
+function calcProgress(){
+
+let checks=editor.querySelectorAll("input[type=checkbox]");
+
+let done=0;
+
+checks.forEach(c=>{
+if(c.checked) done++;
+});
+
+let percent=checks.length?Math.round(done/checks.length*100):0;
+
+document.getElementById("progress").innerHTML="نسبة الإنجاز: "+percent+"%";
+
+}
+
+
+// EXCEL TEMPLATE
+function templateExcel(){
+
+document.getElementById("toolbar").style.display="none";
+
+editor.innerHTML=`
+
+<h2>جدول Excel</h2>
+
+<table>
+
+<tr>
+
+<th>العنصر</th>
+
+<th>القيمة</th>
+
+</tr>
+
+<tr>
+
+<td contenteditable="true">عنصر 1</td>
+
+<td contenteditable="true" oninput="sum()">0</td>
+
+</tr>
+
+<tr>
+
+<td contenteditable="true">عنصر 2</td>
+
+<td contenteditable="true" oninput="sum()">0</td>
+
+</tr>
+
+<tr>
+
+<th>المجموع</th>
+
+<th id="total">0</th>
+
+</tr>
+
+</table>
+
+`;
+
+}
+
+
+// sum auto
+function sum(){
+
+let cells=editor.querySelectorAll("td[contenteditable=true]:nth-child(2)");
+
+let total=0;
+
+cells.forEach(c=>{
+
+let val=parseFloat(c.innerText)||0;
+
+total+=val;
+
+});
+
+let t=document.getElementById("total");
+
+if(t) t.innerText=total;
+
+}
+
+
+// PDF
+function exportPDF(){
+
+if(!currentNote) return;
+
+html2pdf().from(editor).save(currentNote+".pdf");
+
+}
+
 
 updateList();
 
