@@ -20,6 +20,7 @@ button{margin:2px;padding:5px;cursor:pointer}
 <button onclick="newFile()">📄 ملف جديد</button>
 <select id="fileList" onchange="openFile()"></select>
 <button onclick="deleteFile()">🗑 حذف</button>
+<button onclick="saveAll()">💾 حفظ الآن</button>
 <span id="currentFile"></span>
 </div>
 
@@ -58,18 +59,29 @@ button{margin:2px;padding:5px;cursor:pointer}
 
 <script>
 let table;
-let currentFile=null;
-let files=JSON.parse(localStorage.getItem("excelFiles")||"[]");
+let fileList = document.getElementById("fileList");
+let currentFile = null;
+let files = JSON.parse(localStorage.getItem("excelFiles")||"[]");
 let numRows=5, numCols=5;
 let currentColor="#fff";
 let enabledOps={sum:true,sub:false,mul:false,div:false};
 let data=[];
 
+// إنشاء ملف افتراضي إذا ما كاينش
+if(files.length===0){
+  let defaultFile="ملف جديد";
+  files.push(defaultFile);
+  localStorage.setItem("excelFiles",JSON.stringify(files));
+  currentFile = defaultFile;
+  saveAll();
+}
+
 // ===== إدارة الملفات =====
 function updateFileList(){
-  let list=fileList;
-  list.innerHTML="";
-  files.forEach(f=>{let o=document.createElement("option"); o.value=f; o.text=f; list.appendChild(o);});
+  fileList.innerHTML="";
+  files.forEach(f=>{
+    let o=document.createElement("option"); o.value=f; o.text=f; fileList.appendChild(o);
+  });
   if(currentFile) document.getElementById("currentFile").innerText="📂 "+currentFile;
 }
 
@@ -99,8 +111,9 @@ function deleteFile(){
   localStorage.removeItem("excel_"+currentFile);
   files=files.filter(f=>f!=currentFile);
   localStorage.setItem("excelFiles",JSON.stringify(files));
-  currentFile=null;
-  tableContainer.innerHTML="";
+  currentFile = files[0] || null;
+  if(currentFile) loadAll();
+  else tableContainer.innerHTML="";
   updateFileList();
 }
 
@@ -200,6 +213,8 @@ function exportWord(){if(!table) return; let blob=new Blob([table.outerHTML],{ty
 function exportCSV(){if(!table) return; let csv=""; data.forEach(r=>{csv+=r.map(c=>c.text).join(",")+"\n";}); let a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([csv])); a.download=currentFile+".csv"; a.click();}
 
 // ===== بدء =====
+if(!currentFile) currentFile = files[0];
+loadAll();
 updateFileList();
 </script>
 
