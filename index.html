@@ -1,1 +1,80 @@
-7777
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8">
+<title>تعلم الفرنسية</title>
+<style>
+body{
+  font-family:Arial;
+  background:#f0f0f0;
+  text-align:center;
+}
+h2{
+  background:#2196F3;
+  color:white;
+  padding:10px;
+}
+.word{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  background:white;
+  margin:10px auto;
+  padding:10px 20px;
+  border-radius:10px;
+  max-width:400px;
+  box-shadow:0 0 5px gray;
+}
+button{
+  padding:8px 12px;
+  cursor:pointer;
+  font-size:18px;
+  background:#4CAF50;
+  color:white;
+  border:none;
+  border-radius:50%;
+}
+button:hover{
+  background:#45a049;
+}
+</style>
+</head>
+<body>
+
+<h2>تعلم الفرنسية 🔊</h2>
+
+<div id="list"></div>
+
+<script>
+let words = [
+{fr:"Bonjour", ar:"Hello", audio:"audio/bonjour.mp3"},
+{fr:"Merci", ar:"Thank you", audio:"audio/merci.mp3"},
+{fr:"Salut", ar:"Hi", audio:"audio/salut.mp3"},
+{fr:"Oui", ar:"Yes", audio:"audio/oui.mp3"},
+{fr:"Non", ar:"No", audio:"audio/non.mp3"},
+{fr:"S'il vous plaît", ar:"Please", audio:"audio/s'ilvousplait.mp3"},
+{fr:"Excusez-moi", ar:"Excuse me", audio:"audio/excusez-moi.mp3"},
+{fr:"Au revoir", ar:"Goodbye", audio:"audio/au_revoir.mp3"},
+{fr:"Bienvenue", ar:"Welcome", audio:"audio/bienvenue.mp3"},
+{fr:"Comment", ar:"How", audio:"audio/comment.mp3"}
+];
+
+let html = "";
+for(let word of words){
+  html += `
+  <div class="word">
+    <span>${word.fr} → ${word.ar}</span>
+    <button onclick="play('${word.audio}')">▶</button>
+  </div>
+  `;
+}
+document.getElementById("list").innerHTML = html;
+
+function play(src){
+  let audio = new Audio(src);
+  audio.play();
+}
+</script>
+
+</body>
+</html>
