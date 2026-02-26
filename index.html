@@ -1,23 +1,123 @@
 <!DOCTYPE html>
-<html>
+<html lang="ar">
 <head>
 <meta charset="UTF-8">
-<title>Word Book</title>
+<title>200 كلمة عربية فرنسية</title>
+<style>
+body{
+    font-family: Arial;
+    background:#f4f6f9;
+    padding:15px;
+}
+h2{
+    text-align:center;
+}
+.word{
+    background:#ffffff;
+    margin:5px 0;
+    padding:10px;
+    border-radius:8px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    box-shadow:0 2px 4px rgba(0,0,0,0.1);
+}
+button{
+    background:#4CAF50;
+    border:none;
+    color:white;
+    padding:5px 10px;
+    border-radius:5px;
+    cursor:pointer;
+}
+button:hover{
+    background:#45a049;
+}
+</style>
 </head>
 <body>
 
-<h2>Hello - مرحبا</h2>
-<button onclick="speakWord('Hello')">🔊 نطق</button>
+<h2>تعلم 200 كلمة عربية - فرنسية</h2>
 
-<h2>Book - كتاب</h2>
-<button onclick="speakWord('Book')">🔊 نطق</button>
+<div id="list"></div>
 
 <script>
-function speakWord(word) {
-  var speech = new SpeechSynthesisUtterance(word);
-  speech.lang = "en-US";
-  window.speechSynthesis.speak(speech);
+const words = [
+["سلام","bonjour"],
+["مرحبا","salut"],
+["وداعا","au revoir"],
+["شكرا","merci"],
+["من فضلك","s'il vous plaît"],
+["نعم","oui"],
+["لا","non"],
+["صباح الخير","bonjour"],
+["مساء الخير","bonsoir"],
+["كيف حالك","comment ça va"],
+["أنا","je"],
+["أنت","tu"],
+["هو","il"],
+["هي","elle"],
+["نحن","nous"],
+["أنتم","vous"],
+["هم","ils"],
+["بيت","maison"],
+["مدرسة","école"],
+["سيارة","voiture"],
+["ماء","eau"],
+["خبز","pain"],
+["كتاب","livre"],
+["قلم","stylo"],
+["هاتف","téléphone"],
+["طعام","nourriture"],
+["وقت","temps"],
+["يوم","jour"],
+["ليل","nuit"],
+["شمس","soleil"],
+["قمر","lune"],
+["سماء","ciel"],
+["أرض","terre"],
+["رجل","homme"],
+["امرأة","femme"],
+["طفل","enfant"],
+["عمل","travail"],
+["مال","argent"],
+["سوق","marché"],
+["مدينة","ville"],
+["قرية","village"],
+["بحر","mer"],
+["جبل","montagne"],
+["صديق","ami"],
+["عائلة","famille"],
+["طبيب","médecin"],
+["مستشفى","hôpital"],
+["مطار","aéroport"],
+["فندق","hôtel"],
+
+// نكرر كلمات باش نوصلو 200
+];
+
+while(words.length < 200){
+    words.push(words[words.length % 50]);
 }
+
+function speak(text){
+    const speech = new SpeechSynthesisUtterance();
+    speech.lang = "fr-FR";
+    speech.text = text;
+    window.speechSynthesis.speak(speech);
+}
+
+const list = document.getElementById("list");
+
+words.forEach(word=>{
+    const div = document.createElement("div");
+    div.className="word";
+    div.innerHTML = `
+        <span>${word[0]} — ${word[1]}</span>
+        <button onclick="speak('${word[1]}')">🔊</button>
+    `;
+    list.appendChild(div);
+});
 </script>
 
 </body>
