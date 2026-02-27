@@ -1,122 +1,91 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html>
 <head>
 <meta charset="UTF-8">
-<title>200 كلمة عربية فرنسية</title>
+<title>Arabic - French TTS</title>
 <style>
-body{
-    font-family: Arial;
-    background:#f4f6f9;
-    padding:15px;
-}
-h2{
-    text-align:center;
-}
-.word{
-    background:#ffffff;
-    margin:5px 0;
-    padding:10px;
-    border-radius:8px;
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    box-shadow:0 2px 4px rgba(0,0,0,0.1);
-}
-button{
-    background:#4CAF50;
-    border:none;
-    color:white;
-    padding:5px 10px;
-    border-radius:5px;
-    cursor:pointer;
-}
-button:hover{
-    background:#45a049;
-}
+body{font-family:Arial;padding:15px;background:#f4f4f4}
+.word{background:white;margin:8px 0;padding:10px;border-radius:8px;
+display:flex;justify-content:space-between;align-items:center}
+button{background:#4CAF50;color:white;border:none;padding:6px 10px;
+border-radius:6px;font-size:16px}
+button:active{background:#45a049}
 </style>
 </head>
 <body>
 
-<h2>تعلم 200 كلمة عربية - فرنسية</h2>
+<h2>تعلم الفرنسية 🔊</h2>
 
 <div id="list"></div>
 
 <script>
 const words = [
-["سلام","bonjour"],
-["مرحبا","salut"],
-["وداعا","au revoir"],
-["شكرا","merci"],
-["من فضلك","s'il vous plaît"],
-["نعم","oui"],
-["لا","non"],
-["صباح الخير","bonjour"],
-["مساء الخير","bonsoir"],
-["كيف حالك","comment ça va"],
-["أنا","je"],
-["أنت","tu"],
-["هو","il"],
-["هي","elle"],
-["نحن","nous"],
-["أنتم","vous"],
-["هم","ils"],
-["بيت","maison"],
-["مدرسة","école"],
-["سيارة","voiture"],
-["ماء","eau"],
-["خبز","pain"],
-["كتاب","livre"],
-["قلم","stylo"],
-["هاتف","téléphone"],
-["طعام","nourriture"],
-["وقت","temps"],
-["يوم","jour"],
-["ليل","nuit"],
-["شمس","soleil"],
-["قمر","lune"],
-["سماء","ciel"],
-["أرض","terre"],
-["رجل","homme"],
-["امرأة","femme"],
-["طفل","enfant"],
-["عمل","travail"],
-["مال","argent"],
-["سوق","marché"],
-["مدينة","ville"],
-["قرية","village"],
-["بحر","mer"],
-["جبل","montagne"],
-["صديق","ami"],
-["عائلة","famille"],
-["طبيب","médecin"],
-["مستشفى","hôpital"],
-["مطار","aéroport"],
-["فندق","hôtel"],
-
-// نكرر كلمات باش نوصلو 200
+["سلام","Bonjour"],
+["وداعاً","Au revoir"],
+["شكراً","Merci"],
+["من فضلك","S’il vous plaît"],
+["نعم","Oui"],
+["لا","Non"],
+["صباح الخير","Bonjour"],
+["مساء الخير","Bonsoir"],
+["تصبح على خير","Bonne nuit"],
+["كيف حالك؟","Comment ça va ?"],
+["أنا","Je"],
+["أنت","Tu"],
+["هو","Il"],
+["هي","Elle"],
+["نحن","Nous"],
+["أنتم","Vous"],
+["هم","Ils"],
+["ماء","Eau"],
+["خبز","Pain"],
+["حليب","Lait"],
+["قهوة","Café"],
+["شاي","Thé"],
+["سكر","Sucre"],
+["ملح","Sel"],
+["طعام","Nourriture"],
+["بيت","Maison"],
+["مدرسة","École"],
+["مستشفى","Hôpital"],
+["سوق","Marché"],
+["شارع","Rue"],
+["كتاب","Livre"],
+["قلم","Stylo"],
+["كرسي","Chaise"],
+["طاولة","Table"],
+["باب","Porte"],
+["نافذة","Fenêtre"],
+["سيارة","Voiture"],
+["حافلة","Bus"],
+["قطار","Train"],
+["طائرة","Avion"],
+["يوم","Jour"],
+["أسبوع","Semaine"],
+["شهر","Mois"],
+["سنة","Année"],
+["كبير","Grand"],
+["صغير","Petit"],
+["جميل","Beau"],
+["سريع","Rapide"],
+["بطيء","Lent"],
+["صديق","Ami"]
 ];
 
-while(words.length < 200){
-    words.push(words[words.length % 50]);
-}
-
 function speak(text){
-    const speech = new SpeechSynthesisUtterance();
-    speech.lang = "fr-FR";
-    speech.text = text;
-    window.speechSynthesis.speak(speech);
+let speech = new SpeechSynthesisUtterance(text);
+speech.lang = "fr-FR";
+window.speechSynthesis.speak(speech);
 }
 
 const list = document.getElementById("list");
 
-words.forEach(word=>{
-    const div = document.createElement("div");
-    div.className="word";
-    div.innerHTML = `
-        <span>${word[0]} — ${word[1]}</span>
-        <button onclick="speak('${word[1]}')">🔊</button>
-    `;
-    list.appendChild(div);
+words.forEach(w=>{
+let div = document.createElement("div");
+div.className="word";
+div.innerHTML = `<span>${w[0]} — ${w[1]}</span>
+<button onclick="speak('${w[1]}')">🔊</button>`;
+list.appendChild(div);
 });
 </script>
 
