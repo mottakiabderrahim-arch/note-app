@@ -2,199 +2,206 @@
 <html lang="ar">
 <head>
 <meta charset="UTF-8">
-<title>مفكرتي Ultimate 6.2</title>
+<title>Excel Ultimate 20 PRO</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <style>
-body{font-family:Arial;margin:0;background:#f0f0f0;transition:0.3s;}
-body.dark{background:#121212;color:#eee;}
-#topbar{background:#2196f3;padding:8px;color:white;display:flex;flex-wrap:wrap;align-items:center;}
-button, select, input{margin:2px;padding:6px;border:none;cursor:pointer;}
-#toolbar{display:none;background:#f8f8f8;padding:5px;border-bottom:1px solid #ccc;transition:max-height 0.3s;overflow:hidden;}
-#toolbar.collapsed{max-height:0;padding:0;}
-#editor{background:white;min-height:500px;padding:15px;outline:none;font-size:16px;line-height:1.6;transition:0.3s;}
-body.dark #editor{background:#1e1e1e;color:#eee;}
-table{border-collapse:collapse;width:100%;}
-td, th{border:1px solid #999;padding:8px;}
-#progress{font-weight:bold;color:green;margin-top:5px;}
-#searchBar{margin:5px 0;display:none;}
-.highlight{background:yellow;}
-input[type=color]{width:30px;padding:0;}
-.modal{display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:white;padding:15px;border:2px solid #2196f3;z-index:999;}
-.modal.show{display:block;}
+body{font-family:Arial;margin:10px;background:#f0f0f0;text-align:center}
+table{border-collapse:collapse;margin:auto;background:#fff}
+th,td{border:1px solid #000;padding:5px;text-align:center;width:80px}
+th{background:#eee;cursor:text}
+.result{background:#d0f0d0;font-weight:bold}
+button{margin:2px;padding:5px;cursor:pointer}
+.colorBtn{width:25px;height:25px;border:none;cursor:pointer;margin:2px}
 </style>
 </head>
 <body>
 
-<div id="topbar">
-<button id="btnNew"></button>
-<button id="btnSave"></button>
-<button onclick="addWordPro()"></button>
-<button onclick="addTasks()"></button>
-<button onclick="addExcel()"></button>
-<button onclick="exportPDF()"></button>
-<button onclick="exportAllCSV()"></button>
-<button onclick="toggleSearch()"></button>
-<button onclick="toggleToolbar()"></button>
-<button onclick="openSettings()"></button>
-<select id="noteList" onchange="loadNote(this.value)"></select>
+<div>
+<button onclick="newFile()">📄 ملف جديد</button>
+<select id="fileList" onchange="openFile()"></select>
+<button onclick="deleteFile()">🗑 حذف</button>
+<span id="currentFile"></span>
 </div>
 
-<div id="toolbar">
-<select onchange="cmd('fontName',this.value)">
-<option value="">الخط</option>
-<option value="Arial">Arial</option>
-<option value="Tahoma">Tahoma</option>
-<option value="Times New Roman">Times New Roman</option>
-<option value="Courier New">Courier</option>
-</select>
-<select onchange="cmd('formatBlock',this.value)">
-<option value="">العنوان</option>
-<option value="h1">H1</option>
-<option value="h2">H2</option>
-<option value="h3">H3</option>
-</select>
-<button onclick="cmd('bold')">𝗕</button>
-<button onclick="cmd('italic')">𝘐</button>
-<button onclick="cmd('underline')">U̲</button>
-<button onclick="cmd('insertOrderedList')">1. قائمة مرقمة</button>
-<button onclick="cmd('insertUnorderedList')">• قائمة نقطية</button>
-<button onclick="cmd('justifyLeft')">⯇</button>
-<button onclick="cmd('justifyCenter')">≡</button>
-<button onclick="cmd('justifyRight')">⯈</button>
-<input type="color" onchange="cmd('foreColor',this.value)" title="">
-<input type="color" onchange="cmd('hiliteColor',this.value)" title="">
-<button onclick="increaseFont()">🔼</button>
-<button onclick="decreaseFont()">🔽</button>
-<button onclick="undo()">↶</button>
-<button onclick="redo()">↷</button>
-<button onclick="insertImage()">📷</button>
-<button onclick="insertTable()">📑</button>
-</div>
+<br>
 
-<div id="searchBar">
-<input type="text" id="searchText" placeholder="">
-<input type="text" id="replaceText" placeholder="">
-<button onclick="searchText()"></button>
-<button onclick="replaceAllText()"></button>
-</div>
+<button onclick="createTable()">📊 إنشاء جدول</button>
 
-<div id="editor" contenteditable="true"></div>
-<div id="progress"></div>
+<button onclick="toggleOp('sum')">➕ الجمع</button>
+<button onclick="toggleOp('sub')">➖ الطرح</button>
+<button onclick="toggleOp('mul')">✖ الضرب</button>
+<button onclick="toggleOp('div')">➗ القسمة</button>
 
-<div id="settingsModal" class="modal">
-<h3 id="settingsTitle"></h3>
-<label id="darkModeLabel"></label> <input type="checkbox" id="darkMode"><br>
-<label id="languageLabel"></label>
-<select id="languageSelect">
-<option value="ar">العربية</option>
-<option value="en">English</option>
-<option value="fr">Français</option>
-<option value="es">Español</option>
-<option value="it">Italiano</option>
-<option value="de">Deutsch</option>
-</select><br>
-<button id="saveSettingsBtn"></button>
-<button onclick="closeSettings()">✖</button>
-</div>
+<br><br>
+
+<button onclick="addRow()">➕ صف</button>
+<button onclick="addCol()">➕ عمود</button>
+<button onclick="delRow()">➖ حذف صف</button>
+<button onclick="delCol()">➖ حذف عمود</button>
+
+<br><br>
+
+<button onclick="exportPDF()">📄 PDF</button>
+<button onclick="exportExcel()">📊 Excel</button>
+<button onclick="exportWord()">📄 Word</button>
+<button onclick="exportCSV()">📑 CSV</button>
+
+<br><br>
+🎨
+<button class="colorBtn" style="background:#fff" onclick="setColor('#fff')"></button>
+<button class="colorBtn" style="background:#f88" onclick="setColor('#f88')"></button>
+<button class="colorBtn" style="background:#8f8" onclick="setColor('#8f8')"></button>
+<button class="colorBtn" style="background:#88f" onclick="setColor('#88f')"></button>
+<button class="colorBtn" style="background:#ff8" onclick="setColor('#ff8')"></button>
+
+<div id="tableContainer"></div>
 
 <script>
-// ====== اللغة ======
-let languageTexts={
-ar:{newNote:"➕ إضافة ملاحظة", save:"💾 حفظ", word:"📄 Word Pro", tasks:"📋 مهام", excel:"📊 Excel", pdf:"📄 PDF", csv:"💾 تصدير جميع الجداول CSV", search:"🔍 بحث", toolbar:"⬅/➡ Toolbar", settings:"⚙️ إعدادات", searchPlaceholder:"بحث", replacePlaceholder:"استبدال", darkLabel:"الوضع الليلي", langLabel:"اللغة", settingsTitle:"إعدادات المفكرة", saveSettings:"💾 حفظ الإعدادات"},
-en:{newNote:"➕ New Note", save:"💾 Save", word:"📄 Word Pro", tasks:"📋 Tasks", excel:"📊 Excel", pdf:"📄 PDF", csv:"💾 Export CSV", search:"🔍 Search", toolbar:"⬅/➡ Toolbar", settings:"⚙️ Settings", searchPlaceholder:"Search", replacePlaceholder:"Replace", darkLabel:"Dark Mode", langLabel:"Language", settingsTitle:"Notebook Settings", saveSettings:"💾 Save Settings"},
-fr:{newNote:"➕ Nouvelle Note", save:"💾 Enregistrer", word:"📄 Word Pro", tasks:"📋 Tâches", excel:"📊 Excel", pdf:"📄 PDF", csv:"💾 Exporter CSV", search:"🔍 Rechercher", toolbar:"⬅/➡ Barre", settings:"⚙️ Paramètres", searchPlaceholder:"Rechercher", replacePlaceholder:"Remplacer", darkLabel:"Mode Sombre", langLabel:"Langue", settingsTitle:"Paramètres du Carnet", saveSettings:"💾 Enregistrer"},
-es:{newNote:"➕ Nueva Nota", save:"💾 Guardar", word:"📄 Word Pro", tasks:"📋 Tareas", excel:"📊 Excel", pdf:"📄 PDF", csv:"💾 Exportar CSV", search:"🔍 Buscar", toolbar:"⬅/➡ Barra", settings:"⚙️ Configuración", searchPlaceholder:"Buscar", replacePlaceholder:"Reemplazar", darkLabel:"Modo Oscuro", langLabel:"Idioma", settingsTitle:"Configuración", saveSettings:"💾 Guardar Configuración"},
-it:{newNote:"➕ Nuova Nota", save:"💾 Salva", word:"📄 Word Pro", tasks:"📋 Attività", excel:"📊 Excel", pdf:"📄 PDF", csv:"💾 Esporta CSV", search:"🔍 Cerca", toolbar:"⬅/➡ Barra", settings:"⚙️ Impostazioni", searchPlaceholder:"Cerca", replacePlaceholder:"Sostituisci", darkLabel:"Modalità Scura", langLabel:"Lingua", settingsTitle:"Impostazioni Notebook", saveSettings:"💾 Salva Impostazioni"},
-de:{newNote:"➕ Neue Notiz", save:"💾 Speichern", word:"📄 Word Pro", tasks:"📋 Aufgaben", excel:"📊 Excel", pdf:"📄 PDF", csv:"💾 CSV Exportieren", search:"🔍 Suche", toolbar:"⬅/➡ Toolbar", settings:"⚙️ Einstellungen", searchPlaceholder:"Suche", replacePlaceholder:"Ersetzen", darkLabel:"Dunkelmodus", langLabel:"Sprache", settingsTitle:"Notebook Einstellungen", saveSettings:"💾 Einstellungen speichern"}
-};
-let currentLang="ar";
-function updateTexts(){
-    let t=languageTexts[currentLang];
-    let buttons=document.querySelectorAll("#topbar button");
-    buttons[0].innerText=t.newNote; buttons[1].innerText=t.save; buttons[2].innerText=t.word; buttons[3].innerText=t.tasks; buttons[4].innerText=t.excel; buttons[5].innerText=t.pdf; buttons[6].innerText=t.csv;
-    buttons[7].innerText=t.search; buttons[8].innerText=t.toolbar; buttons[9].innerText=t.settings;
-    document.getElementById("searchText").placeholder=t.searchPlaceholder;
-    document.getElementById("replaceText").placeholder=t.replacePlaceholder;
-    document.getElementById("darkModeLabel").innerText=t.darkLabel+": ";
-    document.getElementById("languageLabel").innerText=t.langLabel+": ";
-    document.getElementById("settingsTitle").innerText=t.settingsTitle;
-    document.getElementById("saveSettingsBtn").innerText=t.saveSettings;
+let table;
+let currentFile=null;
+let files=JSON.parse(localStorage.getItem("excelFiles")||"[]");
+let numRows=5, numCols=5;
+let currentColor="#fff";
+let enabledOps={sum:true,sub:false,mul:false,div:false};
+let data=[];
+
+// ===== إدارة الملفات =====
+function updateFileList(){
+  let list=fileList;
+  list.innerHTML="";
+  files.forEach(f=>{let o=document.createElement("option"); o.value=f; o.text=f; list.appendChild(o);});
+  if(currentFile) document.getElementById("currentFile").innerText="📂 "+currentFile;
 }
 
-// ====== حفظ الإعدادات ======
-document.getElementById("saveSettingsBtn").addEventListener("click", function(){
-    let dark=document.getElementById("darkMode").checked;
-    let lang=document.getElementById("languageSelect").value;
-    if(dark) document.body.classList.add("dark"); else document.body.classList.remove("dark");
-    currentLang=lang;
-    localStorage.setItem("notebookSettings", JSON.stringify({darkMode:dark,language:lang}));
-    updateTexts();
-    closeSettings();
-});
-
-// ====== تحميل الإعدادات ======
-function loadSettings(){
-    let saved=JSON.parse(localStorage.getItem("notebookSettings")||'{"darkMode":false,"language":"ar"}');
-    if(saved.darkMode) document.body.classList.add("dark");
-    currentLang=saved.language;
-    document.getElementById("darkMode").checked=saved.darkMode;
-    document.getElementById("languageSelect").value=currentLang;
-    updateTexts();
+function newFile(){
+  let name=prompt("اسم الملف");
+  if(!name) return;
+  if(files.includes(name)){alert("الملف موجود"); return;}
+  files.push(name);
+  localStorage.setItem("excelFiles",JSON.stringify(files));
+  currentFile=name;
+  numRows=5; numCols=5; enabledOps={sum:true,sub:false,mul:false,div:false};
+  data=[];
+  saveAll();
+  updateFileList();
+  createTable();
 }
 
-// ====== باقي وظائف المفكرة ======
-let editor=document.getElementById("editor");
-let toolbar=document.getElementById("toolbar");
-let currentNote="";
-let history=[], historyIndex=-1;
+function openFile(){
+  currentFile=fileList.value;
+  loadAll();
+  updateFileList();
+}
 
-// Notes
-function newNote(){ let name=prompt(languageTexts[currentLang].newNote); if(!name) return; currentNote="note_"+name; localStorage.setItem(currentNote,""); editor.innerHTML=""; updateList(); saveHistory(); }
-function save(){ if(!currentNote){alert("أنشئ ملاحظة"); return;} localStorage.setItem(currentNote, editor.innerHTML); alert("تم الحفظ"); updateList(); saveHistory();}
-function loadNote(name){ currentNote=name; editor.innerHTML=localStorage.getItem(name)||""; saveHistory();}
-function updateList(){ let list=document.getElementById("noteList"); list.innerHTML=""; for(let i=0;i<localStorage.length;i++){ let key=localStorage.key(i); if(key.startsWith("note_")){ let o=document.createElement("option"); o.value=key; o.text=key.replace("note_",""); list.appendChild(o);}}}
+function deleteFile(){
+  if(!currentFile) return;
+  if(!confirm("تأكيد الحذف؟")) return;
+  localStorage.removeItem("excel_"+currentFile);
+  files=files.filter(f=>f!=currentFile);
+  localStorage.setItem("excelFiles",JSON.stringify(files));
+  currentFile=null;
+  tableContainer.innerHTML="";
+  updateFileList();
+}
 
-// Toolbar commands
-function cmd(command,value=null){editor.focus();document.execCommand(command,false,value); saveHistory();}
-function insertImage(){let url=prompt("رابط الصورة:"); if(url){document.execCommand("insertImage",false,url); saveHistory();}}
-function insertTable(){ let rows=prompt("عدد الصفوف؟",2); if(!rows) return; let cols=prompt("عدد الأعمدة؟",2); if(!cols) return; let html="<table>"; for(let r=0;r<rows;r++){html+="<tr>"; for(let c=0;c<cols;c++){html+="<td contenteditable='true'>"+(r===0?"عنوان":"")+"</td>";} html+="</tr>";} html+="</table>"; editor.innerHTML+=html; saveHistory();}
+// ===== إنشاء وبناء الجدول =====
+function createTable(){
+  data=[];
+  for(let r=0;r<numRows;r++){
+    data[r]=[];
+    for(let c=0;c<numCols;c++){
+      data[r][c]={text:"",color:"#fff",rowName:(r+1),colName:String.fromCharCode(65+c)};
+    }
+  }
+  buildTable();
+  saveAll();
+}
 
-// Word Pro, Tasks, Excel, PDF, CSV, Search, Undo/Redo, Font functions
-function addWordPro(){ toolbar.style.display="block"; editor.innerHTML+="<h2>وثيقة Word Pro</h2><p>اكتب هنا...</p>";}
-function addTasks(){ toolbar.style.display="none"; editor.innerHTML+=`<h2>قائمة المهام</h2><label><input type="checkbox" onclick="calcProgress()"> مهمة 1</label><br><label><input type="checkbox" onclick="calcProgress()"> مهمة 2</label><br><label><input type="checkbox" onclick="calcProgress()"> مهمة 3</label><br>`; calcProgress();}
-function calcProgress(){ let checks=editor.querySelectorAll("input[type=checkbox]"); let done=0; checks.forEach(c=>{if(c.checked) done++;}); let percent=checks.length?Math.round(done/checks.length*100):0; document.getElementById("progress").innerHTML="نسبة الإنجاز: "+percent+"%";}
-function addExcel(){ toolbar.style.display="none"; editor.innerHTML+=`<h2>جدول Excel</h2><table><tr><th>العنصر</th><th>القيمة</th><th>لون الخلفية</th></tr><tr><td contenteditable="true">عنصر 1</td><td contenteditable="true" oninput="sum()">0</td><td><input type="color" onchange="updateTableColor(this)"></td></tr><tr><td contenteditable="true">عنصر 2</td><td contenteditable="true" oninput="sum()">0</td><td><input type="color" onchange="updateTableColor(this)"></td></tr><tr><th>المجموع</th><th id="total">0</th><th></th></tr></table>`;}
-function sum(){ let cells=editor.querySelectorAll("td[contenteditable=true]:nth-child(2)"); let total=0; cells.forEach(c=>{total+=parseFloat(c.innerText)||0;}); let t=document.getElementById("total"); if(t) t.innerText=total;}
-function updateTableColor(input){ let td=input.parentElement.previousElementSibling; td.style.backgroundColor=input.value;}
-function exportAllCSV(){ let tables=editor.querySelectorAll("table"); if(tables.length===0){alert("لا يوجد جدول لتصديره"); return;} let csvAll=""; tables.forEach((table, idx)=>{ csvAll+="Table "+(idx+1)+"\n"; for(let r=0;r<table.rows.length;r++){ let row=[]; for(let c=0;c<table.rows[r].cells.length-1;c++){ row.push('"'+table.rows[r].cells[c].innerText.replace(/"/g,'""')+'"'); } csvAll+=row.join(",")+"\n"; } csvAll+="\n";}); let blob=new Blob([csvAll],{type:"text/csv;charset=utf-8;"}); let link=document.createElement("a"); link.href=URL.createObjectURL(blob); link.download=(currentNote||"tables")+".csv"; link.click();}
-function exportPDF(){if(!currentNote) return; html2pdf().from(editor).save(currentNote+".pdf");}
+function buildTable(){
+  let html="<table id='dynamicTable'>";
+  html+="<tr><th>#</th>";
+  for(let c=0;c<numCols;c++){
+    let colName=data[0][c]?.colName||String.fromCharCode(65+c);
+    html+=`<th contenteditable oninput='renameCol(this,${c})'>${colName}</th>`;
+  }
+  html+="</tr>";
+  for(let r=0;r<numRows;r++){
+    let rowName=data[r]?.[0]?.rowName||(r+1);
+    html+="<tr>";
+    html+=`<th contenteditable oninput='renameRow(this,${r})'>${rowName}</th>`;
+    for(let c=0;c<numCols;c++){
+      let cell=data[r][c]||{text:"",color:"#fff"};
+      html+=`<td contenteditable style="background:${cell.color}" oninput="updateCell(this,${r},${c})" onclick="colorCell(this,${r},${c})">${cell.text}</td>`;
+    }
+    html+="</tr>";
+  }
+  if(enabledOps.sum) html+=resultRow("sum","نتيجة الجمع");
+  if(enabledOps.sub) html+=resultRow("sub","نتيجة الطرح");
+  if(enabledOps.mul) html+=resultRow("mul","نتيجة الضرب");
+  if(enabledOps.div) html+=resultRow("div","نتيجة القسمة");
+  html+="</table>";
+  tableContainer.innerHTML=html;
+  table=document.getElementById("dynamicTable");
+  calculate();
+}
 
-// Undo/Redo
-function saveHistory(){ history=history.slice(0,historyIndex+1); history.push(editor.innerHTML); historyIndex=history.length-1;}
-function undo(){if(historyIndex>0){historyIndex--; editor.innerHTML=history[historyIndex];}}
-function redo(){if(historyIndex<history.length-1){historyIndex++; editor.innerHTML=history[historyIndex];}}
+// ===== إعادة تسمية الصفوف والأعمدة =====
+function renameRow(el,r){data[r].forEach(cell=>cell.rowName=el.innerText); saveAll();}
+function renameCol(el,c){data.forEach(row=>row[c].colName=el.innerText); saveAll();}
 
-// Font size
-function increaseFont(){changeFontSizeInfinity(1);}
-function decreaseFont(){changeFontSizeInfinity(-1);}
-function changeFontSizeInfinity(change){ let selection=window.getSelection(); if(selection.rangeCount===0) return; let range=selection.getRangeAt(0); if(range.collapsed) return; let span=document.createElement("span"); span.appendChild(range.extractContents()); range.insertNode(span); let currentSize=parseFloat(span.style.fontSize)||parseFloat(window.getComputedStyle(span).fontSize); span.style.fontSize=(currentSize+change)+"px";}
+// ===== تحديث خلية =====
+function updateCell(td,r,c){data[r][c].text=td.innerText; calculate(); saveAll();}
 
-// Search/Replace
-function toggleSearch(){ let sb=document.getElementById("searchBar"); sb.style.display = sb.style.display==="none"?"block":"none"; }
-function searchText(){ removeHighlights(); let text=document.getElementById("searchText").value; if(!text) return; let content=editor.innerHTML; let regex=new RegExp(text,"gi"); editor.innerHTML=content.replace(regex,match=>`<span class="highlight">${match}</span>`);}
-function replaceAllText(){ let find=document.getElementById("searchText").value; let replace=document.getElementById("replaceText").value; if(!find) return; let content=editor.innerHTML; let regex=new RegExp(find,"gi"); editor.innerHTML=content.replace(regex,replace);}
-function removeHighlights(){ let spans=editor.querySelectorAll("span.highlight"); spans.forEach(s=>{s.outerHTML=s.innerHTML;});}
+// ===== تلوين الخلية =====
+function setColor(c){currentColor=c;}
+function colorCell(td,r,c){td.style.background=currentColor; data[r][c].color=currentColor; saveAll(); calculate();}
 
-// Toolbar toggle
-function toggleToolbar(){ toolbar.classList.toggle("collapsed"); }
+// ===== عمليات الحساب =====
+function resultRow(type,title){
+  let html="<tr><th>"+title+"</th>";
+  for(let c=0;c<numCols;c++){html+=`<th class='result' id='${type}_${c}'>0</th>`;}
+  html+="</tr>";
+  return html;
+}
 
-// Settings modal
-function openSettings(){ document.getElementById("settingsModal").classList.add("show"); }
-function closeSettings(){ document.getElementById("settingsModal").classList.remove("show"); }
+function calculate(){
+  for(let c=0;c<numCols;c++){
+    let vals=data.map(r=>parseFloat(r[c]?.text)||0);
+    let sum=vals.reduce((a,b)=>a+b,0);
+    let sub=vals.reduce((a,b)=>isNaN(a)?b:a-b);
+    let mul=vals.reduce((a,b)=>a*b,1);
+    let div=vals.reduce((a,b)=>b? a/b:0);
+    if(enabledOps.sum) setResult("sum",c,sum);
+    if(enabledOps.sub) setResult("sub",c,sub);
+    if(enabledOps.mul) setResult("mul",c,mul);
+    if(enabledOps.div) setResult("div",c,div);
+  }
+}
 
-// Initialization
-document.addEventListener("DOMContentLoaded", function(){ loadSettings(); document.getElementById("btnNew").addEventListener("click", newNote); document.getElementById("btnSave").addEventListener("click", save); });
-updateList();
+function setResult(type,c,val){let el=document.getElementById(type+"_"+c); if(el) el.innerText=val;}
+
+// ===== إضافة / حذف صفوف وأعمدة =====
+function addRow(){let row=[]; for(let c=0;c<numCols;c++) row.push({text:"",color:"#fff"}); data.push(row); numRows++; buildTable(); saveAll();}
+function addCol(){data.forEach(r=>r.push({text:"",color:"#fff"})); numCols++; buildTable(); saveAll();}
+function delRow(){if(numRows<=1) return; data.pop(); numRows--; buildTable(); saveAll();}
+function delCol(){if(numCols<=1) return; data.forEach(r=>r.pop()); numCols--; buildTable(); saveAll();}
+
+// ===== تفعيل / تعطيل العمليات =====
+function toggleOp(op){enabledOps[op]=!enabledOps[op]; buildTable(); saveAll();}
+
+// ===== حفظ واسترجاع كامل =====
+function saveAll(){if(!currentFile) return; localStorage.setItem("excel_"+currentFile,JSON.stringify({data:data,rows:numRows,cols:numCols,enabledOps:enabledOps}));}
+function loadAll(){let s=localStorage.getItem("excel_"+currentFile); if(!s) return; let obj=JSON.parse(s); data=obj.data||[]; numRows=obj.rows||5; numCols=obj.cols||5; enabledOps=obj.enabledOps||enabledOps; buildTable();}
+
+// ===== تصدير =====
+function exportPDF(){if(!table) return; html2pdf().from(table).save(currentFile+".pdf");}
+function exportExcel(){if(!table) return; let blob=new Blob([table.outerHTML],{type:"application/vnd.ms-excel"}); let a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=currentFile+".xls"; a.click();}
+function exportWord(){if(!table) return; let blob=new Blob([table.outerHTML],{type:"application/msword"}); let a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=currentFile+".doc"; a.click();}
+function exportCSV(){if(!table) return; let csv=""; data.forEach(r=>{csv+=r.map(c=>c.text).join(",")+"\n";}); let a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([csv])); a.download=currentFile+".csv"; a.click();}
+
+// ===== بدء =====
+updateFileList();
 </script>
+
 </body>
 </html>
