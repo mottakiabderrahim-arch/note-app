@@ -8,12 +8,13 @@
 <style>
 body{font-family:Arial;margin:10px;background:#f0f0f0;text-align:center}
 table{border-collapse:collapse;margin:auto;background:#fff}
-th,td{border:1px solid #000;padding:5px;text-align:center;width:80px}
+th,td{border:1px solid #000;padding:5px;text-align:center;width:80px;user-select:text;}
 th{background:#eee;cursor:text}
 .result{background:#d0f0d0;font-weight:bold}
 button{margin:2px;padding:5px;cursor:pointer}
 .colorBtn{width:25px;height:25px;border:none;cursor:pointer;margin:2px}
 input{padding:4px;margin:2px;width:70px;text-align:center}
+.selected{outline:2px solid red}
 </style>
 </head>
 
@@ -66,6 +67,13 @@ input{padding:4px;margin:2px;width:70px;text-align:center}
 <button class="colorBtn" style="background:#88f" onclick="setColor('#88f')"></button>
 <button class="colorBtn" style="background:#ff8" onclick="setColor('#ff8')"></button>
 
+<br><br>
+
+<!-- أزرار التحديد والتلوين/التعبئة -->
+<button onclick="colorSelectedCells()">🎨 تلوين المحدد</button>
+<input type="text" id="fillText" placeholder="نص للتعبئة">
+<button onclick="fillSelectedCells(document.getElementById('fillText').value)">✍️ تعبئة المحدد</button>
+
 <div id="tableContainer"></div>
 
 <script>
@@ -77,6 +85,9 @@ let numRows=5,numCols=5;
 let currentColor="#fff";
 let enabledOps={sum:true,sub:false,mul:false,div:false};
 let data=[];
+
+let isSelecting=false;
+let selectedCells=[];
 
 function updateFileList(){
 let list=fileList;
@@ -94,20 +105,16 @@ document.getElementById("currentFile").innerText="📂 "+currentFile;
 function newFile(){
 let name=prompt("اسم الملف");
 if(!name)return;
-
 if(files.includes(name)){
 alert("الملف موجود");
 return;
 }
-
 files.push(name);
 localStorage.setItem("excelFiles",JSON.stringify(files));
 currentFile=name;
-
 numRows=5;
 numCols=5;
 data=[];
-
 saveAll();
 updateFileList();
 createTable();
@@ -121,97 +128,67 @@ updateFileList();
 
 function deleteFile(){
 if(!currentFile)return;
-
 if(!confirm("تأكيد الحذف؟"))return;
-
 localStorage.removeItem("excel_"+currentFile);
 files=files.filter(f=>f!=currentFile);
-
 localStorage.setItem("excelFiles",JSON.stringify(files));
-
 currentFile=null;
 tableContainer.innerHTML="";
 updateFileList();
 }
 
 function createCustomTable(){
-
 let r=parseInt(rowsInput.value);
 let c=parseInt(colsInput.value);
-
 if(r<1||c<1){
 alert("ضع أرقام صحيحة");
 return;
 }
-
 numRows=r;
 numCols=c;
-
 createTable();
 }
 
 function createTable(){
-
 data=[];
-
 for(let r=0;r<numRows;r++){
-
 data[r]=[];
-
 for(let c=0;c<numCols;c++){
-
-data[r][c]={
-text:"",
-color:"#fff",
-rowName:r+1,
-colName:String.fromCharCode(65+c)
-};
-
+data[r][c]={text:"",color:"#fff",rowName:r+1,colName:String.fromCharCode(65+c)};
 }
-
 }
-
 buildTable();
 saveAll();
 }
 
 function buildTable(){
-
 let html="<table id='dynamicTable'>";
-
 html+="<tr><th>#</th>";
-
 for(let c=0;c<numCols;c++){
-
 let colName=data[0][c]?.colName||String.fromCharCode(65+c);
-
 html+=`<th contenteditable oninput='renameCol(this,${c})'>${colName}</th>`;
-
 }
-
 html+="</tr>";
 
 for(let r=0;r<numRows;r++){
-
 let rowName=data[r]?.[0]?.rowName||(r+1);
-
 html+="<tr>";
-
 html+=`<th contenteditable oninput='renameRow(this,${r})'>${rowName}</th>`;
-
 for(let c=0;c<numCols;c++){
-
 let cell=data[r][c]||{text:"",color:"#fff"};
-
-html+=`<td contenteditable style="background:${cell.color}" oninput="updateCell(this,${r},${c})" onclick="colorCell(this,${r},${c})">${cell.text}</td>`;
-
+html+=`<td contenteditable
+            data-coords='${r},${c}'
+            style="background:${cell.color}"
+            oninput="updateCell(this,${r},${c})"
+            onclick="colorCell(this,${r},${c})"
+            onmousedown="startSelect(this,${r},${c})"
+            onmouseover="selectOver(this,${r},${c})"
+            onmouseup="endSelect()"
+            >${cell.text}</td>`;
 }
-
 html+="</tr>";
 }
-
 html+="</table>";
-
 tableContainer.innerHTML=html;
 table=document.getElementById("dynamicTable");
 }
@@ -231,9 +208,7 @@ data[r][c].text=td.innerText;
 saveAll();
 }
 
-function setColor(c){
-currentColor=c;
-}
+function setColor(c){currentColor=c;}
 
 function colorCell(td,r,c){
 td.style.background=currentColor;
@@ -241,10 +216,53 @@ data[r][c].color=currentColor;
 saveAll();
 }
 
+// تحديد الخلايا
+function startSelect(td,r,c){
+isSelecting=true;
+selectedCells=[];
+selectCell(td,r,c);
+}
+
+function selectOver(td,r,c){
+if(isSelecting) selectCell(td,r,c);
+}
+
+function endSelect(){isSelecting=false;}
+
+function selectCell(td,r,c){
+if(!selectedCells.includes(td)){
+selectedCells.push(td);
+td.classList.add("selected");
+}
+}
+
+// تلوين الخلايا المحددة
+function colorSelectedCells(){
+selectedCells.forEach(td=>{
+td.style.background=currentColor;
+let coords = td.getAttribute("data-coords").split(",");
+data[parseInt(coords[0])][parseInt(coords[1])].color=currentColor;
+td.classList.remove("selected");
+});
+selectedCells=[];
+saveAll();
+}
+
+// تعبئة النص للخلايا المحددة
+function fillSelectedCells(text){
+selectedCells.forEach(td=>{
+td.innerText=text;
+let coords = td.getAttribute("data-coords").split(",");
+data[parseInt(coords[0])][parseInt(coords[1])].text=text;
+td.classList.remove("selected");
+});
+selectedCells=[];
+saveAll();
+}
+
 function addRow(){
 let row=[];
-for(let c=0;c<numCols;c++)
-row.push({text:"",color:"#fff"});
+for(let c=0;c<numCols;c++) row.push({text:"",color:"#fff"});
 data.push(row);
 numRows++;
 buildTable();
@@ -274,95 +292,32 @@ buildTable();
 saveAll();
 }
 
-function toggleOp(op){
-enabledOps[op]=!enabledOps[op];
-}
+function toggleOp(op){enabledOps[op]=!enabledOps[op];}
 
 function saveAll(){
-
 if(!currentFile)return;
-
 localStorage.setItem(
 "excel_"+currentFile,
-JSON.stringify({
-data:data,
-rows:numRows,
-cols:numCols
-})
+JSON.stringify({data:data,rows:numRows,cols:numCols})
 );
 }
 
 function loadAll(){
-
 let s=localStorage.getItem("excel_"+currentFile);
-
 if(!s)return;
-
 let obj=JSON.parse(s);
-
 data=obj.data||[];
 numRows=obj.rows||5;
 numCols=obj.cols||5;
-
 buildTable();
 }
 
-function exportPDF(){
-if(!table)return;
-html2pdf().from(table).save(currentFile+".pdf");
-}
-
-function exportExcel(){
-if(!table)return;
-
-let blob=new Blob([table.outerHTML],
-{type:"application/vnd.ms-excel"});
-
-let a=document.createElement("a");
-
-a.href=URL.createObjectURL(blob);
-
-a.download=currentFile+".xls";
-
-a.click();
-}
-
-function exportWord(){
-if(!table)return;
-
-let blob=new Blob([table.outerHTML],
-{type:"application/msword"});
-
-let a=document.createElement("a");
-
-a.href=URL.createObjectURL(blob);
-
-a.download=currentFile+".doc";
-
-a.click();
-}
-
-function exportCSV(){
-
-if(!table)return;
-
-let csv="";
-
-data.forEach(r=>{
-csv+=r.map(c=>c.text).join(",")+"\n";
-});
-
-let a=document.createElement("a");
-
-a.href=URL.createObjectURL(new Blob([csv]));
-
-a.download=currentFile+".csv";
-
-a.click();
-}
+function exportPDF(){if(!table)return; html2pdf().from(table).save(currentFile+".pdf");}
+function exportExcel(){if(!table)return; let blob=new Blob([table.outerHTML],{type:"application/vnd.ms-excel"}); let a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=currentFile+".xls"; a.click();}
+function exportWord(){if(!table)return; let blob=new Blob([table.outerHTML],{type:"application/msword"}); let a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=currentFile+".doc"; a.click();}
+function exportCSV(){if(!table)return; let csv=""; data.forEach(r=>{csv+=r.map(c=>c.text).join(",")+"\n";}); let a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([csv])); a.download=currentFile+".csv"; a.click();}
 
 updateFileList();
-
 </script>
 
 </body>
