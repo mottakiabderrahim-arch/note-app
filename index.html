@@ -1,141 +1,206 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="ar">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>مفكرة بسيطة</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f5f5f5;
-      margin: 0;
-      padding: 20px;
-    }
-    h1 {
-      text-align: center;
-      color: #333;
-    }
-    #noteForm {
-      display: flex;
-      flex-direction: column;
-      margin-bottom: 20px;
-    }
-    #noteForm input, #noteForm textarea {
-      padding: 10px;
-      margin-bottom: 10px;
-      font-size: 16px;
-    }
-    #noteForm button {
-      padding: 10px;
-      font-size: 16px;
-      cursor: pointer;
-      background-color: #4a90e2;
-      color: white;
-      border: none;
-    }
-    .note {
-      background: #fff;
-      padding: 10px;
-      margin-bottom: 10px;
-      border-radius: 5px;
-      position: relative;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    }
-    .note button {
-      position: absolute;
-      top: 10px;
-      cursor: pointer;
-      border: none;
-      background: none;
-      font-size: 14px;
-    }
-    .editBtn { right: 130px; color: #4a90e2; }
-    .deleteBtn { right: 90px; color: red; }
-    .shareBtn { right: 10px; color: green; }
-  </style>
+<meta charset="UTF-8">
+<title>Excel Ultimate 20 PRO</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<style>
+body{font-family:Arial;margin:10px;background:#f0f0f0;text-align:center}
+table{border-collapse:collapse;margin:auto;background:#fff}
+th,td{border:1px solid #000;padding:5px;text-align:center;width:80px}
+th{background:#eee;cursor:text}
+.result{background:#d0f0d0;font-weight:bold}
+button{margin:2px;padding:5px;cursor:pointer}
+.colorBtn{width:25px;height:25px;border:none;cursor:pointer;margin:2px}
+</style>
 </head>
 <body>
 
-<h1>مفكرة بسيطة</h1>
-
-<div id="noteForm">
-  <input type="text" id="noteTitle" placeholder="عنوان الملاحظة">
-  <textarea id="noteContent" placeholder="محتوى الملاحظة..." rows="5"></textarea>
-  <button onclick="saveNote()">حفظ الملاحظة</button>
+<div>
+<button onclick="newFile()">📄 ملف جديد</button>
+<select id="fileList" onchange="openFile()"></select>
+<button onclick="deleteFile()">🗑 حذف</button>
+<span id="currentFile"></span>
 </div>
 
-<div id="notesContainer"></div>
+<br>
+
+<button onclick="createTable()">📊 إنشاء جدول</button>
+
+<button onclick="toggleOp('sum')">➕ الجمع</button>
+<button onclick="toggleOp('sub')">➖ الطرح</button>
+<button onclick="toggleOp('mul')">✖ الضرب</button>
+<button onclick="toggleOp('div')">➗ القسمة</button>
+
+<br><br>
+
+<button onclick="addRow()">➕ صف</button>
+<button onclick="addCol()">➕ عمود</button>
+<button onclick="delRow()">➖ حذف صف</button>
+<button onclick="delCol()">➖ حذف عمود</button>
+
+<br><br>
+
+<button onclick="exportPDF()">📄 PDF</button>
+<button onclick="exportExcel()">📊 Excel</button>
+<button onclick="exportWord()">📄 Word</button>
+<button onclick="exportCSV()">📑 CSV</button>
+
+<br><br>
+🎨
+<button class="colorBtn" style="background:#fff" onclick="setColor('#fff')"></button>
+<button class="colorBtn" style="background:#f88" onclick="setColor('#f88')"></button>
+<button class="colorBtn" style="background:#8f8" onclick="setColor('#8f8')"></button>
+<button class="colorBtn" style="background:#88f" onclick="setColor('#88f')"></button>
+<button class="colorBtn" style="background:#ff8" onclick="setColor('#ff8')"></button>
+
+<div id="tableContainer"></div>
 
 <script>
-  let notes = JSON.parse(localStorage.getItem('notes')) || [];
+let table;
+let currentFile=null;
+let files=JSON.parse(localStorage.getItem("excelFiles")||"[]");
+let numRows=5, numCols=5;
+let currentColor="#fff";
+let enabledOps={sum:true,sub:false,mul:false,div:false};
+let data=[];
 
-  function displayNotes() {
-    const container = document.getElementById('notesContainer');
-    container.innerHTML = '';
-    // ترتيب حسب الأحدث أولاً
-    notes.slice().reverse().forEach((note, idx) => {
-      const noteDiv = document.createElement('div');
-      noteDiv.className = 'note';
-      const index = notes.length - 1 - idx;
-      noteDiv.innerHTML = `
-        <h3>${note.title}</h3>
-        <p>${note.content}</p>
-        <button class="editBtn" onclick="editNote(${index})">تعديل</button>
-        <button class="deleteBtn" onclick="deleteNote(${index})">حذف</button>
-        <button class="shareBtn" onclick="shareNote(${index})">مشاركة</button>
-      `;
-      container.appendChild(noteDiv);
-    });
-  }
+// ===== إدارة الملفات =====
+function updateFileList(){
+  let list=fileList;
+  list.innerHTML="";
+  files.forEach(f=>{let o=document.createElement("option"); o.value=f; o.text=f; list.appendChild(o);});
+  if(currentFile) document.getElementById("currentFile").innerText="📂 "+currentFile;
+}
 
-  function saveNote() {
-    const title = document.getElementById('noteTitle').value.trim();
-    const content = document.getElementById('noteContent').value.trim();
-    if(title === '' && content === '') return alert('الرجاء إدخال عنوان أو محتوى');
+function newFile(){
+  let name=prompt("اسم الملف");
+  if(!name) return;
+  if(files.includes(name)){alert("الملف موجود"); return;}
+  files.push(name);
+  localStorage.setItem("excelFiles",JSON.stringify(files));
+  currentFile=name;
+  numRows=5; numCols=5; enabledOps={sum:true,sub:false,mul:false,div:false};
+  data=[];
+  saveAll();
+  updateFileList();
+  createTable();
+}
 
-    const editingIndex = document.getElementById('noteForm').getAttribute('data-editing');
-    if(editingIndex !== null) {
-      notes[editingIndex] = { title, content };
-      document.getElementById('noteForm').removeAttribute('data-editing');
-    } else {
-      notes.push({ title, content });
-    }
+function openFile(){
+  currentFile=fileList.value;
+  loadAll();
+  updateFileList();
+}
 
-    localStorage.setItem('notes', JSON.stringify(notes));
-    document.getElementById('noteTitle').value = '';
-    document.getElementById('noteContent').value = '';
-    displayNotes();
-  }
+function deleteFile(){
+  if(!currentFile) return;
+  if(!confirm("تأكيد الحذف؟")) return;
+  localStorage.removeItem("excel_"+currentFile);
+  files=files.filter(f=>f!=currentFile);
+  localStorage.setItem("excelFiles",JSON.stringify(files));
+  currentFile=null;
+  tableContainer.innerHTML="";
+  updateFileList();
+}
 
-  function editNote(index) {
-    const note = notes[index];
-    document.getElementById('noteTitle').value = note.title;
-    document.getElementById('noteContent').value = note.content;
-    document.getElementById('noteForm').setAttribute('data-editing', index);
-  }
-
-  function deleteNote(index) {
-    if(confirm('هل تريد حذف هذه الملاحظة؟')) {
-      notes.splice(index, 1);
-      localStorage.setItem('notes', JSON.stringify(notes));
-      displayNotes();
-    }
-  }
-
-  function shareNote(index) {
-    const note = notes[index];
-    const textToCopy = note.title + "\n" + note.content;
-    if(navigator.clipboard) {
-      navigator.clipboard.writeText(textToCopy)
-        .then(() => alert("تم نسخ الملاحظة، يمكنك لصقها في أي تطبيق آخر"))
-        .catch(err => alert("لا يمكن النسخ: " + err));
-    } else {
-      alert("نسخ الملاحظات غير مدعوم في هذا المتصفح.");
+// ===== إنشاء وبناء الجدول =====
+function createTable(){
+  data=[];
+  for(let r=0;r<numRows;r++){
+    data[r]=[];
+    for(let c=0;c<numCols;c++){
+      data[r][c]={text:"",color:"#fff",rowName:(r+1),colName:String.fromCharCode(65+c)};
     }
   }
+  buildTable();
+  saveAll();
+}
 
-  // عرض الملاحظات عند التحميل
-  displayNotes();
+function buildTable(){
+  let html="<table id='dynamicTable'>";
+  html+="<tr><th>#</th>";
+  for(let c=0;c<numCols;c++){
+    let colName=data[0][c]?.colName||String.fromCharCode(65+c);
+    html+=`<th contenteditable oninput='renameCol(this,${c})'>${colName}</th>`;
+  }
+  html+="</tr>";
+  for(let r=0;r<numRows;r++){
+    let rowName=data[r]?.[0]?.rowName||(r+1);
+    html+="<tr>";
+    html+=`<th contenteditable oninput='renameRow(this,${r})'>${rowName}</th>`;
+    for(let c=0;c<numCols;c++){
+      let cell=data[r][c]||{text:"",color:"#fff"};
+      html+=`<td contenteditable style="background:${cell.color}" oninput="updateCell(this,${r},${c})" onclick="colorCell(this,${r},${c})">${cell.text}</td>`;
+    }
+    html+="</tr>";
+  }
+  if(enabledOps.sum) html+=resultRow("sum","نتيجة الجمع");
+  if(enabledOps.sub) html+=resultRow("sub","نتيجة الطرح");
+  if(enabledOps.mul) html+=resultRow("mul","نتيجة الضرب");
+  if(enabledOps.div) html+=resultRow("div","نتيجة القسمة");
+  html+="</table>";
+  tableContainer.innerHTML=html;
+  table=document.getElementById("dynamicTable");
+  calculate();
+}
+
+// ===== إعادة تسمية الصفوف والأعمدة =====
+function renameRow(el,r){data[r].forEach(cell=>cell.rowName=el.innerText); saveAll();}
+function renameCol(el,c){data.forEach(row=>row[c].colName=el.innerText); saveAll();}
+
+// ===== تحديث خلية =====
+function updateCell(td,r,c){data[r][c].text=td.innerText; calculate(); saveAll();}
+
+// ===== تلوين الخلية =====
+function setColor(c){currentColor=c;}
+function colorCell(td,r,c){td.style.background=currentColor; data[r][c].color=currentColor; saveAll(); calculate();}
+
+// ===== عمليات الحساب =====
+function resultRow(type,title){
+  let html="<tr><th>"+title+"</th>";
+  for(let c=0;c<numCols;c++){html+=`<th class='result' id='${type}_${c}'>0</th>`;}
+  html+="</tr>";
+  return html;
+}
+
+function calculate(){
+  for(let c=0;c<numCols;c++){
+    let vals=data.map(r=>parseFloat(r[c]?.text)||0);
+    let sum=vals.reduce((a,b)=>a+b,0);
+    let sub=vals.reduce((a,b)=>isNaN(a)?b:a-b);
+    let mul=vals.reduce((a,b)=>a*b,1);
+    let div=vals.reduce((a,b)=>b? a/b:0);
+    if(enabledOps.sum) setResult("sum",c,sum);
+    if(enabledOps.sub) setResult("sub",c,sub);
+    if(enabledOps.mul) setResult("mul",c,mul);
+    if(enabledOps.div) setResult("div",c,div);
+  }
+}
+
+function setResult(type,c,val){let el=document.getElementById(type+"_"+c); if(el) el.innerText=val;}
+
+// ===== إضافة / حذف صفوف وأعمدة =====
+function addRow(){let row=[]; for(let c=0;c<numCols;c++) row.push({text:"",color:"#fff"}); data.push(row); numRows++; buildTable(); saveAll();}
+function addCol(){data.forEach(r=>r.push({text:"",color:"#fff"})); numCols++; buildTable(); saveAll();}
+function delRow(){if(numRows<=1) return; data.pop(); numRows--; buildTable(); saveAll();}
+function delCol(){if(numCols<=1) return; data.forEach(r=>r.pop()); numCols--; buildTable(); saveAll();}
+
+// ===== تفعيل / تعطيل العمليات =====
+function toggleOp(op){enabledOps[op]=!enabledOps[op]; buildTable(); saveAll();}
+
+// ===== حفظ واسترجاع كامل =====
+function saveAll(){if(!currentFile) return; localStorage.setItem("excel_"+currentFile,JSON.stringify({data:data,rows:numRows,cols:numCols,enabledOps:enabledOps}));}
+function loadAll(){let s=localStorage.getItem("excel_"+currentFile); if(!s) return; let obj=JSON.parse(s); data=obj.data||[]; numRows=obj.rows||5; numCols=obj.cols||5; enabledOps=obj.enabledOps||enabledOps; buildTable();}
+
+// ===== تصدير =====
+function exportPDF(){if(!table) return; html2pdf().from(table).save(currentFile+".pdf");}
+function exportExcel(){if(!table) return; let blob=new Blob([table.outerHTML],{type:"application/vnd.ms-excel"}); let a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=currentFile+".xls"; a.click();}
+function exportWord(){if(!table) return; let blob=new Blob([table.outerHTML],{type:"application/msword"}); let a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=currentFile+".doc"; a.click();}
+function exportCSV(){if(!table) return; let csv=""; data.forEach(r=>{csv+=r.map(c=>c.text).join(",")+"\n";}); let a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([csv])); a.download=currentFile+".csv"; a.click();}
+
+// ===== بدء =====
+updateFileList();
 </script>
 
 </body>
