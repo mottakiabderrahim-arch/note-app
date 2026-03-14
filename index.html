@@ -25,9 +25,10 @@ input{padding:4px;margin:2px;width:70px;text-align:center}
 </div>
 
 <br>
-عدد الصفوف <input type="number" id="rowsInput" value="5">
-عدد الأعمدة <input type="number" id="colsInput" value="5">
+عدد الصفوف <input type="number" id="rowsInput" value="20">
+عدد الأعمدة <input type="number" id="colsInput" value="10">
 <button onclick="createCustomTable()">📊 إنشاء جدول</button>
+<button onclick="fillWords()">✍️ ملء الكلمات تلقائيًا</button>
 
 <br><br>
 <button onclick="addRow()">➕ صف</button>
@@ -57,14 +58,23 @@ input{padding:4px;margin:2px;width:70px;text-align:center}
 <div id="tableContainer"></div>
 
 <script>
+// قائمة الكلمات
+let words = [
+"apple","book","car","dog","house","water","food","table","chair","phone",
+"computer","school","teacher","student","city","village","road","market","shop","money",
+"time","day","night","sun","moon","star","sky","earth","fire","wind","tree",
+"flower","grass","river","sea","mountain","forest","desert","rain","snow"
+]; // عدّل أو زيد هنا 200 كلمة
+
 let table;
 let currentFile=null;
 let files=JSON.parse(localStorage.getItem("excelFiles")||"[]");
-let numRows=5,numCols=5;
+let numRows=20,numCols=10;
 let currentColor="#fff";
 let data=[];
 let selectedCells=[];
 
+// الملفات
 function updateFileList(){
 let list=fileList;
 list.innerHTML="";
@@ -81,19 +91,15 @@ function newFile(){
 let name=prompt("اسم الملف"); if(!name)return;
 if(files.includes(name)){alert("الملف موجود"); return;}
 files.push(name); localStorage.setItem("excelFiles",JSON.stringify(files));
-currentFile=name; numRows=5; numCols=5; data=[]; saveAll(); updateFileList(); createTable();
+currentFile=name; data=[]; saveAll(); updateFileList(); createTable();
 }
 function openFile(){currentFile=fileList.value; loadAll(); updateFileList();}
-function deleteFile(){
-if(!currentFile)return; if(!confirm("تأكيد الحذف؟"))return;
-localStorage.removeItem("excel_"+currentFile);
-files=files.filter(f=>f!=currentFile);
-localStorage.setItem("excelFiles",JSON.stringify(files));
-currentFile=null; tableContainer.innerHTML=""; updateFileList();
-}
+function deleteFile(){if(!currentFile)return; if(!confirm("تأكيد الحذف؟"))return;
+localStorage.removeItem("excel_"+currentFile); files=files.filter(f=>f!=currentFile); localStorage.setItem("excelFiles",JSON.stringify(files));
+currentFile=null; tableContainer.innerHTML=""; updateFileList();}
 
-function createCustomTable(){
-let r=parseInt(rowsInput.value); let c=parseInt(colsInput.value);
+// الجدول
+function createCustomTable(){let r=parseInt(rowsInput.value); let c=parseInt(colsInput.value);
 if(r<1||c<1){alert("ضع أرقام صحيحة"); return;}
 numRows=r; numCols=c; createTable();
 }
@@ -112,7 +118,6 @@ let colName=data[0][c]?.colName||String.fromCharCode(65+c);
 html+=`<th contenteditable onclick="toggleSelectColumn(${c})" oninput='renameCol(this,${c})'>${colName}</th>`;
 }
 html+="</tr>";
-
 for(let r=0;r<numRows;r++){
 let rowName=data[r]?.[0]?.rowName||(r+1);
 html+="<tr>";
@@ -139,47 +144,19 @@ function renameCol(el,c){data.forEach(row=>row[c].colName=el.innerText); saveAll
 function updateCell(td,r,c){data[r][c].text=td.innerText; saveAll();}
 function setColor(c){currentColor=c;}
 
-// التحديد الحر
-function toggleSelectCell(td){
-if(selectedCells.includes(td)){ td.classList.remove("selected"); selectedCells=selectedCells.filter(c=>c!==td);}
-else{ td.classList.add("selected"); selectedCells.push(td);}
-}
+// التحديد
+function toggleSelectCell(td){if(selectedCells.includes(td)){td.classList.remove("selected"); selectedCells=selectedCells.filter(c=>c!==td);}
+else{td.classList.add("selected"); selectedCells.push(td);}}
 
 // تحديد عمود كامل
-function toggleSelectColumn(c){
-for(let r=0;r<numRows;r++){
-let td = table.rows[r+1].cells[c+1]; // +1 بسبب رأس الصف
-if(!selectedCells.includes(td)){ td.classList.add("selected"); selectedCells.push(td);}
-}
-}
+function toggleSelectColumn(c){for(let r=0;r<numRows;r++){let td = table.rows[r+1].cells[c+1]; if(!selectedCells.includes(td)){td.classList.add("selected"); selectedCells.push(td);}}}
 
 // تحديد صف كامل
-function toggleSelectRow(r){
-for(let c=0;c<numCols;c++){
-let td = table.rows[r+1].cells[c+1]; 
-if(!selectedCells.includes(td)){ td.classList.add("selected"); selectedCells.push(td);}
-}
-}
+function toggleSelectRow(r){for(let c=0;c<numCols;c++){let td = table.rows[r+1].cells[c+1]; if(!selectedCells.includes(td)){td.classList.add("selected"); selectedCells.push(td);}}}
 
 // التلوين و التعبئة للخلايا المحددة
-function colorSelectedCells(){
-selectedCells.forEach(td=>{
-td.style.background=currentColor;
-let coords=td.getAttribute("data-coords").split(",");
-data[parseInt(coords[0])][parseInt(coords[1])].color=currentColor;
-td.classList.remove("selected");
-});
-selectedCells=[]; saveAll();
-}
-function fillSelectedCells(text){
-selectedCells.forEach(td=>{
-td.innerText=text;
-let coords=td.getAttribute("data-coords").split(",");
-data[parseInt(coords[0])][parseInt(coords[1])].text=text;
-td.classList.remove("selected");
-});
-selectedCells=[]; saveAll();
-}
+function colorSelectedCells(){selectedCells.forEach(td=>{td.style.background=currentColor; let coords=td.getAttribute("data-coords").split(","); data[parseInt(coords[0])][parseInt(coords[1])].color=currentColor; td.classList.remove("selected");}); selectedCells=[]; saveAll();}
+function fillSelectedCells(text){selectedCells.forEach(td=>{td.innerText=text; let coords=td.getAttribute("data-coords").split(","); data[parseInt(coords[0])][parseInt(coords[1])].text=text; td.classList.remove("selected");}); selectedCells=[]; saveAll();}
 
 // إضافة/حذف صفوف وأعمدة
 function addRow(){let row=[]; for(let c=0;c<numCols;c++) row.push({text:"",color:"#fff"}); data.push(row); numRows++; buildTable(); saveAll();}
@@ -195,9 +172,25 @@ function exportCSV(){if(!table)return; let csv=""; data.forEach(r=>{csv+=r.map(c
 
 // حفظ واسترجاع
 function saveAll(){if(!currentFile)return; localStorage.setItem("excel_"+currentFile,JSON.stringify({data:data,rows:numRows,cols:numCols}));}
-function loadAll(){let s=localStorage.getItem("excel_"+currentFile); if(!s)return; let obj=JSON.parse(s); data=obj.data||[]; numRows=obj.rows||5; numCols=obj.cols||5; buildTable();}
+function loadAll(){let s=localStorage.getItem("excel_"+currentFile); if(!s)return; let obj=JSON.parse(s); data=obj.data||[]; numRows=obj.rows||20; numCols=obj.cols||10; buildTable();}
+
+// ملء الكلمات تلقائيًا
+function fillWords(){
+let index=0;
+for(let r=0;r<numRows;r++){
+for(let c=0;c<numCols;c++){
+if(index<words.length){
+table.rows[r+1].cells[c+1].innerText = words[index];
+data[r][c].text = words[index];
+index++;
+}
+}
+}
+saveAll();
+}
 
 updateFileList();
+createTable();
 </script>
 
 </body>
