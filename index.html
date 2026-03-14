@@ -1,93 +1,116 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<title>50 كلمة فرنسية مع TTS</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>مفكرة بسيطة</title>
+
 <style>
-body { font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5; }
-.word { margin-bottom: 10px; }
-button { margin-left: 10px; }
+body{
+font-family: Arial;
+background:#f2f2f2;
+text-align:center;
+padding:20px;
+}
+
+h2{
+color:#333;
+}
+
+textarea{
+width:90%;
+height:80px;
+padding:10px;
+font-size:16px;
+}
+
+button{
+padding:10px 15px;
+margin:5px;
+border:none;
+background:#4CAF50;
+color:white;
+font-size:16px;
+cursor:pointer;
+}
+
+.delete{
+background:red;
+}
+
+.note{
+background:white;
+padding:10px;
+margin:10px;
+border-radius:5px;
+box-shadow:0 0 5px rgba(0,0,0,0.2);
+}
 </style>
 </head>
+
 <body>
-<h2>50 كلمة فرنسية مع الترجمة</h2>
-<div id="words"></div>
+
+<h2>📒 مفكرتي</h2>
+
+<textarea id="noteInput" placeholder="اكتب ملاحظة..."></textarea>
+<br>
+
+<button onclick="addNote()">إضافة</button>
+<button onclick="exportPDF()">تصدير PDF</button>
+
+<div id="notes"></div>
 
 <script>
-// قائمة 50 كلمة فرنسية مع الترجمة العربية
-const wordList = [
-  {fr:"bonjour", ar:"مرحبا"},
-  {fr:"merci", ar:"شكرا"},
-  {fr:"amour", ar:"حب"},
-  {fr:"maison", ar:"منزل"},
-  {fr:"chat", ar:"قط"},
-  {fr:"chien", ar:"كلب"},
-  {fr:"livre", ar:"كتاب"},
-  {fr:"école", ar:"مدرسة"},
-  {fr:"pomme", ar:"تفاح"},
-  {fr:"eau", ar:"ماء"},
-  {fr:"pain", ar:"خبز"},
-  {fr:"soleil", ar:"شمس"},
-  {fr:"lune", ar:"قمر"},
-  {fr:"voiture", ar:"سيارة"},
-  {fr:"village", ar:"قرية"},
-  {fr:"ville", ar:"مدينة"},
-  {fr:"fleur", ar:"زهرة"},
-  {fr:"arbre", ar:"شجرة"},
-  {fr:"mer", ar:"بحر"},
-  {fr:"montagne", ar:"جبل"},
-  {fr:"oiseau", ar:"طائر"},
-  {fr:"poisson", ar:"سمكة"},
-  {fr:"fenêtre", ar:"نافذة"},
-  {fr:"porte", ar:"باب"},
-  {fr:"chaise", ar:"كرسي"},
-  {fr:"table", ar:"طاولة"},
-  {fr:"jour", ar:"يوم"},
-  {fr:"nuit", ar:"ليل"},
-  {fr:"temps", ar:"زمن"},
-  {fr:"heure", ar:"ساعة"},
-  {fr:"ami", ar:"صديق"},
-  {fr:"famille", ar:"عائلة"},
-  {fr:"enfant", ar:"طفل"},
-  {fr:"faim", ar:"جوع"},
-  {fr:"soif", ar:"عطش"},
-  {fr:"chanson", ar:"أغنية"},
-  {fr:"musique", ar:"موسيقى"},
-  {fr:"rue", ar:"شارع"},
-  {fr:"pont", ar:"جسر"},
-  {fr:"église", ar:"كنيسة"},
-  {fr:"magasin", ar:"متجر"},
-  {fr:"marché", ar:"سوق"},
-  {fr:"hôtel", ar:"فندق"},
-  {fr:"restaurant", ar:"مطعم"},
-  {fr:"cinéma", ar:"سينما"},
-  {fr:"théâtre", ar:"مسرح"},
-  {fr:"ordinateur", ar:"حاسوب"},
-  {fr:"téléphone", ar:"هاتف"},
-  {fr:"vélo", ar:"دراجة"},
-  {fr:"bus", ar:"حافلة"},
-  {fr:"train", ar:"قطار"}
-];
+let notes = JSON.parse(localStorage.getItem("notes")) || [];
 
-// إنشاء العناصر في الصفحة
-const container = document.getElementById("words");
-wordList.forEach(item => {
-    const div = document.createElement("div");
-    div.className = "word";
-    
-    // زر TTS
-    const btn = document.createElement("button");
-    btn.textContent = "🔊";
-    btn.addEventListener("click", () => {
-        const utter = new SpeechSynthesisUtterance(item.fr);
-        utter.lang = "fr-FR";
-        speechSynthesis.speak(utter);
-    });
-    
-    div.textContent = `${item.fr} - ${item.ar} `;
-    div.appendChild(btn);
-    container.appendChild(div);
+function saveNotes(){
+localStorage.setItem("notes", JSON.stringify(notes));
+}
+
+function displayNotes(){
+let container = document.getElementById("notes");
+container.innerHTML="";
+
+notes.forEach((note,index)=>{
+let div = document.createElement("div");
+div.className="note";
+
+div.innerHTML =
+"<p>"+note+"</p>"+
+"<button class='delete' onclick='deleteNote("+index+")'>حذف</button>";
+
+container.appendChild(div);
 });
+}
+
+function addNote(){
+let input=document.getElementById("noteInput");
+
+if(input.value.trim()!=""){
+notes.push(input.value);
+input.value="";
+saveNotes();
+displayNotes();
+}
+}
+
+function deleteNote(index){
+notes.splice(index,1);
+saveNotes();
+displayNotes();
+}
+
+displayNotes();
 </script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+<script>
+function exportPDF(){
+  var element = document.body;
+  html2pdf().from(element).save("notes.pdf");
+}
+</script>
+
 </body>
 </html>
