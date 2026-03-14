@@ -2,213 +2,416 @@
 <html lang="ar">
 <head>
 <meta charset="UTF-8">
-<title>Excel Ultimate 20 PRO</title>
+<title>Mini Excel PRO</title>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
 <style>
-body{font-family:Arial;margin:10px;background:#f0f0f0;text-align:center}
+body{font-family:Arial;background:#f0f0f0;text-align:center;margin:10px}
 table{border-collapse:collapse;margin:auto;background:#fff}
-th,td{border:1px solid #000;padding:5px;text-align:center;width:80px}
-th{background:#eee;cursor:text}
+th,td{border:1px solid #000;padding:6px;width:80px;text-align:center}
+th{background:#eee}
 .result{background:#d0f0d0;font-weight:bold}
-button{margin:2px;padding:5px;cursor:pointer}
-.colorBtn{width:25px;height:25px;border:none;cursor:pointer;margin:2px}
+button{padding:6px;margin:2px}
 </style>
 </head>
+
 <body>
 
-<div>
-<button onclick="newFile()">📄 ملف جديد</button>
+<h3>Mini Excel</h3>
+
+<button onclick="newFile()">ملف جديد</button>
 <select id="fileList" onchange="openFile()"></select>
-<button onclick="deleteFile()">🗑 حذف</button>
-<span id="currentFile"></span>
-</div>
-
-<br>
-
-<button onclick="createTable()">📊 إنشاء جدول</button>
-
-<button onclick="toggleOp('sum')">➕ الجمع</button>
-<button onclick="toggleOp('sub')">➖ الطرح</button>
-<button onclick="toggleOp('mul')">✖ الضرب</button>
-<button onclick="toggleOp('div')">➗ القسمة</button>
+<button onclick="deleteFile()">حذف</button>
 
 <br><br>
 
-<button onclick="addRow()">➕ صف</button>
-<button onclick="addCol()">➕ عمود</button>
-<button onclick="delRow()">➖ حذف صف</button>
-<button onclick="delCol()">➖ حذف عمود</button>
+<button onclick="createTable()">إنشاء جدول</button>
+
+<button onclick="toggleOp('sum')">جمع</button>
+<button onclick="toggleOp('sub')">طرح</button>
+<button onclick="toggleOp('mul')">ضرب</button>
+<button onclick="toggleOp('div')">قسمة</button>
 
 <br><br>
 
-<button onclick="exportPDF()">📄 PDF</button>
-<button onclick="exportExcel()">📊 Excel</button>
-<button onclick="exportWord()">📄 Word</button>
-<button onclick="exportCSV()">📑 CSV</button>
+<button onclick="addRow()">صف +</button>
+<button onclick="addCol()">عمود +</button>
+<button onclick="delRow()">صف -</button>
+<button onclick="delCol()">عمود -</button>
 
 <br><br>
-🎨
-<button class="colorBtn" style="background:#fff" onclick="setColor('#fff')"></button>
-<button class="colorBtn" style="background:#f88" onclick="setColor('#f88')"></button>
-<button class="colorBtn" style="background:#8f8" onclick="setColor('#8f8')"></button>
-<button class="colorBtn" style="background:#88f" onclick="setColor('#88f')"></button>
-<button class="colorBtn" style="background:#ff8" onclick="setColor('#ff8')"></button>
+
+<button onclick="exportPDF()">PDF</button>
+<button onclick="exportExcel()">Excel</button>
+<button onclick="exportWord()">Word</button>
+<button onclick="exportCSV()">CSV</button>
+
+<br><br>
 
 <div id="tableContainer"></div>
 
 <script>
-let table;
-let currentFile=null;
-let files=JSON.parse(localStorage.getItem("excelFiles")||"[]");
-let numRows=5, numCols=5;
-let currentColor="#fff";
-let enabledOps={sum:true,sub:false,mul:false,div:false};
-let data=[];
 
-// ===== إدارة الملفات =====
+let table
+let currentFile=null
+
+let files=JSON.parse(localStorage.getItem("excelFiles")||"[]")
+
+let numRows=5
+let numCols=5
+
+let enabledOps={sum:true,sub:false,mul:false,div:false}
+
+let data=[]
+
+// ===== الملفات =====
+
 function updateFileList(){
-  const list=document.getElementById("fileList");
-  list.innerHTML="";
-  files.forEach(f=>{
-    let o=document.createElement("option");
-    o.value=f; o.text=f; list.appendChild(o);
-  });
-  if(currentFile) document.getElementById("currentFile").innerText="📂 "+currentFile;
+fileList.innerHTML=""
+files.forEach(f=>{
+let o=document.createElement("option")
+o.value=f
+o.text=f
+fileList.appendChild(o)
+})
 }
 
-// إنشاء ملف جديد
 function newFile(){
-  let name=prompt("اسم الملف");
-  if(!name) return;
-  if(files.includes(name)){alert("الملف موجود"); return;}
-  files.push(name);
-  localStorage.setItem("excelFiles",JSON.stringify(files));
-  currentFile=name;
-  numRows=5; numCols=5; enabledOps={sum:true,sub:false,mul:false,div:false};
-  data=[];
-  saveAll();
-  updateFileList();
-  createTable();
-  document.getElementById("currentFile").innerText="📂 "+currentFile;
+
+let name=prompt("اسم الملف")
+
+if(!name)return
+
+files.push(name)
+
+localStorage.setItem("excelFiles",JSON.stringify(files))
+
+currentFile=name
+
+createTable()
+
+updateFileList()
+
 }
 
-// فتح ملف قائم
 function openFile(){
-  currentFile=document.getElementById("fileList").value;
-  loadAll();
-  updateFileList();
-  document.getElementById("currentFile").innerText="📂 "+currentFile;
+
+currentFile=fileList.value
+
+let s=localStorage.getItem("excel_"+currentFile)
+
+if(!s)return
+
+let obj=JSON.parse(s)
+
+data=obj.data
+
+numRows=obj.rows
+
+numCols=obj.cols
+
+enabledOps=obj.ops
+
+buildTable()
+
 }
 
-// حذف ملف
 function deleteFile(){
-  if(!currentFile) return;
-  if(!confirm("تأكيد الحذف؟")) return;
-  localStorage.removeItem("excel_"+currentFile);
-  files=files.filter(f=>f!=currentFile);
-  localStorage.setItem("excelFiles",JSON.stringify(files));
-  currentFile=null;
-  tableContainer.innerHTML="";
-  updateFileList();
+
+if(!currentFile)return
+
+localStorage.removeItem("excel_"+currentFile)
+
+files=files.filter(f=>f!=currentFile)
+
+localStorage.setItem("excelFiles",JSON.stringify(files))
+
+currentFile=null
+
+updateFileList()
+
+tableContainer.innerHTML=""
+
 }
 
-// ===== إنشاء وبناء الجدول =====
+// ===== الجدول =====
+
 function createTable(){
-  data=[];
-  for(let r=0;r<numRows;r++){
-    data[r]=[];
-    for(let c=0;c<numCols;c++){
-      data[r][c]={text:"",color:"#fff",rowName:(r+1),colName:String.fromCharCode(65+c)};
-    }
-  }
-  buildTable();
-  saveAll();
+
+data=[]
+
+for(let r=0;r<numRows;r++){
+
+data[r]=[]
+
+for(let c=0;c<numCols;c++){
+
+data[r][c]={text:""}
+
+}
+
+}
+
+buildTable()
+
+saveAll()
+
 }
 
 function buildTable(){
-  let html="<table id='dynamicTable'>";
-  html+="<tr><th>#</th>";
-  for(let c=0;c<numCols;c++){
-    let colName=data[0]?.[c]?.colName||String.fromCharCode(65+c);
-    html+=`<th contenteditable oninput='renameCol(this,${c})'>${colName}</th>`;
-  }
-  html+="</tr>";
-  for(let r=0;r<numRows;r++){
-    let rowName=data[r]?.[0]?.rowName||(r+1);
-    html+="<tr>";
-    html+=`<th contenteditable oninput='renameRow(this,${r})'>${rowName}</th>`;
-    for(let c=0;c<numCols;c++){
-      let cell=data[r][c]||{text:"",color:"#fff"};
-      html+=`<td contenteditable style="background:${cell.color}" oninput="updateCell(this,${r},${c})" onclick="colorCell(this,${r},${c})">${cell.text}</td>`;
-    }
-    html+="</tr>";
-  }
-  if(enabledOps.sum) html+=resultRow("sum","نتيجة الجمع");
-  if(enabledOps.sub) html+=resultRow("sub","نتيجة الطرح");
-  if(enabledOps.mul) html+=resultRow("mul","نتيجة الضرب");
-  if(enabledOps.div) html+=resultRow("div","نتيجة القسمة");
-  html+="</table>";
-  tableContainer.innerHTML=html;
-  table=document.getElementById("dynamicTable");
-  calculate();
+
+let html="<table id='dynamicTable'>"
+
+for(let r=0;r<numRows;r++){
+
+html+="<tr>"
+
+for(let c=0;c<numCols;c++){
+
+let cell=data[r][c]
+
+html+=`<td contenteditable oninput="updateCell(this,${r},${c})">${cell.text}</td>`
+
 }
 
-// ===== إعادة تسمية الصفوف والأعمدة =====
-function renameRow(el,r){data[r].forEach(cell=>cell.rowName=el.innerText); saveAll();}
-function renameCol(el,c){data.forEach(row=>row[c].colName=el.innerText); saveAll();}
+html+="</tr>"
 
-// ===== تحديث خلية =====
-function updateCell(td,r,c){data[r][c].text=td.innerText; calculate(); saveAll();}
-
-// ===== تلوين الخلية =====
-function setColor(c){currentColor=c;}
-function colorCell(td,r,c){td.style.background=currentColor; data[r][c].color=currentColor; saveAll(); calculate();}
-
-// ===== عمليات الحساب =====
-function resultRow(type,title){
-  let html="<tr><th>"+title+"</th>";
-  for(let c=0;c<numCols;c++){html+=`<th class='result' id='${type}_${c}'>0</th>`;}
-  html+="</tr>";
-  return html;
 }
+
+if(enabledOps.sum)html+=resultRow("sum")
+if(enabledOps.sub)html+=resultRow("sub")
+if(enabledOps.mul)html+=resultRow("mul")
+if(enabledOps.div)html+=resultRow("div")
+
+html+="</table>"
+
+tableContainer.innerHTML=html
+
+table=document.getElementById("dynamicTable")
+
+calculate()
+
+}
+
+function resultRow(type){
+
+let html="<tr>"
+
+for(let c=0;c<numCols;c++){
+
+html+=`<th class="result" id="${type}_${c}">0</th>`
+
+}
+
+html+="</tr>"
+
+return html
+
+}
+
+function updateCell(td,r,c){
+
+data[r][c].text=td.innerText
+
+calculate()
+
+saveAll()
+
+}
+
+// ===== العمليات =====
 
 function calculate(){
-  for(let c=0;c<numCols;c++){
-    let vals=data.map(r=>parseFloat(r[c]?.text)||0);
-    let sum=vals.reduce((a,b)=>a+b,0);
-    let sub=vals.length>0? vals[0] - (vals.slice(1).reduce((acc,v)=>acc+v,0) ) : 0;
-    let mul=vals.length? vals.reduce((a,b)=>a*b,1) : 0;
-    let div=vals.length? vals.reduce((a,b)=> b? a/b : a, vals[0]) : 0;
-    if(enabledOps.sum) setResult("sum",c,sum);
-    if(enabledOps.sub) setResult("sub",c,sub);
-    if(enabledOps.mul) setResult("mul",c,mul);
-    if(enabledOps.div) setResult("div",c,div);
-  }
+
+for(let c=0;c<numCols;c++){
+
+let vals=data.map(r=>parseFloat(r[c].text)||0)
+
+let sum=vals.reduce((a,b)=>a+b,0)
+
+let sub=vals.reduce((a,b)=>a-b)
+
+let mul=vals.reduce((a,b)=>a*b,1)
+
+let div=vals.reduce((a,b)=>b? a/b:0)
+
+if(enabledOps.sum)setResult("sum",c,sum)
+
+if(enabledOps.sub)setResult("sub",c,sub)
+
+if(enabledOps.mul)setResult("mul",c,mul)
+
+if(enabledOps.div)setResult("div",c,div)
+
 }
 
-function setResult(type,c,val){let el=document.getElementById(type+"_"+c); if(el) el.innerText=val;}
+}
 
-// ===== إضافة / حذف صفوف وأعمدة =====
-function addRow(){let row=[]; for(let c=0;c<numCols;c++) row.push({text:"",color:"#fff"}); data.push(row); numRows++; buildTable(); saveAll();}
-function addCol(){data.forEach(r=>r.push({text:"",color:"#fff"})); numCols++; buildTable(); saveAll();}
-function delRow(){if(numRows<=1) return; data.pop(); numRows--; buildTable(); saveAll();}
-function delCol(){if(numCols<=1) return; data.forEach(r=>r.pop()); numCols--; buildTable(); saveAll();}
+function setResult(type,c,val){
 
-// ===== تفعيل / تعطيل العمليات =====
-function toggleOp(op){enabledOps[op]=!enabledOps[op]; buildTable(); saveAll();}
+let el=document.getElementById(type+"_"+c)
 
-// ===== حفظ واسترجاع كامل =====
-function saveAll(){if(!currentFile) return; localStorage.setItem("excel_"+currentFile,JSON.stringify({data:data,rows:numRows,cols:numCols,enabledOps:enabledOps}));}
-function loadAll(){let s=localStorage.getItem("excel_"+currentFile); if(!s) return; let obj=JSON.parse(s); data=obj.data||[]; numRows=obj.rows||5; numCols=obj.cols||5; enabledOps=obj.enabledOps||enabledOps; buildTable();}
+if(el)el.innerText=val
+
+}
+
+function toggleOp(op){
+
+enabledOps[op]=!enabledOps[op]
+
+buildTable()
+
+saveAll()
+
+}
+
+// ===== صفوف وأعمدة =====
+
+function addRow(){
+
+let row=[]
+
+for(let c=0;c<numCols;c++)row.push({text:""})
+
+data.push(row)
+
+numRows++
+
+buildTable()
+
+saveAll()
+
+}
+
+function addCol(){
+
+data.forEach(r=>r.push({text:""}))
+
+numCols++
+
+buildTable()
+
+saveAll()
+
+}
+
+function delRow(){
+
+if(numRows<=1)return
+
+data.pop()
+
+numRows--
+
+buildTable()
+
+saveAll()
+
+}
+
+function delCol(){
+
+if(numCols<=1)return
+
+data.forEach(r=>r.pop())
+
+numCols--
+
+buildTable()
+
+saveAll()
+
+}
+
+// ===== حفظ =====
+
+function saveAll(){
+
+if(!currentFile)return
+
+localStorage.setItem("excel_"+currentFile,JSON.stringify({
+
+data:data,
+
+rows:numRows,
+
+cols:numCols,
+
+ops:enabledOps
+
+}))
+
+}
 
 // ===== تصدير =====
-function exportPDF(){if(!table) return; html2pdf().from(table).save((currentFile||"table")+".pdf");}
-function exportExcel(){if(!table) return; let blob=new Blob([table.outerHTML],{type:"application/vnd.ms-excel"}); let a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=(currentFile||"table")+".xls"; a.click();}
-function exportWord(){if(!table) return; let blob=new Blob([table.outerHTML],{type:"application/msword"}); let a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=(currentFile||"table")+".doc"; a.click();}
-function exportCSV(){if(!table) return; let csv=""; data.forEach(r=>{csv+=r.map(c=>c.text).join(",")+"\n";}); let a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([csv])); a.download=(currentFile||"table")+".csv"; a.click();}
 
-// ===== بدء =====
-updateFileList();
+function downloadFile(blob,filename){
+
+let url=URL.createObjectURL(blob)
+
+let a=document.createElement("a")
+
+a.href=url
+
+a.download=filename
+
+document.body.appendChild(a)
+
+a.click()
+
+setTimeout(()=>{
+
+document.body.removeChild(a)
+
+URL.revokeObjectURL(url)
+
+},100)
+
+}
+
+function exportPDF(){
+
+if(!table)return
+
+html2pdf().from(table).save(currentFile+".pdf")
+
+}
+
+function exportExcel(){
+
+let blob=new Blob(['\ufeff'+table.outerHTML],{type:"application/vnd.ms-excel"})
+
+downloadFile(blob,currentFile+".xls")
+
+}
+
+function exportWord(){
+
+let blob=new Blob(['\ufeff'+table.outerHTML],{type:"application/msword"})
+
+downloadFile(blob,currentFile+".doc")
+
+}
+
+function exportCSV(){
+
+let csv=""
+
+data.forEach(r=>{
+
+csv+=r.map(c=>`"${c.text}"`).join(",")+"\n"
+
+})
+
+let blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8;"})
+
+downloadFile(blob,currentFile+".csv")
+
+}
+
+updateFileList()
+
 </script>
 
 </body>
