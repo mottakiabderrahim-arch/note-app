@@ -74,16 +74,20 @@ const container = document.getElementById("words");
 wordList.forEach(item => {
     const div = document.createElement("div");
     div.className = "word";
-    div.innerHTML = `${item.fr} - ${item.ar} <button onclick="speak('${item.fr}')">🔊</button>`;
+    
+    // زر TTS
+    const btn = document.createElement("button");
+    btn.textContent = "🔊";
+    btn.addEventListener("click", () => {
+        const utter = new SpeechSynthesisUtterance(item.fr);
+        utter.lang = "fr-FR";
+        speechSynthesis.speak(utter);
+    });
+    
+    div.textContent = `${item.fr} - ${item.ar} `;
+    div.appendChild(btn);
     container.appendChild(div);
 });
-
-// دالة TTS للنطق الفرنسي
-function speak(text){
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = "fr-FR";
-    speechSynthesis.speak(utterance);
-}
 </script>
 </body>
 </html>
