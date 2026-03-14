@@ -49,7 +49,8 @@
       background: none;
       font-size: 14px;
     }
-    .editBtn { right: 40px; color: #4a90e2; }
+    .editBtn { right: 130px; color: #4a90e2; }
+    .deleteBtn { right: 90px; color: red; }
     .shareBtn { right: 10px; color: green; }
   </style>
 </head>
@@ -71,13 +72,16 @@
   function displayNotes() {
     const container = document.getElementById('notesContainer');
     container.innerHTML = '';
-    notes.forEach((note, index) => {
+    // ترتيب حسب الأحدث أولاً
+    notes.slice().reverse().forEach((note, idx) => {
       const noteDiv = document.createElement('div');
       noteDiv.className = 'note';
+      const index = notes.length - 1 - idx;
       noteDiv.innerHTML = `
         <h3>${note.title}</h3>
         <p>${note.content}</p>
         <button class="editBtn" onclick="editNote(${index})">تعديل</button>
+        <button class="deleteBtn" onclick="deleteNote(${index})">حذف</button>
         <button class="shareBtn" onclick="shareNote(${index})">مشاركة</button>
       `;
       container.appendChild(noteDiv);
@@ -89,7 +93,6 @@
     const content = document.getElementById('noteContent').value.trim();
     if(title === '' && content === '') return alert('الرجاء إدخال عنوان أو محتوى');
 
-    // تحقق إذا كنا نعدل ملاحظة موجودة
     const editingIndex = document.getElementById('noteForm').getAttribute('data-editing');
     if(editingIndex !== null) {
       notes[editingIndex] = { title, content };
@@ -111,15 +114,23 @@
     document.getElementById('noteForm').setAttribute('data-editing', index);
   }
 
+  function deleteNote(index) {
+    if(confirm('هل تريد حذف هذه الملاحظة؟')) {
+      notes.splice(index, 1);
+      localStorage.setItem('notes', JSON.stringify(notes));
+      displayNotes();
+    }
+  }
+
   function shareNote(index) {
     const note = notes[index];
-    if(navigator.share) {
-      navigator.share({
-        title: note.title,
-        text: note.content
-      }).catch(err => console.log(err));
+    const textToCopy = note.title + "\n" + note.content;
+    if(navigator.clipboard) {
+      navigator.clipboard.writeText(textToCopy)
+        .then(() => alert("تم نسخ الملاحظة، يمكنك لصقها في أي تطبيق آخر"))
+        .catch(err => alert("لا يمكن النسخ: " + err));
     } else {
-      alert('المشاركة غير مدعومة في هذا المتصفح.');
+      alert("نسخ الملاحظات غير مدعوم في هذا المتصفح.");
     }
   }
 
