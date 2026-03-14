@@ -1,252 +1,295 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<title>Excel Ultimate 20 PRO - جاهز مع jsPDF</title>
-<style>
-  body{font-family:Arial;margin:10px;background:#f0f0f0;text-align:center}
-  table{border-collapse:collapse;margin:auto;background:#fff}
-  th,td{border:1px solid #000;padding:5px;text-align:center;width:80px}
-  th{background:#eee;cursor:text}
-  .result{background:#d0f0d0;font-weight:bold}
-  button{margin:2px;padding:5px;cursor:pointer}
-  .colorBtn{width:25px;height:25px;border:none;cursor:pointer;margin:2px}
-</style>
+  <meta charset="utf-8" />
+  <title>مفكرة بسيطة</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root{
+      --bg: #f5f7fa;
+      --card: #ffffff;
+      --primary: #4a90e2;
+      --text: #333;
+      --muted: #666;
+      --border: #e5e5e5;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial;
+      background: var(--bg);
+      color: var(--text);
+      direction: rtl;
+    }
+    .container {
+      max-width: 900px;
+      margin: 40px auto;
+      padding: 0 16px;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,.05);
+    }
+    h1 { font-size: 1.6rem; margin: 0 0 12px; }
+    .toolbar {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    input[type="text"] {
+      flex: 1 1 260px;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 14px;
+      background: #fff;
+    }
+    textarea {
+      width: 100%;
+      min-height: 120px;
+      resize: vertical;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-family: inherit;
+      font-size: 14px;
+      background: #fff;
+    }
+    button {
+      padding: 10px 14px;
+      border: none;
+      border-radius: 6px;
+      background: var(--primary);
+      color: #fff;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    button.secondary {
+      background: #6c757d;
+    }
+    .notes {
+      margin-top: 12px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 12px;
+    }
+    .note {
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: #fff;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .note .title {
+      font-weight: 700;
+    }
+    .note .content {
+      white-space: pre-wrap;
+      font-size: 14px;
+      color: var(--text);
+    }
+    .note .date {
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .footer {
+      text-align: center;
+      color: var(--muted);
+      margin-top: 16px;
+      font-size: 12px;
+    }
+
+    @media (max-width: 600px) {
+      .toolbar { flex-direction: column; align-items: stretch; }
+      input[type="text"] { width: 100%; }
+    }
+  </style>
 </head>
 <body>
+  <div class="container">
+    <div class="card">
+      <h1>مفكرة بسيطة</h1>
 
-<div>
-<button onclick="newFile()">📄 ملف جديد</button>
-<select id="fileList" onchange="openFile()"></select>
-<button onclick="deleteFile()">🗑 حذف</button>
-<span id="currentFile"></span>
-</div>
+      <div class="toolbar" aria-label="أدوات المفكرة">
+        <input type="text" id="title" placeholder="عنوان الملاحظة">
+        <button id="btn-add" title="إضافة ملاحظة">إضافة</button>
+        <button id="btn-save" class="secondary" title="حفظ الملاحظات محليًا">حفظ</button>
+        <button id="btn-load-pdf" class="secondary" title="تحميل كـ PDF">تحميل كـ PDF</button>
+      </div>
 
-<br>
+      <div class="card" style="padding:12px;">
+        <textarea id="content" placeholder="اكتب ملاحظتك هنا..." rows="6"></textarea>
+      </div>
 
-<button onclick="createTable()">📊 إنشاء جدول</button>
+      <div class="notes" id="notes"></div>
 
-<button onclick="toggleOp('sum')">➕ الجمع</button>
-<button onclick="toggleOp('sub')">➖ الطرح</button>
-<button onclick="toggleOp('mul')">✖ الضرب</button>
-<button onclick="toggleOp('div')">➗ القسمة</button>
+    </div>
 
-<br><br>
+    <div class="footer">
+      تم تخزين البيانات محليًا في جهازك باستخدام LocalStorage. لإعادة تحميل المفكرة من البداية، استخدم زر الحفظ ثم إعادة التحميل.
+    </div>
+  </div>
 
-<button onclick="addRow()">➕ صف</button>
-<button onclick="addCol()">➕ عمود</button>
-<button onclick="delRow()">➖ حذف صف</button>
-<button onclick="delCol()">➖ حذف عمود</button>
+  <!-- jsPDF CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
-<br><br>
+  <script>
+    // اختيار العناصر
+    const titleInput = document.getElementById('title');
+    const contentInput = document.getElementById('content');
+    const btnAdd = document.getElementById('btn-add');
+    const btnSave = document.getElementById('btn-save');
+    const btnLoadPdf = document.getElementById('btn-load-pdf');
+    const notesContainer = document.getElementById('notes');
 
-<button onclick="exportPDF()">📄 PDF</button>
-<button onclick="exportExcel()">📊 Excel</button>
-<button onclick="exportWord()">📄 Word</button>
-<button onclick="exportCSV()">📑 CSV</button>
+    // المخزن المحلي
+    let notes = [];
 
-<br><br>
-🎨
-<button class="colorBtn" style="background:#fff" onclick="setColor('#fff')"></button>
-<button class="colorBtn" style="background:#f88" onclick="setColor('#f88')"></button>
-<button class="colorBtn" style="background:#8f8" onclick="setColor('#8f8')"></button>
-<button class="colorBtn" style="background:#88f" onclick="setColor('#88f')"></button>
-<button class="colorBtn" style="background:#ff8" onclick="setColor('#ff8')"></button>
-
-<div id="tableContainer"></div>
-
-<!-- jsPDF 및 AutoTable를 로컬에 두고 사용하기 위한 CDN 대체 -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
-
-<script>
-let table;
-let currentFile=null;
-let files=JSON.parse(localStorage.getItem("excelFiles")||"[]");
-let numRows=5, numCols=5;
-let currentColor="#fff";
-let enabledOps={sum:true,sub:false,mul:false,div:false};
-let data=[];
-
-// ===== إدارة الملفات =====
-function updateFileList(){
-  let list=document.getElementById("fileList");
-  list.innerHTML="";
-  files.forEach(f=>{let o=document.createElement("option"); o.value=f; o.text=f; list.appendChild(o);});
-  if(currentFile) document.getElementById("currentFile").innerText="📂 "+currentFile;
-}
-
-function newFile(){
-  let name=prompt("اسم الملف");
-  if(!name) return;
-  if(files.includes(name)){alert("الملف موجود"); return;}
-  files.push(name);
-  localStorage.setItem("excelFiles",JSON.stringify(files));
-  currentFile=name;
-  numRows=5; numCols=5; enabledOps={sum:true,sub:false,mul:false,div:false};
-  data=[];
-  saveAll();
-  updateFileList();
-  createTable();
-}
-
-function openFile(){
-  currentFile=document.getElementById("fileList").value;
-  loadAll();
-  updateFileList();
-}
-
-function deleteFile(){
-  if(!currentFile) return;
-  if(!confirm("تأكيد الحذف؟")) return;
-  localStorage.removeItem("excel_"+currentFile);
-  files=files.filter(f=>f!=currentFile);
-  localStorage.setItem("excelFiles",JSON.stringify(files));
-  currentFile=null;
-  document.getElementById("tableContainer").innerHTML="";
-  updateFileList();
-}
-
-// ===== إنشاء وبناء الجدول =====
-function createTable(){
-  data=[];
-  for(let r=0;r<numRows;r++){
-    data[r]=[];
-    for(let c=0;c<numCols;c++){
-      data[r][c]={text:"",color:"#fff",rowName:(r+1),colName:String.fromCharCode(65+c)};
+    // تحميل من التخزين عند البدء
+    function loadFromStorage() {
+      try {
+        const raw = localStorage.getItem('notes');
+        if (raw) {
+          notes = JSON.parse(raw);
+        } else {
+          notes = [];
+        }
+      } catch (e) {
+        notes = [];
+      }
     }
-  }
-  buildTable();
-  saveAll();
-}
 
-function buildTable(){
-  let html="<table id='dynamicTable'>";
-  html+="<tr><th>#</th>";
-  for(let c=0;c<numCols;c++){
-    let colName=data[0]?.[c]?.colName||String.fromCharCode(65+c);
-    html+=`<th contenteditable oninput='renameCol(this,${c})'>${colName}</th>`;
-  }
-  html+="</tr>";
-  for(let r=0;r<numRows;r++){
-    let rowName=data[r]?.[0]?.rowName||(r+1);
-    html+="<tr>";
-    html+=`<th contenteditable oninput='renameRow(this,${r})'>${rowName}</th>`;
-    for(let c=0;c<numCols;c++){
-      let cell=data[r][c]||{text:"",color:"#fff"};
-      html+=`<td contenteditable style="background:${cell.color}" oninput="updateCell(this,${r},${c})" onclick="colorCell(this,${r},${c})">${cell.text}</td>`;
+    function saveToStorage() {
+      localStorage.setItem('notes', JSON.stringify(notes));
     }
-    html+="</tr>";
-  }
-  if(enabledOps.sum) html+=resultRow("sum","نتيجة الجمع");
-  if(enabledOps.sub) html+=resultRow("sub","نتيجة الطرح");
-  if(enabledOps.mul) html+=resultRow("mul","نتيجة الضرب");
-  if(enabledOps.div) html+=resultRow("div","نتيجة القسمة");
-  html+="</table>";
-  document.getElementById("tableContainer").innerHTML=html;
-  table=document.getElementById("dynamicTable");
-  calculate();
-}
 
-// ===== إعادة تسمية الصفوف والأعمدة =====
-function renameRow(el,r){data[r].forEach(cell=>cell.rowName=el.innerText); saveAll();}
-function renameCol(el,c){data.forEach(row=>row[c].colName=el.innerText); saveAll();}
-
-// ===== تحديث خلية =====
-function updateCell(td,r,c){data[r][c].text=td.innerText; calculate(); saveAll();}
-
-// ===== تلوين الخلية =====
-function setColor(c){currentColor=c;}
-function colorCell(td,r,c){td.style.background=currentColor; data[r][c].color=currentColor; saveAll(); calculate();}
-
-// ===== عمليات الحساب =====
-function resultRow(type,title){
-  let html="<tr><th>"+title+"</th>";
-  for(let c=0;c<numCols;c++){html+=`<th class='result' id='${type}_${c}'>0</th>`;}
-  html+="</tr>";
-  return html;
-}
-
-function calculate(){
-  for(let c=0;c<numCols;c++){
-    let vals=data.map(r=>parseFloat(r[c]?.text)||0);
-    let sum=vals.reduce((a,b)=>a+b,0);
-    let sub=vals.reduce((a,b)=>isNaN(a)?b:a-b);
-    let mul=vals.reduce((a,b)=>a*b,1);
-    let div=vals.reduce((a,b)=>b? a/b:0);
-    if(enabledOps.sum) setResult("sum",c,sum);
-    if(enabledOps.sub) setResult("sub",c,sub);
-    if(enabledOps.mul) setResult("mul",c,mul);
-    if(enabledOps.div) setResult("div",c,div);
-  }
-}
-
-function setResult(type,c,val){let el=document.getElementById(type+"_"+c); if(el) el.innerText=val;}
-
-// ===== إضافة / حذف صفوف وأعمدة =====
-function addRow(){let row=[]; for(let c=0;c<numCols;c++) row.push({text:"",color:"#fff"}); data.push(row); numRows++; buildTable(); saveAll();}
-function addCol(){data.forEach(r=>r.push({text:"",color:"#fff"})); numCols++; buildTable(); saveAll();}
-function delRow(){if(numRows<=1) return; data.pop(); numRows--; buildTable(); saveAll();}
-function delCol(){if(numCols<=1) return; data.forEach(r=>r.pop()); numCols--; buildTable(); saveAll();}
-
-// ===== تفعيل / تعطيل العمليات =====
-function toggleOp(op){enabledOps[op]=!enabledOps[op]; buildTable(); saveAll();}
-
-// ===== حفظ واسترجاع كامل =====
-function saveAll(){if(!currentFile) return; localStorage.setItem("excel_"+currentFile,JSON.stringify({data:data,rows:numRows,cols:numCols,enabledOps:enabledOps}));}
-function loadAll(){let s=localStorage.getItem("excel_"+currentFile); if(!s) return; let obj=JSON.parse(s); data=obj.data||[]; numRows=obj.rows||5; numCols=obj.cols||5; enabledOps=obj.enabledOps||enabledOps; buildTable();}
-
-// ===== تصدير =====
-async function exportPDF(){
-  if(!table) return;
-  // استخدام jsPDF و AutoTable
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF();
-
-  // تحويل البيانات إلى جدول بسيط
-  // نجمع headers والصفوف من data
-  let headers = [];
-  headers.push("#");
-  for(let c=0;c<numCols;c++){
-    headers.push(data[0]?.[c]?.colName||String.fromCharCode(65+c));
-  }
-  // تحويل الصفوف
-  let rows = [];
-  for(let r=0;r<numRows;r++){
-    let row=[r+1];
-    for(let c=0;c<numCols;c++){
-      row.push(data[r][c]?.text||"");
+    // عرض الملاحظات
+    function renderNotes() {
+      notesContainer.innerHTML = '';
+      if (notes.length === 0) {
+        notesContainer.innerHTML = '<div class="note" style="opacity:.8">لا توجد ملاحظات حتى الآن.</div>';
+        return;
+      }
+      notes.forEach((n, idx) => {
+        const div = document.createElement('div');
+        div.className = 'note';
+        div.innerHTML = `
+          <div class="title">${escapeHtml(n.title || 'بدون عنوان')}</div>
+          <div class="content">${escapeHtml(n.content || '')}</div>
+          <div class="date">${new Date(n.date).toLocaleString()}</div>
+          <button onclick="deleteNote(${idx})" style="align-self:flex-end; padding:6px 10px; border-radius:6px; border:1px solid #e0e0e0; background:#f8f8f8; cursor:pointer;">حذف</button>
+        `;
+        notesContainer.appendChild(div);
+      });
     }
-    rows.push(row);
-  }
 
-  // استعمل autoTable إن كان متاح
-  try{
-    await doc.autoTable({
-      head: [headers],
-      body: rows,
+    // أمان بسيط لعرض النص بدون تعريض HTML
+    function escapeHtml(str) {
+      if (!str) return '';
+      return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    // إضافة ملاحظة
+    btnAdd.addEventListener('click', () => {
+      const t = titleInput.value.trim();
+      const c = contentInput.value.trim();
+      if (!t && !c) {
+        alert('يرجى كتابة عنوان أو محتوى للملاحظة.');
+        return;
+      }
+      const newNote = {
+        title: t,
+        content: c,
+        date: Date.now()
+      };
+      notes.push(newNote);
+      titleInput.value = '';
+      contentInput.value = '';
+      renderNotes();
     });
-  }catch(e){
-    // fallback بسيط: ضع النص كصف واحد
-    doc.text("جدول البيانات", 14, 20);
-    let y=30;
-    rows.forEach((row,i)=>{
-      doc.text(row.join(" | "), 14, y);
-      y+=7;
+
+    // حفظ الملاحظات (اختياري)
+    btnSave.addEventListener('click', () => {
+      saveToStorage();
+      alert('تم حفظ الملاحظات في التخزين المحلي.');
     });
-  }
 
-  let fileName = (currentFile||"table") + ".pdf";
-  doc.save(fileName);
-}
+    // تحميل إلى PDF
+    btnLoadPdf.addEventListener('click', async () => {
+      // إعداد jsPDF
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
 
-function exportExcel(){ if(!table) return; let blob=new Blob([table.outerHTML],{type:"application/vnd.ms-excel"}); let a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=(currentFile||"table")+".xls"; a.click();}
-function exportWord(){ if(!table) return; let blob=new Blob([table.outerHTML],{type:"application/msword"}); let a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=(currentFile||"table")+".doc"; a.click();}
-function exportCSV(){ if(!table) return; let csv=""; data.forEach(r=>{csv+=r.map(c=>c.text).join(",")+"\n";}); let a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([csv])); a.download=(currentFile||"table")+".csv"; a.click();}
+      let y = 10;
+      doc.setFontSize(16);
+      doc.text('الملاحظات', 105, y, { align: 'center' });
+      y += 8;
 
-// ===== شروع =====
-updateFileList();
-</script>
+      doc.setFontSize(12);
+      if (notes.length === 0) {
+        doc.text('لا توجد ملاحظات لعرضها في الـ PDF.', 10, y);
+      } else {
+        notes.forEach((n, idx) => {
+          const title = (n.title || 'بدون عنوان').trim();
+          const content = (n.content || '').trim();
+          const date = new Date(n.date).toLocaleString();
 
+          doc.setFont(undefined, 'bold');
+          doc.text(`${idx + 1}. ${title}`, 10, y);
+          y += 6;
+
+          doc.setFont(undefined, 'normal');
+          const lines = doc.splitTextToSize(content, 190);
+          doc.text(lines, 12, y);
+          y += lines.length * 6;
+
+          doc.text(`التاريخ: ${date}`, 10, y);
+          y += 8;
+
+          if (y > 270) { // صفحة جديدة لو كان النص كثير
+            doc.addPage();
+            y = 10;
+          }
+        });
+      }
+
+      // حفظ الـ PDF
+      const blob = doc.output('blob');
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'ملاحظات.pdf';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    });
+
+    // حذف ملاحظة (يستدعيه من الزر داخل كل ملاحظة)
+    window.deleteNote = function(index) {
+      if (index >= 0 && index < notes.length) {
+        if (confirm('هل تريد حذف هذه الملاحظة؟')) {
+          notes.splice(index, 1);
+          renderNotes();
+        }
+      }
+    };
+
+    // تهيئة
+    loadFromStorage();
+    renderNotes();
+  </script>
 </body>
 </html>
