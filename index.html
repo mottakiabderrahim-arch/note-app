@@ -1,295 +1,127 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="ar">
 <head>
-  <meta charset="utf-8" />
-  <title>مفكرة بسيطة</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <style>
-    :root{
-      --bg: #f5f7fa;
-      --card: #ffffff;
-      --primary: #4a90e2;
-      --text: #333;
-      --muted: #666;
-      --border: #e5e5e5;
-    }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial;
-      background: var(--bg);
-      color: var(--text);
-      direction: rtl;
-    }
-    .container {
-      max-width: 900px;
-      margin: 40px auto;
-      padding: 0 16px;
-    }
-    .card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 16px;
-      box-shadow: 0 2px 8px rgba(0,0,0,.05);
-    }
-    h1 { font-size: 1.6rem; margin: 0 0 12px; }
-    .toolbar {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      align-items: center;
-      margin-bottom: 12px;
-    }
-    input[type="text"] {
-      flex: 1 1 260px;
-      padding: 10px 12px;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      font-size: 14px;
-      background: #fff;
-    }
-    textarea {
-      width: 100%;
-      min-height: 120px;
-      resize: vertical;
-      padding: 12px;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      font-family: inherit;
-      font-size: 14px;
-      background: #fff;
-    }
-    button {
-      padding: 10px 14px;
-      border: none;
-      border-radius: 6px;
-      background: var(--primary);
-      color: #fff;
-      cursor: pointer;
-      font-weight: 600;
-    }
-    button.secondary {
-      background: #6c757d;
-    }
-    .notes {
-      margin-top: 12px;
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      gap: 12px;
-    }
-    .note {
-      padding: 12px;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      background: #fff;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-    .note .title {
-      font-weight: 700;
-    }
-    .note .content {
-      white-space: pre-wrap;
-      font-size: 14px;
-      color: var(--text);
-    }
-    .note .date {
-      color: var(--muted);
-      font-size: 12px;
-    }
-    .footer {
-      text-align: center;
-      color: var(--muted);
-      margin-top: 16px;
-      font-size: 12px;
-    }
+<meta charset="UTF-8">
+<title>مفكرة بسيطة</title>
 
-    @media (max-width: 600px) {
-      .toolbar { flex-direction: column; align-items: stretch; }
-      input[type="text"] { width: 100%; }
-    }
-  </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+<style>
+body{
+font-family:Arial;
+background:#f0f0f0;
+text-align:center;
+margin:20px;
+}
+
+textarea{
+width:90%;
+height:200px;
+font-size:16px;
+padding:10px;
+}
+
+button{
+padding:10px;
+margin:5px;
+font-size:16px;
+cursor:pointer;
+}
+
+#notes{
+background:white;
+padding:10px;
+margin-top:10px;
+border:1px solid #ccc;
+}
+</style>
 </head>
+
 <body>
-  <div class="container">
-    <div class="card">
-      <h1>مفكرة بسيطة</h1>
 
-      <div class="toolbar" aria-label="أدوات المفكرة">
-        <input type="text" id="title" placeholder="عنوان الملاحظة">
-        <button id="btn-add" title="إضافة ملاحظة">إضافة</button>
-        <button id="btn-save" class="secondary" title="حفظ الملاحظات محليًا">حفظ</button>
-        <button id="btn-load-pdf" class="secondary" title="تحميل كـ PDF">تحميل كـ PDF</button>
-      </div>
+<h2>مفكرة</h2>
 
-      <div class="card" style="padding:12px;">
-        <textarea id="content" placeholder="اكتب ملاحظتك هنا..." rows="6"></textarea>
-      </div>
+<textarea id="noteText" placeholder="اكتب ملاحظتك هنا"></textarea>
 
-      <div class="notes" id="notes"></div>
+<br>
 
-    </div>
+<button onclick="saveNote()">حفظ</button>
+<button onclick="loadNote()">تحميل</button>
 
-    <div class="footer">
-      تم تخزين البيانات محليًا في جهازك باستخدام LocalStorage. لإعادة تحميل المفكرة من البداية، استخدم زر الحفظ ثم إعادة التحميل.
-    </div>
-  </div>
+<button onclick="exportPDF()">PDF</button>
+<button onclick="exportCSV()">CSV</button>
 
-  <!-- jsPDF CDN -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<div id="notes"></div>
 
-  <script>
-    // اختيار العناصر
-    const titleInput = document.getElementById('title');
-    const contentInput = document.getElementById('content');
-    const btnAdd = document.getElementById('btn-add');
-    const btnSave = document.getElementById('btn-save');
-    const btnLoadPdf = document.getElementById('btn-load-pdf');
-    const notesContainer = document.getElementById('notes');
+<script>
 
-    // المخزن المحلي
-    let notes = [];
+// حفظ الملاحظة
+function saveNote(){
 
-    // تحميل من التخزين عند البدء
-    function loadFromStorage() {
-      try {
-        const raw = localStorage.getItem('notes');
-        if (raw) {
-          notes = JSON.parse(raw);
-        } else {
-          notes = [];
-        }
-      } catch (e) {
-        notes = [];
-      }
-    }
+let text=document.getElementById("noteText").value
 
-    function saveToStorage() {
-      localStorage.setItem('notes', JSON.stringify(notes));
-    }
+localStorage.setItem("note",text)
 
-    // عرض الملاحظات
-    function renderNotes() {
-      notesContainer.innerHTML = '';
-      if (notes.length === 0) {
-        notesContainer.innerHTML = '<div class="note" style="opacity:.8">لا توجد ملاحظات حتى الآن.</div>';
-        return;
-      }
-      notes.forEach((n, idx) => {
-        const div = document.createElement('div');
-        div.className = 'note';
-        div.innerHTML = `
-          <div class="title">${escapeHtml(n.title || 'بدون عنوان')}</div>
-          <div class="content">${escapeHtml(n.content || '')}</div>
-          <div class="date">${new Date(n.date).toLocaleString()}</div>
-          <button onclick="deleteNote(${idx})" style="align-self:flex-end; padding:6px 10px; border-radius:6px; border:1px solid #e0e0e0; background:#f8f8f8; cursor:pointer;">حذف</button>
-        `;
-        notesContainer.appendChild(div);
-      });
-    }
+document.getElementById("notes").innerText=text
 
-    // أمان بسيط لعرض النص بدون تعريض HTML
-    function escapeHtml(str) {
-      if (!str) return '';
-      return str
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
-    }
+alert("تم الحفظ")
 
-    // إضافة ملاحظة
-    btnAdd.addEventListener('click', () => {
-      const t = titleInput.value.trim();
-      const c = contentInput.value.trim();
-      if (!t && !c) {
-        alert('يرجى كتابة عنوان أو محتوى للملاحظة.');
-        return;
-      }
-      const newNote = {
-        title: t,
-        content: c,
-        date: Date.now()
-      };
-      notes.push(newNote);
-      titleInput.value = '';
-      contentInput.value = '';
-      renderNotes();
-    });
+}
 
-    // حفظ الملاحظات (اختياري)
-    btnSave.addEventListener('click', () => {
-      saveToStorage();
-      alert('تم حفظ الملاحظات في التخزين المحلي.');
-    });
+// تحميل الملاحظة
+function loadNote(){
 
-    // تحميل إلى PDF
-    btnLoadPdf.addEventListener('click', async () => {
-      // إعداد jsPDF
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF();
+let text=localStorage.getItem("note") || ""
 
-      let y = 10;
-      doc.setFontSize(16);
-      doc.text('الملاحظات', 105, y, { align: 'center' });
-      y += 8;
+document.getElementById("noteText").value=text
 
-      doc.setFontSize(12);
-      if (notes.length === 0) {
-        doc.text('لا توجد ملاحظات لعرضها في الـ PDF.', 10, y);
-      } else {
-        notes.forEach((n, idx) => {
-          const title = (n.title || 'بدون عنوان').trim();
-          const content = (n.content || '').trim();
-          const date = new Date(n.date).toLocaleString();
+document.getElementById("notes").innerText=text
 
-          doc.setFont(undefined, 'bold');
-          doc.text(`${idx + 1}. ${title}`, 10, y);
-          y += 6;
+}
 
-          doc.setFont(undefined, 'normal');
-          const lines = doc.splitTextToSize(content, 190);
-          doc.text(lines, 12, y);
-          y += lines.length * 6;
+// تصدير PDF
+function exportPDF(){
 
-          doc.text(`التاريخ: ${date}`, 10, y);
-          y += 8;
+let element=document.getElementById("notes")
 
-          if (y > 270) { // صفحة جديدة لو كان النص كثير
-            doc.addPage();
-            y = 10;
-          }
-        });
-      }
+if(!element.innerText){
+alert("لا توجد ملاحظة")
+return
+}
 
-      // حفظ الـ PDF
-      const blob = doc.output('blob');
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'ملاحظات.pdf';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    });
+html2pdf().from(element).save("note.pdf")
 
-    // حذف ملاحظة (يستدعيه من الزر داخل كل ملاحظة)
-    window.deleteNote = function(index) {
-      if (index >= 0 && index < notes.length) {
-        if (confirm('هل تريد حذف هذه الملاحظة؟')) {
-          notes.splice(index, 1);
-          renderNotes();
-        }
-      }
-    };
+}
 
-    // تهيئة
-    loadFromStorage();
-    renderNotes();
-  </script>
+// تصدير CSV
+function exportCSV(){
+
+let text=document.getElementById("noteText").value
+
+if(!text){
+alert("لا توجد ملاحظة")
+return
+}
+
+let blob=new Blob(["\ufeff"+text],{type:"text/csv;charset=utf-8;"})
+
+let url=URL.createObjectURL(blob)
+
+let a=document.createElement("a")
+
+a.href=url
+
+a.download="note.csv"
+
+document.body.appendChild(a)
+
+a.click()
+
+document.body.removeChild(a)
+
+}
+
+</script>
+
 </body>
 </html>
