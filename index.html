@@ -11,7 +11,8 @@ th,td{border:1px solid #000;padding:5px;text-align:center;width:80px;user-select
 th{background:#eee;cursor:pointer}
 button{margin:2px;padding:5px;cursor:pointer}
 .colorBtn{width:25px;height:25px;border:none;cursor:pointer;margin:2px}
-input{padding:4px;margin:2px;width:70px;text-align:center}
+input,textarea{padding:4px;margin:2px;}
+textarea{width:300px;height:100px;text-align:right;}
 .selected{outline:2px solid red}
 </style>
 </head>
@@ -28,7 +29,10 @@ input{padding:4px;margin:2px;width:70px;text-align:center}
 عدد الصفوف <input type="number" id="rowsInput" value="20">
 عدد الأعمدة <input type="number" id="colsInput" value="10">
 <button onclick="createCustomTable()">📊 إنشاء جدول</button>
-<button onclick="fillWords()">✍️ ملء الكلمات تلقائيًا</button>
+
+<br><br>
+<textarea id="wordsInput" placeholder="ضع كل كلمة في سطر"></textarea><br>
+<button onclick="fillWordsFromInput()">✍️ ملء الجدول بالكلمات التي أدخلتها</button>
 
 <br><br>
 <button onclick="addRow()">➕ صف</button>
@@ -58,14 +62,6 @@ input{padding:4px;margin:2px;width:70px;text-align:center}
 <div id="tableContainer"></div>
 
 <script>
-// قائمة الكلمات
-let words = [
-"apple","book","car","dog","house","water","food","table","chair","phone",
-"computer","school","teacher","student","city","village","road","market","shop","money",
-"time","day","night","sun","moon","star","sky","earth","fire","wind","tree",
-"flower","grass","river","sea","mountain","forest","desert","rain","snow"
-]; // عدّل أو زيد هنا 200 كلمة
-
 let table;
 let currentFile=null;
 let files=JSON.parse(localStorage.getItem("excelFiles")||"[]");
@@ -96,7 +92,8 @@ currentFile=name; data=[]; saveAll(); updateFileList(); createTable();
 function openFile(){currentFile=fileList.value; loadAll(); updateFileList();}
 function deleteFile(){if(!currentFile)return; if(!confirm("تأكيد الحذف؟"))return;
 localStorage.removeItem("excel_"+currentFile); files=files.filter(f=>f!=currentFile); localStorage.setItem("excelFiles",JSON.stringify(files));
-currentFile=null; tableContainer.innerHTML=""; updateFileList();}
+currentFile=null; tableContainer.innerHTML=""; updateFileList();
+}
 
 // الجدول
 function createCustomTable(){let r=parseInt(rowsInput.value); let c=parseInt(colsInput.value);
@@ -147,14 +144,10 @@ function setColor(c){currentColor=c;}
 // التحديد
 function toggleSelectCell(td){if(selectedCells.includes(td)){td.classList.remove("selected"); selectedCells=selectedCells.filter(c=>c!==td);}
 else{td.classList.add("selected"); selectedCells.push(td);}}
-
-// تحديد عمود كامل
 function toggleSelectColumn(c){for(let r=0;r<numRows;r++){let td = table.rows[r+1].cells[c+1]; if(!selectedCells.includes(td)){td.classList.add("selected"); selectedCells.push(td);}}}
-
-// تحديد صف كامل
 function toggleSelectRow(r){for(let c=0;c<numCols;c++){let td = table.rows[r+1].cells[c+1]; if(!selectedCells.includes(td)){td.classList.add("selected"); selectedCells.push(td);}}}
 
-// التلوين و التعبئة للخلايا المحددة
+// التلوين و التعبئة
 function colorSelectedCells(){selectedCells.forEach(td=>{td.style.background=currentColor; let coords=td.getAttribute("data-coords").split(","); data[parseInt(coords[0])][parseInt(coords[1])].color=currentColor; td.classList.remove("selected");}); selectedCells=[]; saveAll();}
 function fillSelectedCells(text){selectedCells.forEach(td=>{td.innerText=text; let coords=td.getAttribute("data-coords").split(","); data[parseInt(coords[0])][parseInt(coords[1])].text=text; td.classList.remove("selected");}); selectedCells=[]; saveAll();}
 
@@ -174,8 +167,9 @@ function exportCSV(){if(!table)return; let csv=""; data.forEach(r=>{csv+=r.map(c
 function saveAll(){if(!currentFile)return; localStorage.setItem("excel_"+currentFile,JSON.stringify({data:data,rows:numRows,cols:numCols}));}
 function loadAll(){let s=localStorage.getItem("excel_"+currentFile); if(!s)return; let obj=JSON.parse(s); data=obj.data||[]; numRows=obj.rows||20; numCols=obj.cols||10; buildTable();}
 
-// ملء الكلمات تلقائيًا
-function fillWords(){
+// ملء الجدول بالكلمات من textarea
+function fillWordsFromInput(){
+let words = document.getElementById("wordsInput").value.split("\n").map(w=>w.trim()).filter(w=>w!=="");
 let index=0;
 for(let r=0;r<numRows;r++){
 for(let c=0;c<numCols;c++){
