@@ -1,120 +1,20 @@
-<!DOCTYPE html>
-<html lang="ar">
-<head>
-<meta charset="UTF-8">
-<title>اختيار لغتين مع النطق</title>
-<style>
-  body { font-family: Arial, sans-serif; padding: 20px; }
-  select { margin-right: 10px; margin-bottom: 20px; }
-  table { border-collapse: collapse; width: 70%; }
-  th, td { border: 1px solid #333; padding: 8px; text-align: left; }
-  button { margin-left: 5px; }
-</style>
-</head>
-<body>
-
-<h2>اختار لغتين للعرض مع النطق</h2>
-
-<label>اللغة الأولى: </label>
-<select id="lang1Select"></select>
-
-<label>اللغة الثانية: </label>
-<select id="lang2Select"></select>
-
-<table>
-  <thead>
-    <tr>
-      <th id="col1">لغة 1</th>
-      <th id="col2">لغة 2</th>
-    </tr>
-  </thead>
-  <tbody id="wordTable"></tbody>
-</table>
-
-<script>
-// قائمة الكلمات والترجمات
-const words = [
-  {key:"hello", fr:"bonjour", ar:"سلام", de:"hallo", es:"hola"},
-  {key:"goodbye", fr:"au revoir", ar:"وداعا", de:"auf wiedersehen", es:"adiós"},
-  {key:"yes", fr:"oui", ar:"نعم", de:"ja", es:"sí"},
-  {key:"no", fr:"non", ar:"لا", de:"nein", es:"no"},
-  {key:"please", fr:"s'il vous plaît", ar:"من فضلك", de:"bitte", es:"por favor"},
-  {key:"thanks", fr:"merci", ar:"شكرا", de:"danke", es:"gracias"},
-  {key:"sorry", fr:"désolé", ar:"آسف", de:"entschuldigung", es:"lo siento"},
-  {key:"love", fr:"amour", ar:"حب", de:"liebe", es:"amor"},
-  {key:"friend", fr:"ami", ar:"صديق", de:"freund", es:"amigo"},
-  {key:"family", fr:"famille", ar:"عائلة", de:"familie", es:"familia"},
-  {key:"food", fr:"nourriture", ar:"طعام", de:"essen", es:"comida"},
-  {key:"water", fr:"eau", ar:"ماء", de:"wasser", es:"agua"},
-  {key:"house", fr:"maison", ar:"منزل", de:"haus", es:"casa"},
-  {key:"school", fr:"école", ar:"مدرسة", de:"schule", es:"escuela"},
-  {key:"book", fr:"livre", ar:"كتاب", de:"buch", es:"libro"},
-  {key:"car", fr:"voiture", ar:"سيارة", de:"auto", es:"coche"},
-  {key:"money", fr:"argent", ar:"مال", de:"geld", es:"dinero"},
-  {key:"work", fr:"travail", ar:"عمل", de:"arbeit", es:"trabajo"},
-  {key:"time", fr:"temps", ar:"وقت", de:"zeit", es:"tiempo"},
-  {key:"day", fr:"jour", ar:"يوم", de:"tag", es:"día"}
-];
-
-// لغات متاحة
-const languages = ["fr", "ar", "de", "es"];
-const langNames = {fr:"فرنسية", ar:"العربية", de:"ألمانية", es:"إسبانية"};
-const langTTS = {fr:"fr-FR", ar:"ar-SA", de:"de-DE", es:"es-ES"}; // رموز TTS
-
-const lang1Select = document.getElementById("lang1Select");
-const lang2Select = document.getElementById("lang2Select");
-const col1 = document.getElementById("col1");
-const col2 = document.getElementById("col2");
-const wordTable = document.getElementById("wordTable");
-
-// إضافة الخيارات للغات
-languages.forEach(lang => {
-  const option1 = document.createElement("option");
-  option1.value = lang;
-  option1.textContent = langNames[lang];
-  lang1Select.appendChild(option1);
-
-  const option2 = document.createElement("option");
-  option2.value = lang;
-  option2.textContent = langNames[lang];
-  lang2Select.appendChild(option2);
-});
-
-// دالة النطق
-function speak(text, lang) {
-  if ('speechSynthesis' in window) {
-    const utter = new SpeechSynthesisUtterance(text);
-    utter.lang = langTTS[lang];
-    speechSynthesis.speak(utter);
-  } else {
-    alert("خاصية النطق غير مدعومة فهاذ المتصفح");
-  }
-}
-
-// تحديث الجدول
-function updateTable() {
-  const l1 = lang1Select.value;
-  const l2 = lang2Select.value;
-
-  col1.textContent = langNames[l1];
-  col2.textContent = langNames[l2];
-
-  wordTable.innerHTML = "";
-  words.forEach(word => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `<td>${word[l1]} <button onclick="speak('${word[l1]}','${l1}')">🔊</button></td>
-                    <td>${word[l2]} <button onclick="speak('${word[l2]}','${l2}')">🔊</button></td>`;
-    wordTable.appendChild(tr);
-  });
-}
-
-// حدث عند تغيير الاختيار
-lang1Select.addEventListener("change", updateTable);
-lang2Select.addEventListener("change", updateTable);
-
-// عرض افتراضي
-updateTable();
-</script>
-
-</body>
-</html>
+bonjour=hallo=hola=سلام
+merci=danke=gracias=شكرا
+oui=ja=sí=نعم
+non=nein=no=لا
+amour=liebe=amor=حب
+ami=freund=amigo=صديق
+maison=haus=casa=منزل
+eau=wasser=agua=ماء
+pain=brot=pan=خبز
+livre=buch=libro=كتاب
+école=schule=escuela=مدرسة
+soleil=sonne=sol=شمس
+lune=mond=luna=قمر
+chat=katze=gato=قط
+chien=hund=perro=كلب
+voiture=auto=coche=سيارة
+travail=arbeit=trabajo=عمل
+argent=geld=dinero=مال
+famille=familie=familia=عائلة
+temps=zeit=tiempo=وقت
