@@ -1,71 +1,113 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>اختبار النطق</title>
+<title>Speech Any Word</title>
 
 <style>
-body {
-    font-family: Arial;
-    background: #121212;
-    color: white;
-    text-align: center;
+body{
+font-family:Arial;
+text-align:center;
+padding:20px;
+background:#f5f7fb;
 }
 
-.word {
-    font-size: 30px;
-    margin-top: 30px;
+.card{
+background:white;
+padding:20px;
+border-radius:20px;
+max-width:400px;
+margin:auto;
+box-shadow:0 10px 25px rgba(0,0,0,0.1);
 }
 
-button {
-    padding: 15px;
-    margin: 10px;
-    border: none;
-    border-radius: 10px;
-    background: #00c853;
-    color: white;
-    font-size: 18px;
+input{
+padding:10px;
+width:80%;
+border-radius:10px;
+border:1px solid #ccc;
 }
 
-#result {
-    font-size: 25px;
-    margin-top: 20px;
+button{
+margin:10px;
+padding:10px 15px;
+border:none;
+border-radius:10px;
+background:#1976d2;
+color:white;
+cursor:pointer;
 }
+
+#result{
+margin-top:15px;
+font-size:18px;
+font-weight:bold;
+}
+
+.correct{color:green}
+.wrong{color:red}
 </style>
-
 </head>
 
 <body>
 
-<h1>🎤 اختبار النطق</h1>
+<div class="card">
 
-<div class="word" id="target">Hello</div>
+<h2>🎤 Speak ANY Word</h2>
 
-<button onclick="start()">🎙️ نطق</button>
+<input id="target" placeholder="اكتب الكلمة الصحيحة هنا">
+
+<br>
+
+<button onclick="start()">🎤 Speak Now</button>
 
 <div id="result"></div>
 
+</div>
+
 <script>
-let targetWord = "hello";
 
-function start() {
-    let recognition = new webkitSpeechRecognition();
-    recognition.lang = "en-US";
-    recognition.start();
+function start(){
 
-    recognition.onresult = function(event) {
-        let spoken = event.results[0][0].transcript.toLowerCase();
-        check(spoken);
-    };
+let SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+if(!SpeechRecognition){
+alert("Not supported");
+return;
 }
 
-function check(spoken) {
-    if (spoken === targetWord) {
-        document.getElementById("result").innerHTML = "✅ صحيح";
-    } else {
-        document.getElementById("result").innerHTML = "❌ خطأ (قلت: " + spoken + ")";
-    }
+let recognition = new SpeechRecognition();
+recognition.lang = "en-US";
+recognition.start();
+
+recognition.onresult = function(e){
+
+let spoken = e.results[0][0].transcript.toLowerCase();
+let target = document.getElementById("target").value.toLowerCase();
+
+if(target === ""){
+document.getElementById("result").innerHTML =
+"⚠️ اكتب الكلمة أولا";
+return;
 }
+
+if(spoken.includes(target)){
+document.getElementById("result").innerHTML =
+"✅ صحيح! قلت: " + spoken;
+document.getElementById("result").className="correct";
+}else{
+document.getElementById("result").innerHTML =
+"❌ خطأ: " + spoken;
+document.getElementById("result").className="wrong";
+}
+};
+
+recognition.onerror = function(){
+document.getElementById("result").innerHTML =
+"خطأ في الصوت";
+};
+}
+
 </script>
 
 </body>
