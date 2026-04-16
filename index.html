@@ -2,77 +2,34 @@
 <html lang="ar">
 <head>
 <meta charset="UTF-8">
-<title>مفكرة احترافية</title>
+<title>اختبار النطق</title>
 
 <style>
 body {
     font-family: Arial;
     background: #121212;
     color: white;
-    margin: 0;
-}
-
-.container {
-    width: 90%;
-    max-width: 700px;
-    margin: auto;
-    margin-top: 30px;
-}
-
-h1 {
     text-align: center;
 }
 
-textarea {
-    width: 100%;
-    height: 80px;
-    border-radius: 10px;
-    padding: 10px;
-    border: none;
-    font-size: 16px;
-}
-
-input {
-    width: 100%;
-    padding: 10px;
-    border-radius: 10px;
-    border: none;
-    margin-top: 10px;
+.word {
+    font-size: 30px;
+    margin-top: 30px;
 }
 
 button {
-    width: 100%;
-    padding: 10px;
-    margin-top: 10px;
-    border-radius: 10px;
+    padding: 15px;
+    margin: 10px;
     border: none;
+    border-radius: 10px;
     background: #00c853;
     color: white;
-    font-size: 16px;
-    cursor: pointer;
+    font-size: 18px;
 }
 
-.note {
-    padding: 10px;
-    border-radius: 10px;
-    margin-top: 10px;
-    position: relative;
-}
-
-.note small {
-    display: block;
-    opacity: 0.6;
-}
-
-.actions {
-    position: absolute;
-    top: 5px;
-    right: 10px;
-}
-
-.actions span {
-    cursor: pointer;
-    margin-left: 10px;
+#result {
+    font-size: 25px;
+    margin-top: 20px;
 }
 </style>
 
@@ -80,97 +37,35 @@ button {
 
 <body>
 
-<div class="container">
-    <h1>📝 مفكرتي الاحترافية</h1>
+<h1>🎤 اختبار النطق</h1>
 
-    <input type="text" id="search" placeholder="🔍 بحث..." onkeyup="searchNotes()">
+<div class="word" id="target">Hello</div>
 
-    <textarea id="noteInput" placeholder="كتب ملاحظتك..."></textarea>
+<button onclick="start()">🎙️ نطق</button>
 
-    <button onclick="addNote()">➕ إضافة</button>
-
-    <div id="notes"></div>
-</div>
+<div id="result"></div>
 
 <script>
-let notes = JSON.parse(localStorage.getItem("notes")) || [];
+let targetWord = "hello";
 
-function saveNotes() {
-    localStorage.setItem("notes", JSON.stringify(notes));
+function start() {
+    let recognition = new webkitSpeechRecognition();
+    recognition.lang = "en-US";
+    recognition.start();
+
+    recognition.onresult = function(event) {
+        let spoken = event.results[0][0].transcript.toLowerCase();
+        check(spoken);
+    };
 }
 
-function getDate() {
-    let d = new Date();
-    return d.toLocaleString();
-}
-
-function displayNotes(list = notes) {
-    let notesDiv = document.getElementById("notes");
-    notesDiv.innerHTML = "";
-
-    list.forEach((note, index) => {
-        let div = document.createElement("div");
-        div.className = "note";
-        div.style.background = note.color;
-
-        div.innerHTML = `
-            <div class="actions">
-                <span onclick="editNote(${index})">✏️</span>
-                <span onclick="deleteNote(${index})">❌</span>
-            </div>
-            ${note.text}
-            <small>${note.date}</small>
-        `;
-
-        notesDiv.appendChild(div);
-    });
-}
-
-function addNote() {
-    let input = document.getElementById("noteInput");
-
-    if (input.value.trim() === "") return;
-
-    let colors = ["#1e88e5", "#43a047", "#fb8c00", "#8e24aa"];
-    let randomColor = colors[Math.floor(Math.random() * colors.length)];
-
-    notes.push({
-        text: input.value,
-        date: getDate(),
-        color: randomColor
-    });
-
-    input.value = "";
-    saveNotes();
-    displayNotes();
-}
-
-function deleteNote(index) {
-    notes.splice(index, 1);
-    saveNotes();
-    displayNotes();
-}
-
-function editNote(index) {
-    let newText = prompt("عدل الملاحظة:", notes[index].text);
-    if (newText !== null && newText.trim() !== "") {
-        notes[index].text = newText;
-        saveNotes();
-        displayNotes();
+function check(spoken) {
+    if (spoken === targetWord) {
+        document.getElementById("result").innerHTML = "✅ صحيح";
+    } else {
+        document.getElementById("result").innerHTML = "❌ خطأ (قلت: " + spoken + ")";
     }
 }
-
-function searchNotes() {
-    let search = document.getElementById("search").value.toLowerCase();
-
-    let filtered = notes.filter(note =>
-        note.text.toLowerCase().includes(search)
-    );
-
-    displayNotes(filtered);
-}
-
-displayNotes();
 </script>
 
 </body>
