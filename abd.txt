@@ -1,0 +1,39 @@
+bonjour=hello=مرحبا=merhaba=olá=hola=hallo=ciao=привет=नमस्ते
+au revoir=goodbye=مع السلامة=güle güle=adeus=adiós=auf wiedersehen=arrivederci=пока=अलविदा
+merci=thank you=شكرا=teşekkürler=obrigado=gracias=danke=grazie=спасибо=धन्यवाद
+s'il vous plaît=please=من فضلك=lütfen=por favor=por favor=bitte=per favore=пожалуйста=कृपया
+oui=yes=نعم=evet=sim=sí=ja=sì=да=हाँ
+non=no=لا=hayır=não=no=nein=no=нет=नहीं
+homme=man=رجل=adam=homem=hombre=mann=uomo=мужчина=आदमी
+femme=woman=امرأة=kadın=mulher=mujer=frau=donna=женщина=औरत
+enfant=child=طفل=çocuk=criança=niño=kind=bambino=ребёнок=बच्चा
+eau=water=ماء=su=água=agua=wasser=acqua=вода=पानी
+pain=bread=خبز=ekmek=pão=pan=brot=pane=хлеб=रोटी
+maison=house=بيت=ev=casa=casa=haus=casa=дом=घर
+école=school=مدرسة=okul=escola=escuela=schule=scuola=школа=विद्यालय
+livre=book=كتاب=kitap=livro=libro=buch=libro=книга=किताब
+soleil=sun=شمس=güneş=sol=sol=sonne=sole=солнце=सूरज
+lune=moon=قمر=ay=lua=luna=mond=luna=луна=चाँद
+chat=cat=قطة=kedi=gato=gato=katze=gatto=кошка=बिल्ली
+chien=dog=كلب=köpek=cão=perro=hund=cane=собака=कुत्ता
+rouge=red=أحمر=kırmızı=vermelho=rojo=rot=rosso=красный=लाल
+bleu=blue=أزرق=mavi=azul=azul=blau=blu=синий=नीला
+vert=green=أخضر=yeşil=verde=verde=grün=verde=зелёный=हरा
+un=one=واحد=bir=um=uno=eins=uno=один=एक
+deux=two=اثنان=iki=dois=dos=zwei=due=два=दो
+trois=three=ثلاثة=üç=três=tres=drei=tre=три=तीन
+temps=time=وقت=zaman=tempo=tiempo=zeit=tempo=время=समय
+jour=day=يوم=gün=dia=día=tag=giorno=день=दिन
+nuit=night=ليل=gece=noite=noche=nacht=notte=ночь=रात
+manger=to eat=يأكل=yemek=comer=comer=essen=mangiare=есть=खाना
+boire=to drink=يشرب=içmek=beber=beber=trinken=bere=пить=पीना
+dormir=to sleep=ينام=uyumak=dormir=dormir=schlafen=dormire=спать=सोना
+ami=friend=صديق=arkadaş=amigo=amigo=freund=amico=друг=दोस्त
+famille=family=عائلة=aile=família=familia=familie=famiglia=семья=परिवार
+amour=love=حب=aşk=amor=amor=liebe=amore=любовь=प्यार
+travail=work=عمل=iş=trabalho=trabajo=arbeit=lavoro=работа=काम
+argent=money=مال=para=dinheiro=dinero=geld=soldi=деньги=पैसा
+ville=city=مدينة=şehir=cidade=ciudad=stadt=città=город=शहर
+pays=country=بلد=ülke=país=país=land=paese=страна=देश
+voiture=car=سيارة=araba=carro=coche=auto=macchina=машина=कार
+manger=food=طعام=yemek=comida=comida=essen=cibo=еда=भोजन
