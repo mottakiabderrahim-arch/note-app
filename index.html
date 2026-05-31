@@ -1,114 +1,110 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<title>Speech Any Word</title>
-
+<title>تعلم اللغات</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
-body{
-font-family:Arial;
-text-align:center;
-padding:20px;
-background:#f5f7fb;
-}
-
-.card{
-background:white;
-padding:20px;
-border-radius:20px;
-max-width:400px;
-margin:auto;
-box-shadow:0 10px 25px rgba(0,0,0,0.1);
-}
-
-input{
-padding:10px;
-width:80%;
-border-radius:10px;
-border:1px solid #ccc;
-}
-
-button{
-margin:10px;
-padding:10px 15px;
-border:none;
-border-radius:10px;
-background:#1976d2;
-color:white;
-cursor:pointer;
-}
-
-#result{
-margin-top:15px;
-font-size:18px;
-font-weight:bold;
-}
-
-.correct{color:green}
-.wrong{color:red}
+  body { font-family: 'Arial', sans-serif; background: #f0f4f8; padding: 15px; text-align: center; }
+  h1 { color: #2c3e50; }
+  select { padding: 8px; margin: 5px; font-size: 16px; width: 45%; border-radius: 8px; border: 1px solid #ccc; }
+  #card { background: white; margin: 20px auto; padding: 30px; border-radius: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); max-width: 500px; min-height: 200px; }
+ .word { font-size: 28px; font-weight: bold; margin: 10px 0; color: #2c3e50; }
+ .label { font-size: 14px; color: #7f8c8d; }
+  button { padding: 12px 20px; font-size: 16px; background: #3498db; color: white; border: none; border-radius: 10px; margin: 5px; cursor: pointer; }
+  button:active { background: #2980b9; }
 </style>
 </head>
-
 <body>
 
-<div class="card">
+<h1>تعلم اللغات</h1>
 
-<h2>🎤 Speak ANY Word</h2>
+<select id="lang1"></select>
+<select id="lang2"></select>
 
-<input id="target" placeholder="اكتب الكلمة الصحيحة هنا">
+<div id="card">
+  <div class="label" id="label1">فرنسية</div>
+  <div class="word" id="word1">جاري التحميل...</div>
+  <button onclick="speak(0)">🔊 استمع</button>
 
-<br>
-
-<button onclick="start()">🎤 Speak Now</button>
-
-<div id="result"></div>
-
+  <div class="label" id="label2">عربية</div>
+  <div class="word" id="word2">؟</div>
+  <button onclick="speak(1)">🔊 استمع</button>
 </div>
 
+<button onclick="nextWord()">كلمة جديدة</button>
+<button onclick="showAnswer()">إظهار الترجمة</button>
+
 <script>
+let words = [];
+let currentIndex = 0;
+let synth = window.speechSynthesis;
 
-function start(){
+const langNames = ["فرنسية","انجليزية","عربية","تركية","برتغالية","اسبانية","المانية","ايطالية","روسية","هندية"];
+const ttsCodes = ["fr-FR","en-US","ar-SA","tr-TR","pt-PT","es-ES","de-DE","it-IT","ru-RU","hi-IN"];
 
-let SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-
-if(!SpeechRecognition){
-alert("Not supported");
-return;
+function readFile(file, callback) {
+  let xhr = new XMLHttpRequest();
+  xhr.open('GET', file, true);
+  xhr.onload = function() {
+    if(xhr.status == 200 || xhr.status == 0) {
+      callback(xhr.responseText);
+    } else {
+      document.getElementById('word1').innerText = "خطأ: ما لقيتش abd.txt";
+    }
+  };
+  xhr.onerror = function() {
+    document.getElementById('word1').innerText = "خطأ: فشل تحميل الملف";
+  };
+  xhr.send();
 }
 
-let recognition = new SpeechRecognition();
-recognition.lang = "en-US";
-recognition.start();
+readFile('abd.txt', function(text) {
+  words = text.trim().split('\n').map(line => line.split('='));
 
-recognition.onresult = function(e){
+  const s1 = document.getElementById('lang1');
+  const s2 = document.getElementById('lang2');
+  langNames.forEach((name, i) => {
+    s1.innerHTML += `<option value="${i}">${name}</option>`;
+    s2.innerHTML += `<option value="${i}">${name}</option>`;
+  });
+  s1.value = 0;
+  s2.value = 2;
 
-let spoken = e.results[0][0].transcript.toLowerCase();
-let target = document.getElementById("target").value.toLowerCase();
+  document.getElementById('word1').innerText = "اضغط كلمة جديدة";
+  nextWord();
+});
 
-if(target === ""){
-document.getElementById("result").innerHTML =
-"⚠️ اكتب الكلمة أولا";
-return;
+function nextWord() {
+  if(words.length == 0) return;
+  currentIndex = Math.floor(Math.random() * words.length);
+  displayWord();
 }
 
-if(spoken.includes(target)){
-document.getElementById("result").innerHTML =
-"✅ صحيح! قلت: " + spoken;
-document.getElementById("result").className="correct";
-}else{
-document.getElementById("result").innerHTML =
-"❌ خطأ: " + spoken;
-document.getElementById("result").className="wrong";
-}
-};
-
-recognition.onerror = function(){
-document.getElementById("result").innerHTML =
-"خطأ في الصوت";
-};
+function showAnswer() {
+  const l2 = document.getElementById('lang2').value;
+  if(words[currentIndex]) {
+    document.getElementById('word2').innerText = words[currentIndex][l2];
+  }
 }
 
+function displayWord() {
+  const l1 = document.getElementById('lang1').value;
+  const l2 = document.getElementById('lang2').value;
+  document.getElementById('label1').innerText = langNames[l1];
+  document.getElementById('label2').innerText = langNames[l2];
+  document.getElementById('word1').innerText = words[currentIndex][l1];
+  document.getElementById('word2').innerText = "?";
+}
+
+function speak(num) {
+  if(words.length == 0) return;
+  const lang = num == 0? document.getElementById('lang1').value : document.getElementById('lang2').value;
+  const text = words[currentIndex][lang];
+  let msg = new SpeechSynthesisUtterance(text);
+  msg.lang = ttsCodes[lang];
+  synth.speak(msg);
+}
 </script>
-
 </body>
 </html>
