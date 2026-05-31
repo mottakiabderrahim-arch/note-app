@@ -2,46 +2,32 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<title>تعلم اللغات</title>
+<title>قاموس - لائحة</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
-  body { font-family: 'Arial', sans-serif; background: #f0f4f8; padding: 15px; text-align: center; }
-  h1 { color: #2c3e50; }
-  select { padding: 8px; margin: 5px; font-size: 16px; width: 45%; border-radius: 8px; border: 1px solid #ccc; }
-  #card { background: white; margin: 20px auto; padding: 30px; border-radius: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); max-width: 500px; min-height: 200px; }
- .word { font-size: 28px; font-weight: bold; margin: 10px 0; color: #2c3e50; }
- .label { font-size: 14px; color: #7f8c8d; }
-  button { padding: 12px 20px; font-size: 16px; background: #3498db; color: white; border: none; border-radius: 10px; margin: 5px; cursor: pointer; }
-  button:active { background: #2980b9; }
+  body { font-family: Arial; background: #2c3e50; margin: 0; padding: 0; color: #ecf0f1; }
+ .header { background: #34495e; padding: 15px; position: sticky; top: 0; z-index: 10; }
+  select { padding: 10px; margin: 5px; font-size: 16px; width: 48%; border-radius: 8px; background: #2c3e50; color: white; border: 1px solid #3498db; }
+  h1 { margin: 5px 0; font-size: 20px; text-align: center; }
+  #list { padding: 10px; }
+ .row { background: #34495e; margin: 8px 0; padding: 15px; border-radius: 8px; font-size: 22px; display: flex; justify-content: space-between; border-right: 4px solid #3498db; }
+ .word { flex: 1; }
+ .eq { color: #7f8c8d; margin: 0 10px; }
 </style>
 </head>
 <body>
 
-<h1>تعلم اللغات</h1>
-
-<select id="lang1"></select>
-<select id="lang2"></select>
-
-<div id="card">
-  <div class="label" id="label1">فرنسية</div>
-  <div class="word" id="word1">جاري التحميل...</div>
-  <button onclick="speak(0)">🔊 استمع</button>
-
-  <div class="label" id="label2">عربية</div>
-  <div class="word" id="word2">؟</div>
-  <button onclick="speak(1)">🔊 استمع</button>
+<div class="header">
+  <h1>📚 قاموس اللغات</h1>
+  <select id="lang1"></select>
+  <select id="lang2"></select>
 </div>
 
-<button onclick="nextWord()">كلمة جديدة</button>
-<button onclick="showAnswer()">إظهار الترجمة</button>
+<div id="list">جاري التحميل...</div>
 
 <script>
 let words = [];
-let currentIndex = 0;
-let synth = window.speechSynthesis;
-
 const langNames = ["فرنسية","انجليزية","عربية","تركية","برتغالية","اسبانية","المانية","ايطالية","روسية","هندية"];
-const ttsCodes = ["fr-FR","en-US","ar-SA","tr-TR","pt-PT","es-ES","de-DE","it-IT","ru-RU","hi-IN"];
 
 function readFile(file, callback) {
   let xhr = new XMLHttpRequest();
@@ -50,11 +36,8 @@ function readFile(file, callback) {
     if(xhr.status == 200 || xhr.status == 0) {
       callback(xhr.responseText);
     } else {
-      document.getElementById('word1').innerText = "خطأ: ما لقيتش abd.txt";
+      document.getElementById('list').innerText = "خطأ: ما لقيتش abd.txt";
     }
-  };
-  xhr.onerror = function() {
-    document.getElementById('word1').innerText = "خطأ: فشل تحميل الملف";
   };
   xhr.send();
 }
@@ -68,42 +51,29 @@ readFile('abd.txt', function(text) {
     s1.innerHTML += `<option value="${i}">${name}</option>`;
     s2.innerHTML += `<option value="${i}">${name}</option>`;
   });
-  s1.value = 0;
-  s2.value = 2;
+  s1.value = 4; // برتغالية
+  s2.value = 0; // فرنسية
 
-  document.getElementById('word1').innerText = "اضغط كلمة جديدة";
-  nextWord();
+  s1.onchange = s2.onchange = displayList;
+  displayList();
 });
 
-function nextWord() {
-  if(words.length == 0) return;
-  currentIndex = Math.floor(Math.random() * words.length);
-  displayWord();
-}
-
-function showAnswer() {
-  const l2 = document.getElementById('lang2').value;
-  if(words[currentIndex]) {
-    document.getElementById('word2').innerText = words[currentIndex][l2];
-  }
-}
-
-function displayWord() {
+function displayList() {
   const l1 = document.getElementById('lang1').value;
   const l2 = document.getElementById('lang2').value;
-  document.getElementById('label1').innerText = langNames[l1];
-  document.getElementById('label2').innerText = langNames[l2];
-  document.getElementById('word1').innerText = words[currentIndex][l1];
-  document.getElementById('word2').innerText = "?";
-}
+  let html = '';
 
-function speak(num) {
-  if(words.length == 0) return;
-  const lang = num == 0? document.getElementById('lang1').value : document.getElementById('lang2').value;
-  const text = words[currentIndex][lang];
-  let msg = new SpeechSynthesisUtterance(text);
-  msg.lang = ttsCodes[lang];
-  synth.speak(msg);
+  words.forEach(row => {
+    if(row[l1] && row[l2]) {
+      html += `<div class="row">
+        <div class="word">${row[l1]}</div>
+        <div class="eq">=</div>
+        <div class="word">${row[l2]}</div>
+      </div>`;
+    }
+  });
+
+  document.getElementById('list').innerHTML = html;
 }
 </script>
 </body>
