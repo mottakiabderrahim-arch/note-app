@@ -2,23 +2,25 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<title>قاموس - لائحة</title>
+<title>قاموس - لائحة + صوت</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
   body { font-family: Arial; background: #2c3e50; margin: 0; padding: 0; color: #ecf0f1; }
- .header { background: #34495e; padding: 15px; position: sticky; top: 0; z-index: 10; }
+.header { background: #34495e; padding: 15px; position: sticky; top: 0; z-index: 10; }
   select { padding: 10px; margin: 5px; font-size: 16px; width: 48%; border-radius: 8px; background: #2c3e50; color: white; border: 1px solid #3498db; }
   h1 { margin: 5px 0; font-size: 20px; text-align: center; }
   #list { padding: 10px; }
- .row { background: #34495e; margin: 8px 0; padding: 15px; border-radius: 8px; font-size: 22px; display: flex; justify-content: space-between; border-right: 4px solid #3498db; }
- .word { flex: 1; }
- .eq { color: #7f8c8d; margin: 0 10px; }
+.row { background: #34495e; margin: 8px 0; padding: 12px; border-radius: 8px; font-size: 22px; display: flex; align-items: center; border-right: 4px solid #3498db; }
+.word { flex: 1; }
+.eq { color: #7f8c8d; margin: 0 8px; }
+.tts { background: #3498db; border: none; color: white; font-size: 18px; padding: 8px 12px; border-radius: 50%; cursor: pointer; margin: 0 4px; }
+.tts:active { background: #2980b9; }
 </style>
 </head>
 <body>
 
 <div class="header">
-  <h1>📚 قاموس اللغات</h1>
+  <h1>📚 قاموس اللغات + النطق</h1>
   <select id="lang1"></select>
   <select id="lang2"></select>
 </div>
@@ -27,7 +29,10 @@
 
 <script>
 let words = [];
+let synth = window.speechSynthesis;
+
 const langNames = ["فرنسية","انجليزية","عربية","تركية","برتغالية","اسبانية","المانية","ايطالية","روسية","هندية"];
+const ttsCodes = ["fr-FR","en-US","ar-SA","tr-TR","pt-PT","es-ES","de-DE","it-IT","ru-RU","hi-IN"];
 
 function readFile(file, callback) {
   let xhr = new XMLHttpRequest();
@@ -63,17 +68,28 @@ function displayList() {
   const l2 = document.getElementById('lang2').value;
   let html = '';
 
-  words.forEach(row => {
+  words.forEach((row, index) => {
     if(row[l1] && row[l2]) {
       html += `<div class="row">
+        <button class="tts" onclick="speak('${row[l1]}', ${l1})">🔊</button>
         <div class="word">${row[l1]}</div>
         <div class="eq">=</div>
         <div class="word">${row[l2]}</div>
+        <button class="tts" onclick="speak('${row[l2]}', ${l2})">🔊</button>
       </div>`;
     }
   });
 
   document.getElementById('list').innerHTML = html;
+}
+
+function speak(text, langIndex) {
+  if(!text || text == "") return;
+  synth.cancel(); // وقف أي صوت خدام
+  let msg = new SpeechSynthesisUtterance(text);
+  msg.lang = ttsCodes[langIndex];
+  msg.rate = 0.9; // السرعة مزيانة
+  synth.speak(msg);
 }
 </script>
 </body>
