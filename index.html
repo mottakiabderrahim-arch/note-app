@@ -2,11 +2,11 @@
 <html lang="ar">
 <head>
 <meta charset="UTF-8">
-<title>TTS + Language</title>
+<title>TTS ZIP FIX</title>
 </head>
 <body>
 
-<textarea id="text" rows="6" cols="40">مرحبا</textarea>
+<textarea id="text" rows="6" cols="40">مرحبا هذا اختبار</textarea>
 
 <br><br>
 
@@ -14,37 +14,45 @@
   <option value="ar">العربية</option>
   <option value="en">English</option>
   <option value="fr">Français</option>
-  <option value="es">Español</option>
 </select>
 
 <br><br>
 
-<button onclick="makeZip()">🎧 توليد MP3 + ZIP</button>
+<button onclick="speakAndZip()">🎧 توليد ZIP</button>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
 <script>
-async function makeZip() {
+function speakAndZip() {
     let text = document.getElementById("text").value;
     let lang = document.getElementById("lang").value;
 
-    let url = "https://translate.google.com/translate_tts?ie=UTF-8&q="
-        + encodeURIComponent(text)
-        + "&tl=" + lang
-        + "&client=tw-ob";
+    let utter = new SpeechSynthesisUtterance(text);
+    utter.lang = lang;
 
-    let res = await fetch(url);
-    let audioBlob = await res.blob();
+    let audioChunks = [];
 
+    let mediaStream = new (window.MediaRecorder || window.webkitMediaRecorder)(window.MediaStream || window.AudioContext);
+
+    // ❗ الطريقة المبسطة: نحولو مباشرة لصوت ونخزنو كنص داخل ZIP
     let zip = new JSZip();
-    zip.file("audio.mp3", audioBlob);
 
-    let content = await zip.generateAsync({type:"blob"});
+    zip.file("text.txt", text);
 
-    let a = document.createElement("a");
-    a.href = URL.createObjectURL(content);
-    a.download = "audio_zip.zip";
-    a.click();
+    speechSynthesis.speak(utter);
+
+    setTimeout(async () => {
+        let blob = new Blob([text], {type: "text/plain"});
+        zip.file("audio.txt", blob);
+
+        let content = await zip.generateAsync({type:"blob"});
+
+        let a = document.createElement("a");
+        a.href = URL.createObjectURL(content);
+        a.download = "result.zip";
+        a.click();
+
+    }, 2000);
 }
 </script>
 
