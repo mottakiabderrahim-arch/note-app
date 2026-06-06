@@ -1,58 +1,46 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html>
 <head>
 <meta charset="UTF-8">
-<title>TTS ZIP FIX</title>
+<title>TTS Generator</title>
 </head>
 <body>
 
-<textarea id="text" rows="6" cols="40">مرحبا هذا اختبار</textarea>
+<h2>Words to MP3</h2>
+
+<textarea id="text" rows="10" cols="40">
+hello
+book
+car
+house
+</textarea>
 
 <br><br>
 
-<select id="lang">
-  <option value="ar">العربية</option>
-  <option value="en">English</option>
-  <option value="fr">Français</option>
-</select>
-
-<br><br>
-
-<button onclick="speakAndZip()">🎧 توليد ZIP</button>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<button onclick="generate()">Generate MP3</button>
 
 <script>
-function speakAndZip() {
-    let text = document.getElementById("text").value;
-    let lang = document.getElementById("lang").value;
+async function generate() {
+    let words = document.getElementById("text").value.split("\n");
 
-    let utter = new SpeechSynthesisUtterance(text);
-    utter.lang = lang;
+    for (let i = 0; i < words.length; i++) {
+        let word = words[i].trim();
+        if (!word) continue;
 
-    let audioChunks = [];
-
-    let mediaStream = new (window.MediaRecorder || window.webkitMediaRecorder)(window.MediaStream || window.AudioContext);
-
-    // ❗ الطريقة المبسطة: نحولو مباشرة لصوت ونخزنو كنص داخل ZIP
-    let zip = new JSZip();
-
-    zip.file("text.txt", text);
-
-    speechSynthesis.speak(utter);
-
-    setTimeout(async () => {
-        let blob = new Blob([text], {type: "text/plain"});
-        zip.file("audio.txt", blob);
-
-        let content = await zip.generateAsync({type:"blob"});
+        let url = "https://translate.google.com/translate_tts?ie=UTF-8&tl=en&client=tw-ob&q=" 
+                  + encodeURIComponent(word);
 
         let a = document.createElement("a");
-        a.href = URL.createObjectURL(content);
-        a.download = "result.zip";
+        a.href = url;
+        a.download = word + ".mp3";
+        document.body.appendChild(a);
         a.click();
+        document.body.removeChild(a);
 
-    }, 2000);
+        await new Promise(r => setTimeout(r, 1500));
+    }
+
+    alert("Done");
 }
 </script>
 
