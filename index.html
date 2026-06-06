@@ -1,96 +1,52 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="ar">
 <head>
 <meta charset="UTF-8">
-<title>قاموس - لائحة + صوت</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<style>
-  body { font-family: Arial; background: #2c3e50; margin: 0; padding: 0; color: #ecf0f1; }
-.header { background: #34495e; padding: 15px; position: sticky; top: 0; z-index: 10; }
-  select { padding: 10px; margin: 5px; font-size: 16px; width: 48%; border-radius: 8px; background: #2c3e50; color: white; border: 1px solid #3498db; }
-  h1 { margin: 5px 0; font-size: 20px; text-align: center; }
-  #list { padding: 10px; }
-.row { background: #34495e; margin: 8px 0; padding: 12px; border-radius: 8px; font-size: 22px; display: flex; align-items: center; border-right: 4px solid #3498db; }
-.word { flex: 1; }
-.eq { color: #7f8c8d; margin: 0 8px; }
-.tts { background: #3498db; border: none; color: white; font-size: 18px; padding: 8px 12px; border-radius: 50%; cursor: pointer; margin: 0 4px; }
-.tts:active { background: #2980b9; }
-</style>
+<title>TTS + Language</title>
 </head>
 <body>
 
-<div class="header">
-  <h1>📚 قاموس اللغات + النطق</h1>
-  <select id="lang1"></select>
-  <select id="lang2"></select>
-</div>
+<textarea id="text" rows="6" cols="40">مرحبا</textarea>
 
-<div id="list">جاري التحميل...</div>
+<br><br>
+
+<select id="lang">
+  <option value="ar">العربية</option>
+  <option value="en">English</option>
+  <option value="fr">Français</option>
+  <option value="es">Español</option>
+</select>
+
+<br><br>
+
+<button onclick="makeZip()">🎧 توليد MP3 + ZIP</button>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
 <script>
-let words = [];
-let synth = window.speechSynthesis;
+async function makeZip() {
+    let text = document.getElementById("text").value;
+    let lang = document.getElementById("lang").value;
 
-const langNames = ["فرنسية","انجليزية","عربية","تركية","برتغالية","اسبانية","المانية","ايطالية","روسية","هندية"];
-const ttsCodes = ["fr-FR","en-US","ar-SA","tr-TR","pt-PT","es-ES","de-DE","it-IT","ru-RU","hi-IN"];
+    let url = "https://translate.google.com/translate_tts?ie=UTF-8&q="
+        + encodeURIComponent(text)
+        + "&tl=" + lang
+        + "&client=tw-ob";
 
-function readFile(file, callback) {
-  let xhr = new XMLHttpRequest();
-  xhr.open('GET', file, true);
-  xhr.onload = function() {
-    if(xhr.status == 200 || xhr.status == 0) {
-      callback(xhr.responseText);
-    } else {
-      document.getElementById('list').innerText = "خطأ: ما لقيتش abd.txt";
-    }
-  };
-  xhr.send();
-}
+    let res = await fetch(url);
+    let audioBlob = await res.blob();
 
-readFile('abd.txt', function(text) {
-  words = text.trim().split('\n').map(line => line.split('='));
+    let zip = new JSZip();
+    zip.file("audio.mp3", audioBlob);
 
-  const s1 = document.getElementById('lang1');
-  const s2 = document.getElementById('lang2');
-  langNames.forEach((name, i) => {
-    s1.innerHTML += `<option value="${i}">${name}</option>`;
-    s2.innerHTML += `<option value="${i}">${name}</option>`;
-  });
-  s1.value = 4; // برتغالية
-  s2.value = 0; // فرنسية
+    let content = await zip.generateAsync({type:"blob"});
 
-  s1.onchange = s2.onchange = displayList;
-  displayList();
-});
-
-function displayList() {
-  const l1 = document.getElementById('lang1').value;
-  const l2 = document.getElementById('lang2').value;
-  let html = '';
-
-  words.forEach((row, index) => {
-    if(row[l1] && row[l2]) {
-      html += `<div class="row">
-        <button class="tts" onclick="speak('${row[l1]}', ${l1})">🔊</button>
-        <div class="word">${row[l1]}</div>
-        <div class="eq">=</div>
-        <div class="word">${row[l2]}</div>
-        <button class="tts" onclick="speak('${row[l2]}', ${l2})">🔊</button>
-      </div>`;
-    }
-  });
-
-  document.getElementById('list').innerHTML = html;
-}
-
-function speak(text, langIndex) {
-  if(!text || text == "") return;
-  synth.cancel(); // وقف أي صوت خدام
-  let msg = new SpeechSynthesisUtterance(text);
-  msg.lang = ttsCodes[langIndex];
-  msg.rate = 0.9; // السرعة مزيانة
-  synth.speak(msg);
+    let a = document.createElement("a");
+    a.href = URL.createObjectURL(content);
+    a.download = "audio_zip.zip";
+    a.click();
 }
 </script>
+
 </body>
 </html>
