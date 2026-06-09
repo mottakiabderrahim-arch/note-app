@@ -2,735 +2,176 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>المفكرة الاحترافية</title>
-
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ملاحظاتي</title>
 <style>
-
-*{
-margin:0;
-padding:0;
-box-sizing:border-box;
-font-family:Tahoma,sans-serif;
+:root{
+  --bg:#f5f7fb; --card:#fff; --text:#1e293b; --muted:#64748b;
+  --accent:#4f46e5; --border:#e2e8f0; --shadow:0 4px 12px rgba(0,0,0,.06)
 }
-
-body{
-background:#f4f4f4;
-transition:.3s;
-}
-
-body.dark{
-background:#111;
-color:#fff;
-}
-
-header{
-background:#2196F3;
-color:#fff;
-padding:15px;
-text-align:center;
-font-size:24px;
-font-weight:bold;
-}
-
-.container{
-padding:10px;
-max-width:900px;
-margin:auto;
-}
-
-.toolbar{
-display:flex;
-flex-wrap:wrap;
-gap:8px;
-margin-bottom:10px;
-}
-
-button{
-padding:10px;
-border:none;
-border-radius:8px;
-cursor:pointer;
-}
-
-input,select{
-padding:10px;
-border:1px solid #ccc;
-border-radius:8px;
-}
-
-#search{
-width:100%;
-margin-bottom:10px;
-}
-
-.note-card{
-background:#fff;
-padding:10px;
-border-radius:10px;
-margin-bottom:10px;
-box-shadow:0 2px 5px rgba(0,0,0,.1);
-}
-
-.dark .note-card{
-background:#222;
-}
-
-.note-title{
-font-size:18px;
-font-weight:bold;
-margin-bottom:5px;
-}
-
-.note-date{
-font-size:12px;
-opacity:.7;
-margin-bottom:5px;
-}
-
-.note-text{
-white-space:pre-wrap;
-}
-
-#editor{
-display:none;
-margin-top:10px;
-}
-
-#title{
-width:100%;
-margin-bottom:10px;
-}
-
-#content{
-width:100%;
-height:220px;
-padding:10px;
-border-radius:10px;
-border:1px solid #ccc;
-resize:none;
-}
-
-.stats{
-margin-top:10px;
-font-size:14px;
-}
-
-img.preview{
-max-width:100%;
-margin-top:10px;
-border-radius:10px;
-}
-
-.pin{
-color:gold;
-font-weight:bold;
-}
-
+.dark{--bg:#0f172a; --card:#1e293b; --text:#f1f5f9; --muted:#94a3b8;
+  --border:#334155; --shadow:0 4px 12px rgba(0,0,0,.3)}
+*{box-sizing:border-box;font-family:'Segoe UI',Tahoma,sans-serif}
+body{margin:0;background:var(--bg);color:var(--text);transition:.3s}
+header{position:sticky;top:0;background:var(--card);padding:14px 20px;
+  display:flex;gap:10px;align-items:center;border-bottom:1px solid var(--border);
+  box-shadow:var(--shadow);z-index:10}
+header input{flex:1;padding:10px 14px;border:1px solid var(--border);
+  border-radius:10px;background:var(--bg);color:var(--text);outline:none}
+.btn{padding:9px 14px;border:none;border-radius:9px;cursor:pointer;
+  background:var(--accent);color:#fff;font-weight:600;transition:.2s}
+.btn:hover{opacity:.85}
+.btn.ghost{background:transparent;color:var(--text);border:1px solid var(--border)}
+.container{max-width:1000px;margin:24px auto;padding:0 16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+.note{background:var(--card);border:1px solid var(--border);border-radius:14px;
+  padding:14px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:8px}
+.note.pinned{border-color:var(--accent)}
+.note h3{margin:0;font-size:16px;display:flex;justify-content:space-between;align-items:center}
+.note textarea{flex:1;min-height:120px;border:none;outline:none;background:transparent;
+  color:var(--text);resize:vertical;font-size:14px;line-height:1.6}
+.note img{max-width:100%;border-radius:8px;margin-top:6px}
+.meta{font-size:12px;color:var(--muted);display:flex;gap:10px;flex-wrap:wrap}
+.tags{display:flex;gap:6px;flex-wrap:wrap}
+.tag{font-size:11px;padding:3px 8px;border-radius:20px;background:var(--bg);border:1px solid var(--border)}
+.footer{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.footer button{padding:6px 10px;font-size:12px;border-radius:7px;border:1px solid var(--border);
+  background:transparent;color:var(--text);cursor:pointer}
+.lock-screen{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;
+  justify-content:center;z-index:99}
+.lock-box{background:var(--card);padding:30px;border-radius:16px;box-shadow:var(--shadow);
+  text-align:center;width:300px}
+.lock-box input{width:100%;padding:10px;border:1px solid var(--border);
+  border-radius:8px;margin:12px 0;background:var(--bg);color:var(--text)}
+.hidden{display:none}
 </style>
 </head>
-
 <body>
+<div id="lockScreen" class="lock-screen">
+  <div class="lock-box">
+    <h2>🔒 كلمة السر</h2>
+    <input type="password" id="pwdInput" placeholder="دخل كلمة السر">
+    <button class="btn" onclick="unlock()">دخول</button>
+    <p style="font-size:12px;color:var(--muted)">أول مرة؟ دخل أي كلمة سر للتسجيل</p>
+  </div>
+</div>
 
 <header>
-📝 المفكرة الاحترافية
+  <input type="text" id="search" placeholder="🔍 بحث فالملاحظات...">
+  <button class="btn ghost" onclick="toggleDark()">🌓</button>
+  <button class="btn" onclick="newNote()">+ ملاحظة</button>
 </header>
 
 <div class="container">
-
-<input
-type="text"
-id="search"
-placeholder="🔍 البحث داخل الملاحظات">
-
-<div class="toolbar">
-
-<button onclick="newNote()">
-➕ ملاحظة
-</button>
-
-<button onclick="toggleDark()">
-🌙 الوضع الليلي
-</button>
-
-<button onclick="exportBackup()">
-💾 نسخ احتياطي
-</button>
-
-<button onclick="importBackup()">
-📂 استرجاع
-</button>
-
-<button onclick="setPassword()">
-🔒 كلمة سر
-</button>
-
-<input
-type="file"
-id="backupFile"
-style="display:none">
-
-</div>
-
-<div id="notesList"></div>
-
-<div id="editor">
-
-<input
-id="title"
-placeholder="عنوان الملاحظة">
-
-<select id="category">
-<option>شخصي</option>
-<option>دراسة</option>
-<option>عمل</option>
-<option>أفكار</option>
-</select>
-
-<br><br>
-
-<textarea
-id="content"
-placeholder="اكتب هنا..."></textarea>
-
-<br><br>
-
-<input
-type="file"
-id="imageInput"
-accept="image/*">
-
-<div id="imagePreview"></div>
-
-<div class="stats">
-
-<span id="words">
-الكلمات: 0
-</span>
-
-</div>
-
-<br>
-
-<button onclick="saveNote()">
-💾 حفظ
-</button>
-
-<button onclick="pinNote()">
-⭐ تثبيت
-</button>
-
-<button onclick="deleteCurrent()">
-🗑️ حذف
-</button>
-
-<button onclick="downloadTXT()">
-📄 TXT
-</button>
-
-</div>
-
+  <div id="notesGrid" class="grid"></div>
 </div>
 
 <script>
+let notes = JSON.parse(localStorage.getItem('notes')||'[]');
+let dark = localStorage.getItem('dark')==='1';
+let pwd = localStorage.getItem('pwd');
 
-let notes =
-JSON.parse(
-localStorage.getItem("notes") || "[]"
-);
+if(dark) document.body.classList.add('dark');
+if(!pwd) document.getElementById('lockScreen').classList.remove('hidden');
+else if(pwd) document.getElementById('lockScreen').classList.add('hidden');
 
-let current = null;
-function saveStorage(){
-localStorage.setItem(
-"notes",
-JSON.stringify(notes)
-);
+function unlock(){
+  let v = document.getElementById('pwdInput').value;
+  if(!pwd){ localStorage.setItem('pwd',v); }
+  if(v===localStorage.getItem('pwd')){
+    document.getElementById('lockScreen').classList.add('hidden');
+  } else alert('كلمة السر غلط');
 }
 
-function renderNotes(){
-
-let list =
-document.getElementById("notesList");
-
-let search =
-document.getElementById("search")
-.value
-.toLowerCase();
-
-list.innerHTML="";
-
-let filtered =
-notes.filter(n=>
-n.title.toLowerCase().includes(search)
-||
-n.content.toLowerCase().includes(search)
-);
-
-filtered.sort((a,b)=>
-(b.pinned?1:0)-
-(a.pinned?1:0)
-);
-
-filtered.forEach(note=>{
-
-let card =
-document.createElement("div");
-
-card.className="note-card";
-
-card.innerHTML=`
-
-<div class="note-title">
-${note.pinned ? "⭐ " : ""}
-${note.title}
-</div>
-
-<div class="note-date">
-${note.date}
- | ${note.category}
-</div>
-
-<div class="note-text">
-${note.content.substring(0,150)}
-</div>
-
-`;
-
-card.onclick=()=>{
-openNote(note.id);
-};
-
-list.appendChild(card);
-
-});
-
-}
+function save(){ localStorage.setItem('notes',JSON.stringify(notes)); render(); }
+function uid(){ return Date.now().toString(36) }
 
 function newNote(){
-
-current=null;
-
-document.getElementById("editor")
-.style.display="block";
-
-document.getElementById("title")
-.value="";
-
-document.getElementById("content")
-.value="";
-
-document.getElementById("imagePreview")
-.innerHTML="";
-
-updateWords();
-
+  notes.unshift({id:uid(),title:'ملاحظة جديدة',content:'',tags:[],pinned:false,img:null,created:Date.now()});
+  save();
 }
 
-function openNote(id){
+function del(id){ notes=notes.filter(n=>n.id!=id); save(); }
+function togglePin(id){ let n=notes.find(x=>x.id==id); n.pinned=!n.pinned;
+  notes.sort((a,b)=>b.pinned-a.pinned); save(); }
+function update(id,field,val){ let n=notes.find(x=>x.id==id); n[field]=val; save(); }
 
-let note =
-notes.find(n=>n.id==id);
-
-if(!note) return;
-
-current=id;
-
-document.getElementById("editor")
-.style.display="block";
-
-document.getElementById("title")
-.value=note.title;
-
-document.getElementById("content")
-.value=note.content;
-
-document.getElementById("category")
-.value=note.category;
-
-if(note.image){
-
-document.getElementById(
-"imagePreview"
-).innerHTML=
-`<img class="preview"
-src="${note.image}">`;
-
-}else{
-
-document.getElementById(
-"imagePreview"
-).innerHTML="";
-
+function uploadImg(id,e){
+  let f=e.target.files[0]; if(!f) return;
+  let r=new FileReader();
+  r.onload=()=>{ update(id,'img',r.result); }
+  r.readAsDataURL(f);
 }
 
-updateWords();
-
+function exportTxt(id){
+  let n=notes.find(x=>x.id==id);
+  let blob=new Blob([n.title+'\n\n'+n.content],{type:'text/plain'});
+  let a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download=n.title+'.txt'; a.click();
 }
 
-function saveNote(){
-
-let title=
-document.getElementById("title")
-.value.trim();
-
-let content=
-document.getElementById("content")
-.value.trim();
-
-let category=
-document.getElementById("category")
-.value;
-
-if(title===""){
-alert("أدخل عنوان");
-return;
+function backup(){
+  let blob=new Blob([JSON.stringify(notes)],{type:'application/json'});
+  let a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='backup_'+Date.now()+'.json'; a.click();
 }
 
-let image="";
-
-let img =
-document.querySelector(
-"#imagePreview img"
-);
-
-if(img){
-image=img.src;
+function restore(e){
+  let f=e.target.files[0]; if(!f) return;
+  let r=new FileReader();
+  r.onload=()=>{ notes=JSON.parse(r.result); save(); }
+  r.readAsText(f);
 }
 
-if(current){
+function wordCount(txt){ return txt.trim().split(/\s+/).filter(Boolean).length }
 
-let note=
-notes.find(n=>n.id==current);
-
-note.title=title;
-note.content=content;
-note.category=category;
-note.image=image;
-
-}else{
-
-notes.push({
-
-id:Date.now(),
-
-title:title,
-
-content:content,
-
-category:category,
-
-image:image,
-
-pinned:false,
-
-date:new Date()
-.toLocaleString()
-
-});
-
-}
-
-saveStorage();
-
-renderNotes();
-
-alert("تم الحفظ");
-
-}
-
-function deleteCurrent(){
-
-if(!current) return;
-
-if(confirm("حذف الملاحظة؟")){
-
-notes=
-notes.filter(
-n=>n.id!=current
-);
-
-saveStorage();
-
-renderNotes();
-
-document.getElementById("editor")
-.style.display="none";
-
-}
-
-}
-
-function pinNote(){
-
-if(!current) return;
-
-let note=
-notes.find(n=>n.id==current);
-
-note.pinned=!note.pinned;
-
-saveStorage();
-
-renderNotes();
-
-alert("تم التحديث");
-
+function render(){
+  let q=document.getElementById('search').value.toLowerCase();
+  let filtered=notes.filter(n=>
+    n.title.toLowerCase().includes(q) || n.content.toLowerCase().includes(q) ||
+    n.tags.join(' ').toLowerCase().includes(q)
+  );
+  document.getElementById('notesGrid').innerHTML=filtered.map(n=>`
+    <div class="note ${n.pinned?'pinned':''}">
+      <h3>
+        <input value="${n.title}" oninput="update('${n.id}','title',this.value)"
+          style="border:none;background:transparent;color:var(--text);font-weight:700;flex:1">
+        <span style="cursor:pointer" onclick="togglePin('${n.id}')">${n.pinned?'📌':'📍'}</span>
+      </h3>
+      <textarea oninput="update('${n.id}','content',this.value)">${n.content}</textarea>
+      ${n.img?`<img src="${n.img}">`:''}
+      <input type="text" placeholder="تصنيفات بفاصلة" value="${n.tags.join(',')}"
+        oninput="update('${n.id}','tags',this.value.split(',').map(t=>t.trim()))">
+      ${n.img?'' : `<input type="file" accept="image/*" onchange="uploadImg('${n.id}',event)">`}
+      <div class="meta">
+        <span>📝 ${wordCount(n.content)} كلمة</span>
+        <span>📅 ${new Date(n.created).toLocaleDateString('ar')}</span>
+      </div>
+      <div class="footer">
+        <button onclick="exportTxt('${n.id}')">📄 TXT</button>
+        <button onclick="del('${n.id}')">🗑️ حذف</button>
+      </div>
+    </div>
+  `).join('');
 }
 
 function toggleDark(){
-
-document.body
-.classList.toggle("dark");
-
-localStorage.setItem(
-"dark",
-document.body.classList.contains(
-"dark"
-)
-);
-
+  dark=!dark; document.body.classList.toggle('dark');
+  localStorage.setItem('dark',dark?1:0);
 }
 
-if(
-localStorage.getItem("dark")
-==="true"
-){
-document.body.classList.add("dark");
-}
-
-document.getElementById("search")
-.addEventListener(
-"input",
-renderNotes
-);
-document
-.getElementById("content")
-.addEventListener(
-"input",
-updateWords
-);
-
-function updateWords(){
-
-let txt=
-document.getElementById("content")
-.value
-.trim();
-
-let count=
-txt===""
-?0
-:txt.split(/\s+/).length;
-
-document.getElementById("words")
-.innerText=
-"الكلمات: "+count;
-
-}
-
-document
-.getElementById("imageInput")
-.addEventListener(
-"change",
-function(){
-
-let file=
-this.files[0];
-
-if(!file) return;
-
-let reader=
-new FileReader();
-
-reader.onload=function(e){
-
-document
-.getElementById(
-"imagePreview"
-)
-.innerHTML=
-
-`<img
-class="preview"
-src="${e.target.result}">`;
-
-};
-
-reader.readAsDataURL(file);
-
-}
-);
-
-function downloadTXT(){
-
-let title=
-document.getElementById("title")
-.value;
-
-let content=
-document.getElementById("content")
-.value;
-
-let blob=
-new Blob(
-[
-title+"\n\n"+content
-],
-{
-type:"text/plain"
-}
-);
-
-let a=
-document.createElement("a");
-
-a.href=
-URL.createObjectURL(blob);
-
-a.download=
-(title||"note")
-+".txt";
-
-a.click();
-
-}
-
-function exportBackup(){
-
-let blob=
-new Blob(
-[
-JSON.stringify(notes)
-],
-{
-type:"application/json"
-}
-);
-
-let a=
-document.createElement("a");
-
-a.href=
-URL.createObjectURL(blob);
-
-a.download=
-"backup.json";
-
-a.click();
-
-}
-
-function importBackup(){
-
-document
-.getElementById("backupFile")
-.click();
-
-}
-
-document
-.getElementById("backupFile")
-.addEventListener(
-"change",
-function(){
-
-let file=
-this.files[0];
-
-if(!file) return;
-
-let reader=
-new FileReader();
-
-reader.onload=
-function(e){
-
-try{
-
-notes=
-JSON.parse(
-e.target.result
-);
-
-saveStorage();
-
-renderNotes();
-
-alert(
-"تم الاسترجاع"
-);
-
-}catch{
-
-alert(
-"ملف غير صالح"
-);
-
-}
-
-};
-
-reader.readAsText(file);
-
-}
-);
-
-function setPassword(){
-
-let pass=
-prompt(
-"أدخل كلمة سر"
-);
-
-if(
-pass &&
-pass.trim()!=""
-){
-
-localStorage.setItem(
-"notes_password",
-pass
-);
-
-alert(
-"تم حفظ كلمة السر"
-);
-
-}
-
-}
-
-let savedPass=
-localStorage.getItem(
-"notes_password"
-);
-
-if(savedPass){
-
-let ask=
-prompt(
-"أدخل كلمة السر"
-);
-
-if(
-ask!==savedPass
-){
-
-document.body.innerHTML=
-
-"<h1 style='text-align:center;margin-top:50px'>❌ كلمة السر غير صحيحة</h1>";
-
-throw new Error(
-"Wrong Password"
-);
-
-}
-
-}
-
-renderNotes();
-
+document.getElementById('search').oninput=render;
+render();
+
+// أزرار النسخ الاحتياطي
+let extraBtns = document.createElement('div');
+extraBtns.innerHTML = `
+  <button class="btn ghost" onclick="backup()">💾 نسخ JSON</button>
+  <label class="btn ghost" style="cursor:pointer">📂 استرجاع
+    <input type="file" accept=".json" onchange="restore(event)" style="display:none">
+  </label>
+`;
+document.querySelector('header').append(extraBtns);
 </script>
-
 </body>
 </html>
