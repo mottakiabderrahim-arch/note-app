@@ -3,48 +3,47 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ملاحظاتي</title>
+<title>ملاحظاتي Pro Plus</title>
 <style>
 :root{
-  --bg:#f5f7fb; --card:#fff; --text:#1e293b; --muted:#64748b;
-  --accent:#4f46e5; --border:#e2e8f0; --shadow:0 4px 12px rgba(0,0,0,.06)
+  --bg:#f8fafc; --card:#fff; --text:#0f172a; --muted:#64748b;
+  --accent:#6366f1; --border:#e2e8f0; --shadow:0 2px 8px rgba(0,0,0,.08)
 }
-.dark{--bg:#0f172a; --card:#1e293b; --text:#f1f5f9; --muted:#94a3b8;
-  --border:#334155; --shadow:0 4px 12px rgba(0,0,0,.3)}
+.dark{--bg:#0b1220; --card:#111827; --text:#e5e7eb; --muted:#94a3b8;
+  --border:#1f2937; --shadow:0 4px 16px rgba(0,0,0,.4)}
 *{box-sizing:border-box;font-family:'Segoe UI',Tahoma,sans-serif}
-body{margin:0;background:var(--bg);color:var(--text);transition:.3s}
-header{position:sticky;top:0;background:var(--card);padding:14px 20px;
-  display:flex;gap:10px;align-items:center;border-bottom:1px solid var(--border);
-  box-shadow:var(--shadow);z-index:10}
-header input{flex:1;padding:10px 14px;border:1px solid var(--border);
+body{margin:0;background:var(--bg);color:var(--text);transition:.25s}
+header{position:sticky;top:0;background:var(--card);padding:12px 16px;
+  display:flex;gap:8px;align-items:center;border-bottom:1px solid var(--border);
+  box-shadow:var(--shadow);z-index:10;flex-wrap:wrap}
+header input{flex:1;min-width:180px;padding:10px 12px;border:1px solid var(--border);
   border-radius:10px;background:var(--bg);color:var(--text);outline:none}
-.btn{padding:9px 14px;border:none;border-radius:9px;cursor:pointer;
-  background:var(--accent);color:#fff;font-weight:600;transition:.2s}
-.btn:hover{opacity:.85}
-.btn.ghost{background:transparent;color:var(--text);border:1px solid va
-r(--border)}
-.container{max-width:1000px;margin:24px auto;padding:0 16px}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+.btn{padding:9px 12px;border:none;border-radius:9px;cursor:pointer;
+  background:var(--accent);color:#fff;font-weight:600}
+.btn:hover{filter:brightness(1.1)}
+.btn.ghost{background:transparent;color:var(--text);border:1px solid var(--border)}
+.container{max-width:1100px;margin:20px auto;padding:0 14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px}
 .note{background:var(--card);border:1px solid var(--border);border-radius:14px;
-  padding:14px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:8px}
+  padding:12px;display:flex;flex-direction:column;gap:8px;box-shadow:var(--shadow)}
 .note.pinned{border-color:var(--accent)}
-.note h3{margin:0;font-size:16px;display:flex;justify-content:space-between;align-items:center}
-.note textarea{flex:1;min-height:120px;border:none;outline:none;background:transparent;
+.note h3{margin:0;font-size:15px;display:flex;gap:8px;align-items:center}
+.note textarea{flex:1;min-height:110px;border:none;outline:none;background:transparent;
   color:var(--text);resize:vertical;font-size:14px;line-height:1.6}
-.note img{max-width:100%;border-radius:8px;margin-top:6px}
-.meta{font-size:12px;color:var(--muted);display:flex;gap:10px;flex-wrap:wrap}
-.tags{display:flex;gap:6px;flex-wrap:wrap}
-.tag{font-size:11px;padding:3px 8px;border-radius:20px;background:var(--bg);border:1px solid var(--border)}
-.footer{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
-.footer button{padding:6px 10px;font-size:12px;border-radius:7px;border:1px solid var(--border);
+.meta{font-size:12px;color:var(--muted);display:flex;gap:12px;flex-wrap:wrap}
+.footer{display:flex;gap:6px;flex-wrap:wrap}
+.footer button{padding:6px 9px;font-size:12px;border-radius:7px;border:1px solid var(--border);
   background:transparent;color:var(--text);cursor:pointer}
+.footer button:hover{background:var(--bg)}
 .lock-screen{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;
   justify-content:center;z-index:99}
-.lock-box{background:var(--card);padding:30px;border-radius:16px;box-shadow:var(--shadow);
-  text-align:center;width:300px}
+.lock-box{background:var(--card);padding:26px;border-radius:16px;box-shadow:var(--shadow);
+  text-align:center;width:320px;border:1px solid var(--border)}
 .lock-box input{width:100%;padding:10px;border:1px solid var(--border);
-  border-radius:8px;margin:12px 0;background:var(--bg);color:var(--text)}
+  border-radius:8px;margin:10px 0;background:var(--bg);color:var(--text)}
 .hidden{display:none}
+.toolbar{display:flex;gap:6px;flex-wrap:wrap}
+.toolbar button{padding:5px 7px;font-size:12px}
 </style>
 </head>
 <body>
@@ -58,9 +57,13 @@ r(--border)}
 </div>
 
 <header>
-  <input type="text" id="search" placeholder="🔍 بحث فالملاحظات...">
+  <input type="text" id="search" placeholder="🔍 بحث فالملاحظات والتصنيفات...">
   <button class="btn ghost" onclick="toggleDark()">🌓</button>
   <button class="btn" onclick="newNote()">+ ملاحظة</button>
+  <button class="btn ghost" onclick="backup()">💾 JSON</button>
+  <label class="btn ghost" style="cursor:pointer">📂 استرجاع
+    <input type="file" accept=".json" onchange="restore(event)" style="display:none">
+  </label>
 </header>
 
 <div class="container">
@@ -68,31 +71,31 @@ r(--border)}
 </div>
 
 <script>
-let notes = JSON.parse(localStorage.getItem('notes')||'[]');
+let notes = JSON.parse(localStorage.getItem('notes_pro')||'[]');
 let dark = localStorage.getItem('dark')==='1';
-let pwd = localStorage.getItem('pwd');
+let pwd = localStorage.getItem('pwd_pro');
 
 if(dark) document.body.classList.add('dark');
 if(!pwd) document.getElementById('lockScreen').classList.remove('hidden');
-else if(pwd) document.getElementById('lockScreen').classList.add('hidden');
+else document.getElementById('lockScreen').classList.add('hidden');
 
 function unlock(){
   let v = document.getElementById('pwdInput').value;
-  if(!pwd){ localStorage.setItem('pwd',v); }
-  if(v===localStorage.getItem('pwd')){
+  if(!pwd){ localStorage.setItem('pwd_pro',v); }
+  if(v===localStorage.getItem('pwd_pro')){
     document.getElementById('lockScreen').classList.add('hidden');
   } else alert('كلمة السر غلط');
 }
 
-function save(){ localStorage.setItem('notes',JSON.stringify(notes)); render(); }
-function uid(){ return Date.now().toString(36) }
+function save(){ localStorage.setItem('notes_pro',JSON.stringify(notes)); render(); }
+function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,6) }
 
 function newNote(){
   notes.unshift({id:uid(),title:'ملاحظة جديدة',content:'',tags:[],pinned:false,img:null,created:Date.now()});
   save();
 }
 
-function del(id){ notes=notes.filter(n=>n.id!=id); save(); }
+function del(id){ if(confirm('مسح الملاحظة؟')){ notes=notes.filter(n=>n.id!=id); save(); } }
 function togglePin(id){ let n=notes.find(x=>x.id==id); n.pinned=!n.pinned;
   notes.sort((a,b)=>b.pinned-a.pinned); save(); }
 function update(id,field,val){ let n=notes.find(x=>x.id==id); n[field]=val; save(); }
@@ -106,25 +109,35 @@ function uploadImg(id,e){
 
 function exportTxt(id){
   let n=notes.find(x=>x.id==id);
-  let blob=new Blob([n.title+'\n\n'+n.content],{type:'text/plain'});
+  let blob=new Blob([n.title+'\n\n'+n.content],{type:'text/plain;charset=utf-8'});
   let a=document.createElement('a'); a.href=URL.createObjectURL(blob);
-  a.download=n.title+'.txt'; a.click();
+  a.download=(n.title||'note')+'.txt'; a.click();
 }
 
 function backup(){
-  let blob=new Blob([JSON.stringify(notes)],{type:'application/json'});
+  let blob=new Blob([JSON.stringify(notes,null,2)],{type:'application/json'});
   let a=document.createElement('a'); a.href=URL.createObjectURL(blob);
-  a.download='backup_'+Date.now()+'.json'; a.click();
+  a.download='backup_notes_'+Date.now()+'.json'; a.click();
 }
 
 function restore(e){
   let f=e.target.files[0]; if(!f) return;
   let r=new FileReader();
-  r.onload=()=>{ notes=JSON.parse(r.result); save(); }
+  r.onload=()=>{ try{ notes=JSON.parse(r.result); save(); }catch{ alert('ملف غير صالح') } }
   r.readAsText(f);
 }
 
 function wordCount(txt){ return txt.trim().split(/\s+/).filter(Boolean).length }
+
+function applyFormat(id,cmd){
+  let ta = document.querySelector(`[data-id="${id}"]`);
+  let start = ta.selectionStart, end = ta.selectionEnd;
+  let txt = ta.value;
+  let before = txt.slice(0,start), sel = txt.slice(start,end), after = txt.slice(end);
+  let wrap = cmd==='bold'?'**':cmd==='italic'?'*':'';
+  ta.value = before + wrap + sel + wrap + after;
+  update(id,'content',ta.value);
+}
 
 function render(){
   let q=document.getElementById('search').value.toLowerCase();
@@ -137,16 +150,20 @@ function render(){
       <h3>
         <input value="${n.title}" oninput="update('${n.id}','title',this.value)"
           style="border:none;background:transparent;color:var(--text);font-weight:700;flex:1">
-        <span style="cursor:pointer" onclick="togglePin('${n.id}')">${n.pinned?'📌':'📍'}</span>
+        <span style="cursor:pointer;font-size:18px" onclick="togglePin('${n.id}')">${n.pinned?'📌':'📍'}</span>
       </h3>
-      <textarea oninput="update('${n.id}','content',this.value)">${n.content}</textarea>
-      ${n.img?`<img src="${n.img}">`:''}
+      <div class="toolbar">
+        <button onclick="applyFormat('${n.id}','bold')"><b>B</b></button>
+        <button onclick="applyFormat('${n.id}','italic')"><i>I</i></button>
+      </div>
+      <textarea data-id="${n.id}" oninput="update('${n.id}','content',this.value)">${n.content}</textarea>
+      ${n.img?`<img src="${n.img}" style="max-width:100%;border-radius:8px">`:''}
       <input type="text" placeholder="تصنيفات بفاصلة" value="${n.tags.join(',')}"
         oninput="update('${n.id}','tags',this.value.split(',').map(t=>t.trim()))">
       ${n.img?'' : `<input type="file" accept="image/*" onchange="uploadImg('${n.id}',event)">`}
       <div class="meta">
         <span>📝 ${wordCount(n.content)} كلمة</span>
-        <span>📅 ${new Date(n.created).toLocaleDateString('ar')}</span>
+        <span>📅 ${new Date(n.created).toLocaleDateString('ar-EG')}</span>
       </div>
       <div class="footer">
         <button onclick="exportTxt('${n.id}')">📄 TXT</button>
@@ -157,22 +174,12 @@ function render(){
 }
 
 function toggleDark(){
-  dark=!dark; document.body.classList.toggle('dark');
-  localStorage.setItem('dark',dark?1:0);
+  document.body.classList.toggle('dark');
+  localStorage.setItem('dark',document.body.classList.contains('dark')?1:0);
 }
 
 document.getElementById('search').oninput=render;
 render();
-
-// أزرار النسخ الاحتياطي
-let extraBtns = document.createElement('div');
-extraBtns.innerHTML = `
-  <button class="btn ghost" onclick="backup()">💾 نسخ JSON</button>
-  <label class="btn ghost" style="cursor:pointer">📂 استرجاع
-    <input type="file" accept=".json" onchange="restore(event)" style="display:none">
-  </label>
-`;
-document.querySelector('header').append(extraBtns);
 </script>
 </body>
 </html>
