@@ -1,47 +1,735 @@
 <!DOCTYPE html>
-<html>
+<html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<title>TTS Generator</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>المفكرة الاحترافية</title>
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:Tahoma,sans-serif;
+}
+
+body{
+background:#f4f4f4;
+transition:.3s;
+}
+
+body.dark{
+background:#111;
+color:#fff;
+}
+
+header{
+background:#2196F3;
+color:#fff;
+padding:15px;
+text-align:center;
+font-size:24px;
+font-weight:bold;
+}
+
+.container{
+padding:10px;
+max-width:900px;
+margin:auto;
+}
+
+.toolbar{
+display:flex;
+flex-wrap:wrap;
+gap:8px;
+margin-bottom:10px;
+}
+
+button{
+padding:10px;
+border:none;
+border-radius:8px;
+cursor:pointer;
+}
+
+input,select{
+padding:10px;
+border:1px solid #ccc;
+border-radius:8px;
+}
+
+#search{
+width:100%;
+margin-bottom:10px;
+}
+
+.note-card{
+background:#fff;
+padding:10px;
+border-radius:10px;
+margin-bottom:10px;
+box-shadow:0 2px 5px rgba(0,0,0,.1);
+}
+
+.dark .note-card{
+background:#222;
+}
+
+.note-title{
+font-size:18px;
+font-weight:bold;
+margin-bottom:5px;
+}
+
+.note-date{
+font-size:12px;
+opacity:.7;
+margin-bottom:5px;
+}
+
+.note-text{
+white-space:pre-wrap;
+}
+
+#editor{
+display:none;
+margin-top:10px;
+}
+
+#title{
+width:100%;
+margin-bottom:10px;
+}
+
+#content{
+width:100%;
+height:220px;
+padding:10px;
+border-radius:10px;
+border:1px solid #ccc;
+resize:none;
+}
+
+.stats{
+margin-top:10px;
+font-size:14px;
+}
+
+img.preview{
+max-width:100%;
+margin-top:10px;
+border-radius:10px;
+}
+
+.pin{
+color:gold;
+font-weight:bold;
+}
+
+</style>
 </head>
+
 <body>
 
-<h2>Words to MP3</h2>
+<header>
+📝 المفكرة الاحترافية
+</header>
 
-<textarea id="text" rows="10" cols="40">
-hello
-book
-car
-house
-</textarea>
+<div class="container">
+
+<input
+type="text"
+id="search"
+placeholder="🔍 البحث داخل الملاحظات">
+
+<div class="toolbar">
+
+<button onclick="newNote()">
+➕ ملاحظة
+</button>
+
+<button onclick="toggleDark()">
+🌙 الوضع الليلي
+</button>
+
+<button onclick="exportBackup()">
+💾 نسخ احتياطي
+</button>
+
+<button onclick="importBackup()">
+📂 استرجاع
+</button>
+
+<button onclick="setPassword()">
+🔒 كلمة سر
+</button>
+
+<input
+type="file"
+id="backupFile"
+style="display:none">
+
+</div>
+
+<div id="notesList"></div>
+
+<div id="editor">
+
+<input
+id="title"
+placeholder="عنوان الملاحظة">
+
+<select id="category">
+<option>شخصي</option>
+<option>دراسة</option>
+<option>عمل</option>
+<option>أفكار</option>
+</select>
 
 <br><br>
 
-<button onclick="generate()">Generate MP3</button>
+<textarea
+id="content"
+placeholder="اكتب هنا..."></textarea>
+
+<br><br>
+
+<input
+type="file"
+id="imageInput"
+accept="image/*">
+
+<div id="imagePreview"></div>
+
+<div class="stats">
+
+<span id="words">
+الكلمات: 0
+</span>
+
+</div>
+
+<br>
+
+<button onclick="saveNote()">
+💾 حفظ
+</button>
+
+<button onclick="pinNote()">
+⭐ تثبيت
+</button>
+
+<button onclick="deleteCurrent()">
+🗑️ حذف
+</button>
+
+<button onclick="downloadTXT()">
+📄 TXT
+</button>
+
+</div>
+
+</div>
 
 <script>
-async function generate() {
-    let words = document.getElementById("text").value.split("\n");
 
-    for (let i = 0; i < words.length; i++) {
-        let word = words[i].trim();
-        if (!word) continue;
+let notes =
+JSON.parse(
+localStorage.getItem("notes") || "[]"
+);
 
-        let url = "https://translate.google.com/translate_tts?ie=UTF-8&tl=en&client=tw-ob&q=" 
-                  + encodeURIComponent(word);
-
-        let a = document.createElement("a");
-        a.href = url;
-        a.download = word + ".mp3";
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-
-        await new Promise(r => setTimeout(r, 1500));
-    }
-
-    alert("Done");
+let current = null;
+function saveStorage(){
+localStorage.setItem(
+"notes",
+JSON.stringify(notes)
+);
 }
+
+function renderNotes(){
+
+let list =
+document.getElementById("notesList");
+
+let search =
+document.getElementById("search")
+.value
+.toLowerCase();
+
+list.innerHTML="";
+
+let filtered =
+notes.filter(n=>
+n.title.toLowerCase().includes(search)
+||
+n.content.toLowerCase().includes(search)
+);
+
+filtered.sort((a,b)=>
+(b.pinned?1:0)-
+(a.pinned?1:0)
+);
+
+filtered.forEach(note=>{
+
+let card =
+document.createElement("div");
+
+card.className="note-card";
+
+card.innerHTML=`
+
+<div class="note-title">
+${note.pinned ? "⭐ " : ""}
+${note.title}
+</div>
+
+<div class="note-date">
+${note.date}
+ | ${note.category}
+</div>
+
+<div class="note-text">
+${note.content.substring(0,150)}
+</div>
+
+`;
+
+card.onclick=()=>{
+openNote(note.id);
+};
+
+list.appendChild(card);
+
+});
+
+}
+
+function newNote(){
+
+current=null;
+
+document.getElementById("editor")
+.style.display="block";
+
+document.getElementById("title")
+.value="";
+
+document.getElementById("content")
+.value="";
+
+document.getElementById("imagePreview")
+.innerHTML="";
+
+updateWords();
+
+}
+
+function openNote(id){
+
+let note =
+notes.find(n=>n.id==id);
+
+if(!note) return;
+
+current=id;
+
+document.getElementById("editor")
+.style.display="block";
+
+document.getElementById("title")
+.value=note.title;
+
+document.getElementById("content")
+.value=note.content;
+
+document.getElementById("category")
+.value=note.category;
+
+if(note.image){
+
+document.getElementById(
+"imagePreview"
+).innerHTML=
+`<img class="preview"
+src="${note.image}">`;
+
+}else{
+
+document.getElementById(
+"imagePreview"
+).innerHTML="";
+
+}
+
+updateWords();
+
+}
+
+function saveNote(){
+
+let title=
+document.getElementById("title")
+.value.trim();
+
+let content=
+document.getElementById("content")
+.value.trim();
+
+let category=
+document.getElementById("category")
+.value;
+
+if(title===""){
+alert("أدخل عنوان");
+return;
+}
+
+let image="";
+
+let img =
+document.querySelector(
+"#imagePreview img"
+);
+
+if(img){
+image=img.src;
+}
+
+if(current){
+
+let note=
+notes.find(n=>n.id==current);
+
+note.title=title;
+note.content=content;
+note.category=category;
+note.image=image;
+
+}else{
+
+notes.push({
+
+id:Date.now(),
+
+title:title,
+
+content:content,
+
+category:category,
+
+image:image,
+
+pinned:false,
+
+date:new Date()
+.toLocaleString()
+
+});
+
+}
+
+saveStorage();
+
+renderNotes();
+
+alert("تم الحفظ");
+
+}
+
+function deleteCurrent(){
+
+if(!current) return;
+
+if(confirm("حذف الملاحظة؟")){
+
+notes=
+notes.filter(
+n=>n.id!=current
+);
+
+saveStorage();
+
+renderNotes();
+
+document.getElementById("editor")
+.style.display="none";
+
+}
+
+}
+
+function pinNote(){
+
+if(!current) return;
+
+let note=
+notes.find(n=>n.id==current);
+
+note.pinned=!note.pinned;
+
+saveStorage();
+
+renderNotes();
+
+alert("تم التحديث");
+
+}
+
+function toggleDark(){
+
+document.body
+.classList.toggle("dark");
+
+localStorage.setItem(
+"dark",
+document.body.classList.contains(
+"dark"
+)
+);
+
+}
+
+if(
+localStorage.getItem("dark")
+==="true"
+){
+document.body.classList.add("dark");
+}
+
+document.getElementById("search")
+.addEventListener(
+"input",
+renderNotes
+);
+document
+.getElementById("content")
+.addEventListener(
+"input",
+updateWords
+);
+
+function updateWords(){
+
+let txt=
+document.getElementById("content")
+.value
+.trim();
+
+let count=
+txt===""
+?0
+:txt.split(/\s+/).length;
+
+document.getElementById("words")
+.innerText=
+"الكلمات: "+count;
+
+}
+
+document
+.getElementById("imageInput")
+.addEventListener(
+"change",
+function(){
+
+let file=
+this.files[0];
+
+if(!file) return;
+
+let reader=
+new FileReader();
+
+reader.onload=function(e){
+
+document
+.getElementById(
+"imagePreview"
+)
+.innerHTML=
+
+`<img
+class="preview"
+src="${e.target.result}">`;
+
+};
+
+reader.readAsDataURL(file);
+
+}
+);
+
+function downloadTXT(){
+
+let title=
+document.getElementById("title")
+.value;
+
+let content=
+document.getElementById("content")
+.value;
+
+let blob=
+new Blob(
+[
+title+"\n\n"+content
+],
+{
+type:"text/plain"
+}
+);
+
+let a=
+document.createElement("a");
+
+a.href=
+URL.createObjectURL(blob);
+
+a.download=
+(title||"note")
++".txt";
+
+a.click();
+
+}
+
+function exportBackup(){
+
+let blob=
+new Blob(
+[
+JSON.stringify(notes)
+],
+{
+type:"application/json"
+}
+);
+
+let a=
+document.createElement("a");
+
+a.href=
+URL.createObjectURL(blob);
+
+a.download=
+"backup.json";
+
+a.click();
+
+}
+
+function importBackup(){
+
+document
+.getElementById("backupFile")
+.click();
+
+}
+
+document
+.getElementById("backupFile")
+.addEventListener(
+"change",
+function(){
+
+let file=
+this.files[0];
+
+if(!file) return;
+
+let reader=
+new FileReader();
+
+reader.onload=
+function(e){
+
+try{
+
+notes=
+JSON.parse(
+e.target.result
+);
+
+saveStorage();
+
+renderNotes();
+
+alert(
+"تم الاسترجاع"
+);
+
+}catch{
+
+alert(
+"ملف غير صالح"
+);
+
+}
+
+};
+
+reader.readAsText(file);
+
+}
+);
+
+function setPassword(){
+
+let pass=
+prompt(
+"أدخل كلمة سر"
+);
+
+if(
+pass &&
+pass.trim()!=""
+){
+
+localStorage.setItem(
+"notes_password",
+pass
+);
+
+alert(
+"تم حفظ كلمة السر"
+);
+
+}
+
+}
+
+let savedPass=
+localStorage.getItem(
+"notes_password"
+);
+
+if(savedPass){
+
+let ask=
+prompt(
+"أدخل كلمة السر"
+);
+
+if(
+ask!==savedPass
+){
+
+document.body.innerHTML=
+
+"<h1 style='text-align:center;margin-top:50px'>❌ كلمة السر غير صحيحة</h1>";
+
+throw new Error(
+"Wrong Password"
+);
+
+}
+
+}
+
+renderNotes();
+
 </script>
 
 </body>
